@@ -184,7 +184,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ onClose, userId }) => {
                       </>
                     )}
                   </div>
-                  <div className={`rounded-2xl px-4 py-3 text-sm break-words ${
+                                    <div className={`rounded-2xl px-4 py-3 text-sm wrap-break-word ${
                     item.type === 'user'
                       ? 'bg-white border border-stone-200 text-stone-800 rounded-tl-sm shadow-sm'
                       : 'bg-linear-to-br from-emerald-500 to-green-600 text-white rounded-tr-sm shadow-md'

@@ -12,7 +12,7 @@ import {
   AlertTriangle, 
   UtensilsCrossed 
 } from 'lucide-react';
-import { ContactsView } from './components/ContactsView';
+import { EmergencyView } from './components/EmergencyView';
 
 interface Section {
   id: string;
@@ -81,8 +81,8 @@ function App() {
   };
 
   // Экран контактов
-  if (activeSection === 'emergency') {
-    return <ContactsView onClose={() => setActiveSection(null)} />;
+    if (activeSection === 'emergency') {
+    return <EmergencyView onClose={() => setActiveSection(null)} />;
   }
 
   return (

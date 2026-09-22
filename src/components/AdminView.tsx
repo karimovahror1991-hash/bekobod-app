@@ -205,7 +205,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ onClose, userId }) => {
       </div>
 
              {/* Форма ввода */}
-      <div className="bg-white shadow-2xl border-t-2 border-amber-200 pb-6 pt-4 mt-4">
+      <div className="bg-white shadow-2xl border-t-2 border-amber-200 px-4 py-4 mb-6 rounded-3xl max-w-2xl w-full mx-auto">
         <form
           onSubmit={handleSend}
           className="max-w-2xl mx-auto px-4 flex items-end space-x-2"

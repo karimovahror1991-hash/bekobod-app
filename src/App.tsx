@@ -1,3 +1,4 @@
+import { TransportView } from './components/TransportView';
 import React, { useEffect, useState } from 'react';
 import { Cloud, Sun, CloudRain, Snowflake, Wind, Droplets } from 'lucide-react';
 import { 
@@ -10,7 +11,8 @@ import {
   Wrench, 
   Briefcase, 
   AlertTriangle, 
-  UtensilsCrossed 
+  UtensilsCrossed, 
+  Phone
 } from 'lucide-react';
 import { EmergencyView } from './components/EmergencyView';
 
@@ -31,7 +33,7 @@ const sections: Section[] = [
   { id: 'market', titleUz: 'Oldi-sotdi', titleRu: 'Купля-продажа', icon: ShoppingCart, gradient: 'from-orange-500 to-red-500' },
   { id: 'services', titleUz: 'Xizmatlar', titleRu: 'Услуги', icon: Wrench, gradient: 'from-cyan-500 to-teal-600' },
   { id: 'jobs', titleUz: 'Vakansiya', titleRu: 'Вакансии', icon: Briefcase, gradient: 'from-violet-500 to-purple-600' },
-  { id: 'emergency', titleUz: 'Favqulodda', titleRu: 'Экстренные', icon: AlertTriangle, gradient: 'from-rose-500 to-red-600' },
+    { id: 'emergency', titleUz: 'Shahar telefonlari', titleRu: 'Справочная служба', icon: Phone, gradient: 'from-rose-500 to-red-600' },
   { id: 'restaurants', titleUz: 'Restoranlar', titleRu: 'Рестораны и кафе', icon: UtensilsCrossed, gradient: 'from-red-500 to-pink-600' },
 ];
 
@@ -84,7 +86,9 @@ function App() {
     if (activeSection === 'emergency') {
     return <EmergencyView onClose={() => setActiveSection(null)} />;
   }
-
+  if (activeSection === 'transport') {
+    return <TransportView onClose={() => setActiveSection(null)} />;
+  }
   return (
     <div className="min-h-screen bg-linear-to-b from-stone-50 to-stone-100 text-stone-900 flex flex-col">
       {/* Верхняя панель */}

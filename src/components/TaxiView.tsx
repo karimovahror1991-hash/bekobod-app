@@ -120,26 +120,10 @@ export const TaxiView: React.FC<TaxiViewProps> = ({ onClose }) => {
           phone: normalizedPhone,
         }),
       });
-      const regData = await regRes.json();
+          const regData = await regRes.json();
       
-      if (regData.alreadyExists) {
-        alert('Siz allaqachon ro\'yxatdan o\'tgansiz. Reys yaratilmoqda...');
-      }
-
-      // Потом создаём рейс
-      const res = await fetch(`${API_URL}/api/taxi/create`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          driverName: driverName.trim(),
-                    driverPhone: normalizedPhone,
-          direction: newDirection,
-          totalSeats,
-        }),
-      });
-      const data = await res.json();
-      if (data.error) {
-        alert(data.error);
+            if (regData.error) {
+        alert(regData.error);
         return;
       }
       setDriverName('');
@@ -187,7 +171,7 @@ export const TaxiView: React.FC<TaxiViewProps> = ({ onClose }) => {
       }
       setBookedRides((prev) => prev.filter((id) => id !== rideId));
           loadRides();
-      setBookedRides((prev) => [...prev, rideId]);
+     
     } catch (err) {
       console.error(err);
     }
@@ -205,9 +189,9 @@ export const TaxiView: React.FC<TaxiViewProps> = ({ onClose }) => {
         body: JSON.stringify({ rideId, rating }),
       });
       
-      setShowRatingModal(null);
+           setShowRatingModal(null);
       setSelectedRating(0);
-            setBookedRides((prev) => [...prev, rideId]);
+      loadRides();
     } catch (err) {
       console.error(err);
     }

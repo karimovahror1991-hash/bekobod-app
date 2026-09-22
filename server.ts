@@ -191,13 +191,19 @@ app.post('/api/taxi/register', async (req, res) => {
       return res.status(400).json({ error: 'Заполните имя и телефон' });
     }
 
+    // Проверяем, есть ли уже такой таксист
     const existing = await pool.query(
       'SELECT * FROM taxi_drivers WHERE phone = $1',
       [phone]
     );
 
     if (existing.rows.length > 0) {
-      return res.json({ driver: existing.rows[0], alreadyExists: true });
+      // Номер уже есть — регистрация НЕ проходит
+      return res.status(400).json({ 
+        error: `Bu raqam allaqachon ${existing.rows[0].name} nomiga ro'yxatdan o'tgan. Iltimos, boshqa raqam kiriting yoki shu nom bilan kiring.`,
+        alreadyExists: true,
+        driver: existing.rows[0]
+      });
     }
 
     const result = await pool.query(

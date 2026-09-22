@@ -153,7 +153,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ onClose, userId }) => {
       </div>
 
       {/* Чат */}
-      <div className="flex-1 max-w-2xl w-full mx-auto px-4 py-4">
+            <div className="flex-1 max-w-2xl w-full mx-auto px-4 py-4 pb-32">
         {loading ? (
           <div className="flex justify-center py-12">
             <Loader2 className="w-6 h-6 animate-spin text-amber-600" />
@@ -204,18 +204,18 @@ export const AdminView: React.FC<AdminViewProps> = ({ onClose, userId }) => {
         )}
       </div>
 
-      {/* Форма ввода (как в чате) */}
-      <div className="sticky bottom-0 bg-white/95 backdrop-blur-lg border-t border-stone-200">
+            {/* Форма ввода */}
+      <div className="sticky bottom-0 bg-white shadow-2xl border-t-2 border-amber-200 pb-4 pt-3">
         <form
           onSubmit={handleSend}
-          className="max-w-2xl mx-auto px-4 py-3 flex items-end space-x-2"
+          className="max-w-2xl mx-auto px-4 flex items-end space-x-2"
         >
           <textarea
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             placeholder="Xabar yozing..."
             rows={1}
-            className="flex-1 px-4 py-3 rounded-2xl border border-stone-300 text-sm focus:outline-hidden focus:border-amber-500 resize-none max-h-32"
+            className="flex-1 px-4 py-3.5 rounded-2xl border-2 border-stone-200 text-sm focus:outline-hidden focus:border-amber-500 resize-none max-h-32 bg-stone-50"
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
@@ -226,12 +226,12 @@ export const AdminView: React.FC<AdminViewProps> = ({ onClose, userId }) => {
           <button
             type="submit"
             disabled={sending || !newMessage.trim() || !userId}
-            className="w-12 h-12 rounded-2xl bg-linear-to-br from-amber-500 to-orange-600 text-white flex items-center justify-center disabled:opacity-50 transition shadow-lg shrink-0"
+            className="w-14 h-14 rounded-2xl bg-linear-to-br from-amber-500 to-orange-600 text-white flex items-center justify-center disabled:opacity-50 transition shadow-lg shrink-0 active:scale-95"
           >
             {sending ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
+              <Loader2 className="w-6 h-6 animate-spin" />
             ) : (
-              <Send className="w-5 h-5" />
+              <Send className="w-6 h-6" />
             )}
           </button>
         </form>

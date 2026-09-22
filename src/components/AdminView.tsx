@@ -205,10 +205,10 @@ export const AdminView: React.FC<AdminViewProps> = ({ onClose, userId }) => {
       </div>
 
              {/* Форма ввода */}
-      <div className="bg-white shadow-2xl border-t-2 border-amber-200 px-4 py-4 mb-6 rounded-3xl max-w-2xl w-full mx-auto">
+      <div className="w-full max-w-2xl mx-auto px-4 pb-8 pt-4">
         <form
           onSubmit={handleSend}
-          className="max-w-2xl mx-auto px-4 flex items-end space-x-2"
+          className="bg-white shadow-2xl border-2 border-amber-200 rounded-3xl px-4 py-3 flex items-end space-x-2"
         >
           <textarea
             value={newMessage}
@@ -234,7 +234,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ onClose, userId }) => {
               <Send className="w-6 h-6" />
             )}
           </button>
-        </form>
+         </form>
       </div>
     </div>
   );

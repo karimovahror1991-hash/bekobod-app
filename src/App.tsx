@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import { Cloud, Sun, CloudRain, Snowflake, Wind, Droplets } from 'lucide-react';
 import { 
   Newspaper, 
   Megaphone, 
@@ -33,7 +34,6 @@ const sections: Section[] = [
   { id: 'restaurants', titleUz: 'Restoranlar', titleRu: 'Рестораны и кафе', icon: UtensilsCrossed, gradient: 'from-red-500 to-pink-600' },
 ];
 
-// Рекламные баннеры (заглушки)
 const ads = [
   { id: 1, title: 'Reklama 1', subtitle: "Bu yerda sizning reklamangiz bo'lishi mumkin", gradient: 'from-purple-600 to-indigo-700' },
   { id: 2, title: 'Reklama 2', subtitle: "Bu yerda sizning reklamangiz bo'lishi mumkin", gradient: 'from-amber-600 to-orange-700' },
@@ -42,14 +42,41 @@ const ads = [
 
 function App() {
   const [currentAd, setCurrentAd] = useState(0);
+  const [weather, setWeather] = useState<any>(null);
+  const [weatherLoading, setWeatherLoading] = useState(true);
 
-  // Автопрокрутка карусели
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentAd((prev) => (prev + 1) % ads.length);
     }, 4000);
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    const lat = 40.22;
+    const lon = 69.22;
+    
+    fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min,weather_code&timezone=auto&forecast_days=1`)
+      .then(res => res.json())
+      .then(data => {
+        setWeather(data);
+        setWeatherLoading(false);
+      })
+      .catch(err => {
+        console.error('Ошибка погоды:', err);
+        setWeatherLoading(false);
+      });
+  }, []);
+
+  const getWeatherIcon = (code: number) => {
+    if (code === 0) return <Sun className="w-8 h-8 text-yellow-500" />;
+    if (code >= 1 && code <= 3) return <Cloud className="w-8 h-8 text-gray-400" />;
+    if (code >= 45 && code <= 48) return <Cloud className="w-8 h-8 text-gray-500" />;
+    if (code >= 51 && code <= 67) return <CloudRain className="w-8 h-8 text-blue-500" />;
+    if (code >= 71 && code <= 77) return <Snowflake className="w-8 h-8 text-blue-300" />;
+    if (code >= 80 && code <= 82) return <CloudRain className="w-8 h-8 text-blue-600" />;
+    return <Sun className="w-8 h-8 text-yellow-500" />;
+  };
 
   return (
     <div className="min-h-screen bg-linear-to-b from-stone-50 to-stone-100 text-stone-900 flex flex-col">
@@ -71,6 +98,34 @@ function App() {
         </div>
       </div>
 
+      {/* Погода */}
+      <div className="max-w-2xl w-full mx-auto px-4 pt-4">
+        <div className="bg-white rounded-2xl p-4 shadow-sm border border-stone-100 flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            {weather && getWeatherIcon(weather.current?.weather_code || 0)}
+            <div>
+              <div className="text-sm font-bold text-stone-900">Bekobod</div>
+              <div className="text-xs text-stone-500">
+                {weatherLoading ? 'Yuklanmoqda...' : 
+                  weather ? `${Math.round(weather.current?.temperature_2m || 0)}°C` : '—'}
+              </div>
+            </div>
+          </div>
+          {weather && (
+            <div className="flex items-center space-x-3 text-xs text-stone-500">
+              <div className="flex items-center space-x-1">
+                <Droplets className="w-3 h-3" />
+                <span>{weather.current?.relative_humidity_2m || 0}%</span>
+              </div>
+              <div className="flex items-center space-x-1">
+                <Wind className="w-3 h-3" />
+                <span>{weather.current?.wind_speed_10m || 0} km/h</span>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
       {/* Карусель рекламы */}
       <div className="max-w-2xl w-full mx-auto px-4 pt-4">
         <div className="relative rounded-3xl overflow-hidden shadow-xl h-48">
@@ -87,7 +142,6 @@ function App() {
             </div>
           ))}
           
-          {/* Индикаторы */}
           <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex space-x-1.5">
             {ads.map((_, index) => (
               <button

@@ -10,24 +10,24 @@
     "start": "node dist/server.cjs"
   },
   "dependencies": {
+    "@tailwindcss/postcss": "^4.3.3",
     "@vitejs/plugin-react": "^4.3.1",
+    "autoprefixer": "^10.4.20",
     "dotenv": "^16.4.5",
     "esbuild": "^0.23.0",
     "express": "^4.19.2",
     "lucide-react": "^0.400.0",
+    "postcss": "^8.4.47",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "tailwindcss": "^4.3.3",
     "vite": "^5.4.0"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4.3.3",
     "@types/express": "^4.17.21",
     "@types/node": "^20.14.0",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
-    "autoprefixer": "^10.6.1",
-    "postcss": "^8.5.28",
-    "tailwindcss": "^4.3.3",
     "typescript": "^5.5.3"
   }
 }

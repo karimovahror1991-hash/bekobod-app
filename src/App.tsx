@@ -12,6 +12,7 @@ import {
   AlertTriangle, 
   UtensilsCrossed 
 } from 'lucide-react';
+import { ContactsView } from './components/ContactsView';
 
 interface Section {
   id: string;
@@ -44,6 +45,7 @@ function App() {
   const [currentAd, setCurrentAd] = useState(0);
   const [weather, setWeather] = useState<any>(null);
   const [weatherLoading, setWeatherLoading] = useState(true);
+  const [activeSection, setActiveSection] = useState<string | null>(null);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -78,6 +80,11 @@ function App() {
     return <Sun className="w-8 h-8 text-yellow-500" />;
   };
 
+  // Экран контактов
+  if (activeSection === 'emergency') {
+    return <ContactsView onClose={() => setActiveSection(null)} />;
+  }
+
   return (
     <div className="min-h-screen bg-linear-to-b from-stone-50 to-stone-100 text-stone-900 flex flex-col">
       {/* Верхняя панель */}
@@ -98,10 +105,10 @@ function App() {
         </div>
       </div>
 
-            {/* Погода */}
+      {/* Погода */}
       <div className="max-w-2xl w-full mx-auto px-4 pt-4">
         <div className="bg-linear-to-br from-sky-400 to-blue-600 rounded-3xl p-6 shadow-xl text-white">
-                   <div className="text-center mb-4">
+          <div className="text-center mb-4">
             <div className="text-sm font-bold mb-1">Bekobod</div>
             <div className="text-xs text-white/80">
               {new Date().toLocaleDateString('uz-UZ', { 
@@ -188,6 +195,7 @@ function App() {
             return (
               <button
                 key={section.id}
+                onClick={() => setActiveSection(section.id)}
                 className="group relative bg-white rounded-3xl p-5 flex flex-col items-center justify-center space-y-3 shadow-sm hover:shadow-xl transition-all duration-300 active:scale-95 border border-stone-100"
               >
                 <div className={`w-16 h-16 rounded-2xl bg-linear-to-br ${section.gradient} flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform duration-300`}>

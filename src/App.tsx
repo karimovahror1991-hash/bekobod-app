@@ -101,8 +101,8 @@ function App() {
             {/* Погода */}
       <div className="max-w-2xl w-full mx-auto px-4 pt-4">
         <div className="bg-linear-to-br from-sky-400 to-blue-600 rounded-3xl p-6 shadow-xl text-white">
-          <div className="flex items-center justify-between mb-4">
-            <div className="text-sm font-bold">Bekobod</div>
+                   <div className="text-center mb-4">
+            <div className="text-sm font-bold mb-1">Bekobod</div>
             <div className="text-xs text-white/80">
               {new Date().toLocaleDateString('uz-UZ', { 
                 day: 'numeric', 

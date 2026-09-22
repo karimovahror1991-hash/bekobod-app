@@ -141,7 +141,46 @@ app.post('/api/taxi/delete', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+// Оценить таксиста (анонимно)
+app.post('/api/taxi/rate', async (req, res) => {
+  try {
+    const { rideId, rating } = req.body;
 
+    if (!rideId || !rating || rating < 1 || rating > 5) {
+      return res.status(400).json({ error: 'Неверная оценка' });
+    }
+
+    await pool.query(
+      'INSERT INTO taxi_ratings (ride_id, rating) VALUES ($1, $2)',
+      [rideId, rating]
+    );
+
+    res.json({ ok: true });
+  } catch (error: any) {
+    console.error('Taxi rate error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Получить средний рейтинг таксиста по рейсу
+app.get('/api/taxi/rating/:rideId', async (req, res) => {
+  try {
+    const { rideId } = req.params;
+
+    const result = await pool.query(
+      'SELECT AVG(rating) as avg_rating, COUNT(*) as count FROM taxi_ratings WHERE ride_id = $1',
+      [rideId]
+    );
+
+    const avg = result.rows[0].avg_rating ? Number(result.rows[0].avg_rating) : 0;
+    const count = Number(result.rows[0].count);
+
+    res.json({ avgRating: Math.round(avg * 10) / 10, count });
+  } catch (error: any) {
+    console.error('Taxi rating error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
 // ============ STATIC ============
 
 const distPath = path.join(process.cwd(), 'dist');

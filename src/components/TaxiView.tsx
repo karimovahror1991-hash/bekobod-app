@@ -27,7 +27,9 @@ export const TaxiView: React.FC<TaxiViewProps> = ({ onClose }) => {
   const [newDirection, setNewDirection] = useState('bekobod_toshkent');
   const [totalSeats, setTotalSeats] = useState(4);
   const [creating, setCreating] = useState(false);
-
+  const [ratings, setRatings] = useState<{[key: number]: {avg: number, count: number}}>({});
+  const [showRatingModal, setShowRatingModal] = useState<number | null>(null);
+  const [selectedRating, setSelectedRating] = useState(0);
   const API_URL = 'https://bekobod-app-1.onrender.com';
 
   const loadRides = async () => {
@@ -39,6 +41,21 @@ export const TaxiView: React.FC<TaxiViewProps> = ({ onClose }) => {
       const res = await fetch(url);
       const data = await res.json();
       setRides(data.rides || []);
+            // Загружаем рейтинги для каждого рейса
+      const ridesList = data.rides || [];
+      const ratingsData: {[key: number]: {avg: number, count: number}} = {};
+      
+      await Promise.all(ridesList.map(async (ride: Ride) => {
+        try {
+          const r = await fetch(`${API_URL}/api/taxi/rating/${ride.id}`);
+          const d = await r.json();
+          ratingsData[ride.id] = { avg: d.avgRating || 0, count: d.count || 0 };
+        } catch (e) {
+          ratingsData[ride.id] = { avg: 0, count: 0 };
+        }
+      }));
+      
+      setRatings(ratingsData);
     } catch (err) {
       console.error(err);
     } finally {
@@ -95,12 +112,29 @@ export const TaxiView: React.FC<TaxiViewProps> = ({ onClose }) => {
         alert(data.error);
         return;
       }
+         loadRides();
+      setShowRatingModal(rideId);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+  const handleRate = async (rating: number) => {
+    if (!showRatingModal) return;
+    
+    try {
+      await fetch(`${API_URL}/api/taxi/rate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rideId: showRatingModal, rating }),
+      });
+      
+      setShowRatingModal(null);
+      setSelectedRating(0);
       loadRides();
     } catch (err) {
       console.error(err);
     }
   };
-
   const getDirectionLabel = (dir: string) => {
     return dir === 'bekobod_toshkent' ? 'Bekobod → Toshkent' : 'Toshkent → Bekobod';
   };
@@ -209,9 +243,22 @@ export const TaxiView: React.FC<TaxiViewProps> = ({ onClose }) => {
                         </div>
                       </div>
 
-                      <div className="flex items-center space-x-2 text-sm text-stone-600">
-                        <User className="w-4 h-4" />
-                        <span>{ride.driver_name}</span>
+                                            <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2 text-sm text-stone-600">
+                          <User className="w-4 h-4" />
+                          <span>{ride.driver_name}</span>
+                        </div>
+                        {ratings[ride.id] && ratings[ride.id].count > 0 && (
+                          <div className="flex items-center space-x-1 text-xs">
+                            <span className="text-amber-500">⭐</span>
+                            <span className="font-bold text-stone-700">
+                              {ratings[ride.id].avg}
+                            </span>
+                            <span className="text-stone-400">
+                              ({ratings[ride.id].count})
+                            </span>
+                          </div>
+                        )}
                       </div>
 
                       <div className="w-full bg-stone-100 rounded-full h-2">
@@ -335,6 +382,52 @@ export const TaxiView: React.FC<TaxiViewProps> = ({ onClose }) => {
           </form>
         )}
       </div>
+            {/* Модальное окно оценки */}
+      {showRatingModal && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl">
+            <h3 className="font-bold text-lg text-stone-900 text-center mb-2">
+              Haydovchini baholang
+            </h3>
+            <p className="text-xs text-stone-500 text-center mb-4">
+              Sizning bahoyingiz anonim saqlanadi
+            </p>
+            
+            <div className="flex justify-center space-x-2 mb-6">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button
+                  key={star}
+                  onClick={() => setSelectedRating(star)}
+                  className="text-4xl transition-transform active:scale-110"
+                >
+                  <span className={star <= selectedRating ? 'text-amber-500' : 'text-stone-300'}>
+                    ★
+                  </span>
+                </button>
+              ))}
+            </div>
+
+            <div className="flex space-x-2">
+              <button
+                onClick={() => handleRate(selectedRating)}
+                disabled={selectedRating === 0}
+                className="flex-1 py-3 bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-semibold disabled:opacity-50 transition"
+              >
+                Yuborish
+              </button>
+              <button
+                onClick={() => {
+                  setShowRatingModal(null);
+                  setSelectedRating(0);
+                }}
+                className="px-5 py-3 text-stone-500 hover:text-stone-700"
+              >
+                O'tkazib yuborish
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -247,6 +247,52 @@ app.get('/api/taxi/driver-rating/:phone', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+// Отменить бронирование (пассажир)
+app.post('/api/taxi/cancel-booking', async (req, res) => {
+  try {
+    const { rideId, passengerPhone } = req.body;
+
+    if (!rideId) {
+      return res.status(400).json({ error: 'Не указан рейс' });
+    }
+
+    // Удаляем бронирование
+    if (passengerPhone) {
+      await pool.query(
+        'DELETE FROM taxi_bookings WHERE ride_id = $1 AND passenger_phone = $2',
+        [rideId, passengerPhone]
+      );
+    } else {
+      // Если нет телефона — удаляем последнее бронирование для этого рейса
+      await pool.query(
+        `DELETE FROM taxi_bookings 
+         WHERE id = (SELECT id FROM taxi_bookings WHERE ride_id = $1 ORDER BY created_at DESC LIMIT 1)`,
+        [rideId]
+      );
+    }
+
+    // Обновляем счётчик
+    const rideResult = await pool.query(
+      'SELECT booked_seats FROM taxi_rides WHERE id = $1',
+      [rideId]
+    );
+
+    if (rideResult.rows.length > 0) {
+      const newBooked = Math.max(0, rideResult.rows[0].booked_seats - 1);
+      const newStatus = newBooked < 4 ? 'active' : 'full';
+
+      await pool.query(
+        'UPDATE taxi_rides SET booked_seats = $1, status = $2 WHERE id = $3',
+        [newBooked, newStatus, rideId]
+      );
+    }
+
+    res.json({ ok: true });
+  } catch (error: any) {
+    console.error('Cancel booking error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
 // ============ STATIC ============
 
 const distPath = path.join(process.cwd(), 'dist');

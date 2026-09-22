@@ -35,7 +35,7 @@ export const TaxiView: React.FC<TaxiViewProps> = ({ onClose }) => {
   const [newDirection, setNewDirection] = useState('bekobod_toshkent');
   const [totalSeats, setTotalSeats] = useState(4);
   const [creating, setCreating] = useState(false);
-
+  const [bookedRides, setBookedRides] = useState<number[]>([]);
   // Рейтинги
   const [ratings, setRatings] = useState<{[key: string]: {avg: number, count: number}}>({});
   const [showRatingModal, setShowRatingModal] = useState<string | null>(null);
@@ -167,7 +167,24 @@ export const TaxiView: React.FC<TaxiViewProps> = ({ onClose }) => {
       console.error(err);
     }
   };
-
+  const handleCancel = async (rideId: number) => {
+    try {
+      const res = await fetch(`${API_URL}/api/taxi/cancel-booking`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rideId }),
+      });
+      const data = await res.json();
+      if (data.error) {
+        alert(data.error);
+        return;
+      }
+      setBookedRides((prev) => prev.filter((id) => id !== rideId));
+      loadRides();
+    } catch (err) {
+      console.error(err);
+    }
+  };
   const handleRate = async (rating: number) => {
     if (!showRatingModal) return;
     
@@ -183,7 +200,7 @@ export const TaxiView: React.FC<TaxiViewProps> = ({ onClose }) => {
       
       setShowRatingModal(null);
       setSelectedRating(0);
-      loadRides();
+            setBookedRides((prev) => [...prev, rideId]);
     } catch (err) {
       console.error(err);
     }
@@ -325,7 +342,7 @@ export const TaxiView: React.FC<TaxiViewProps> = ({ onClose }) => {
                         {ride.booked_seats} / {ride.total_seats} joy band
                       </div>
 
-                      <div className="flex space-x-2">
+                                    <div className="flex space-x-2">
                         <a
                           href={`tel:${ride.driver_phone}`}
                           className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-semibold flex items-center justify-center space-x-1.5 transition"
@@ -333,17 +350,26 @@ export const TaxiView: React.FC<TaxiViewProps> = ({ onClose }) => {
                           <Phone className="w-4 h-4" />
                           <span>Qo'ng'iroq</span>
                         </a>
-                        <button
-                          onClick={() => handleBook(ride.id)}
-                          disabled={isFull}
-                          className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition ${
-                            isFull
-                              ? 'bg-stone-100 text-stone-400'
-                              : 'bg-amber-600 hover:bg-amber-700 text-white'
-                          }`}
-                        >
-                          {isFull ? "To'lgan" : 'Joy band qilish'}
-                        </button>
+                        {bookedRides.includes(ride.id) ? (
+                          <button
+                            onClick={() => handleCancel(ride.id)}
+                            className="flex-1 py-2.5 rounded-xl text-sm font-semibold transition bg-rose-600 hover:bg-rose-700 text-white"
+                          >
+                            Bekor qilish
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => handleBook(ride.id)}
+                            disabled={isFull}
+                            className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition ${
+                              isFull
+                                ? 'bg-stone-100 text-stone-400'
+                                : 'bg-amber-600 hover:bg-amber-700 text-white'
+                            }`}
+                          >
+                            {isFull ? "To'lgan" : 'Joy band qilish'}
+                          </button>
+                        )}
                       </div>
                     </div>
                   );

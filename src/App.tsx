@@ -52,12 +52,12 @@ function App() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-stone-50 to-stone-100 text-stone-900 flex flex-col">
+    <div className="min-h-screen bg-linear-to-b from-stone-50 to-stone-100 text-stone-900 flex flex-col">
       {/* Верхняя панель */}
       <div className="bg-white/80 backdrop-blur-lg border-b border-stone-200 sticky top-0 z-20">
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center text-white font-bold text-lg shadow-lg">
+            <div className="w-10 h-10 rounded-xl bg-linear-to-br from-amber-500 to-orange-600 flex items-center justify-center text-white font-bold text-lg shadow-lg">
               B
             </div>
             <div>
@@ -77,7 +77,7 @@ function App() {
           {ads.map((ad, index) => (
             <div
               key={ad.id}
-              className={`absolute inset-0 bg-gradient-to-br ${ad.gradient} transition-opacity duration-700 flex flex-col items-center justify-center text-white p-6 ${
+              className={`absolute inset-0 bg-linear-to-br ${ad.gradient} transition-opacity duration-700 flex flex-col items-center justify-center text-white p-6 ${
                 index === currentAd ? 'opacity-100' : 'opacity-0'
               }`}
             >
@@ -117,7 +117,7 @@ function App() {
                 key={section.id}
                 className="group relative bg-white rounded-3xl p-5 flex flex-col items-center justify-center space-y-3 shadow-sm hover:shadow-xl transition-all duration-300 active:scale-95 border border-stone-100"
               >
-                <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${section.gradient} flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+                <div className={`w-16 h-16 rounded-2xl bg-linear-to-br ${section.gradient} flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform duration-300`}>
                   <Icon className="w-8 h-8" />
                 </div>
                 <div className="text-center">

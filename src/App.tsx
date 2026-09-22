@@ -1,3 +1,4 @@
+import { AdminView } from './components/AdminView';
 import { ServicesView } from './components/ServicesView';
 import { TransportView } from './components/TransportView';
 import React, { useEffect, useState } from 'react';
@@ -13,7 +14,8 @@ import {
   Briefcase, 
   AlertTriangle, 
   UtensilsCrossed, 
-  Phone
+  Phone,
+  Mail
 } from 'lucide-react';
 import { EmergencyView } from './components/EmergencyView';
 
@@ -30,7 +32,7 @@ const sections: Section[] = [
   { id: 'ads', titleUz: "E'lonlar", titleRu: 'Объявления', icon: Megaphone, gradient: 'from-amber-500 to-orange-500' },
   { id: 'events', titleUz: 'Tadbirlar', titleRu: 'События', icon: PartyPopper, gradient: 'from-pink-500 to-rose-500' },
   { id: 'transport', titleUz: 'Transport', titleRu: 'Транспорт', icon: Bus, gradient: 'from-emerald-500 to-green-600' },
-  { id: 'districts', titleUz: 'Mahallalar', titleRu: 'Районы', icon: Home, gradient: 'from-indigo-500 to-violet-600' },
+    { id: 'admin', titleUz: 'Administrator', titleRu: 'Администратор', icon: Mail, gradient: 'from-indigo-500 to-violet-600' },
   { id: 'market', titleUz: 'Oldi-sotdi', titleRu: 'Купля-продажа', icon: ShoppingCart, gradient: 'from-orange-500 to-red-500' },
   { id: 'services', titleUz: 'Xizmatlar', titleRu: 'Услуги', icon: Wrench, gradient: 'from-cyan-500 to-teal-600' },
   { id: 'jobs', titleUz: 'Vakansiya', titleRu: 'Вакансии', icon: Briefcase, gradient: 'from-violet-500 to-purple-600' },

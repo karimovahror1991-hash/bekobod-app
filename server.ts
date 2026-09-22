@@ -401,6 +401,94 @@ app.get('/api/services/rating/:providerId', async (req, res) => {
 });
 // ============ STATIC ============
 
+// ============ ADMIN MESSAGES ============
+
+// Отправить сообщение администратору
+app.post('/api/admin/message', async (req, res) => {
+  try {
+    const { userId, userName, message } = req.body;
+
+    if (!userId || !message || !message.trim()) {
+      return res.status(400).json({ error: 'Сообщение не может быть пустым' });
+    }
+
+    const result = await pool.query(
+      'INSERT INTO admin_messages (user_id, user_name, message) VALUES ($1, $2, $3) RETURNING *',
+      [userId, userName || null, message.trim()]
+    );
+
+    res.json({ message: result.rows[0] });
+  } catch (error: any) {
+    console.error('Admin message error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Получить сообщения пользователя
+app.get('/api/admin/my-messages', async (req, res) => {
+  try {
+    const { userId } = req.query;
+
+    if (!userId) {
+      return res.status(400).json({ error: 'Не указан пользователь' });
+    }
+
+    const result = await pool.query(
+      'SELECT * FROM admin_messages WHERE user_id = $1 ORDER BY created_at DESC',
+      [userId]
+    );
+
+    res.json({ messages: result.rows });
+  } catch (error: any) {
+    console.error('My messages error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Получить все сообщения (только для админа)
+app.get('/api/admin/all-messages', async (req, res) => {
+  try {
+    const { adminId } = req.query;
+
+    if (Number(adminId) !== 988368940) {
+      return res.status(403).json({ error: 'Доступ запрещён' });
+    }
+
+    const result = await pool.query(
+      'SELECT * FROM admin_messages ORDER BY created_at DESC LIMIT 50'
+    );
+
+    res.json({ messages: result.rows });
+  } catch (error: any) {
+    console.error('All messages error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Ответить на сообщение (только для админа)
+app.post('/api/admin/reply', async (req, res) => {
+  try {
+    const { adminId, messageId, reply } = req.body;
+
+    if (Number(adminId) !== 988368940) {
+      return res.status(403).json({ error: 'Доступ запрещён' });
+    }
+
+    if (!messageId || !reply || !reply.trim()) {
+      return res.status(400).json({ error: 'Ответ не может быть пустым' });
+    }
+
+    await pool.query(
+      "UPDATE admin_messages SET reply = $1, status = 'answered', replied_at = NOW() WHERE id = $2",
+      [reply.trim(), messageId]
+    );
+
+    res.json({ ok: true });
+  } catch (error: any) {
+    console.error('Admin reply error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
 const distPath = path.join(process.cwd(), 'dist');
 app.use(express.static(distPath));
 

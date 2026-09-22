@@ -1,3 +1,4 @@
+import { ServicesView } from './components/ServicesView';
 import { TransportView } from './components/TransportView';
 import React, { useEffect, useState } from 'react';
 import { Cloud, Sun, CloudRain, Snowflake, Wind, Droplets } from 'lucide-react';
@@ -88,6 +89,9 @@ function App() {
   }
   if (activeSection === 'transport') {
     return <TransportView onClose={() => setActiveSection(null)} />;
+  }
+    if (activeSection === 'services') {
+    return <ServicesView onClose={() => setActiveSection(null)} />;
   }
   return (
     <div className="min-h-screen bg-linear-to-b from-stone-50 to-stone-100 text-stone-900 flex flex-col">

@@ -299,6 +299,106 @@ app.post('/api/taxi/cancel-booking', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
+// ============ SERVICES ============
+
+// Регистрация мастера
+app.post('/api/services/register', async (req, res) => {
+  try {
+    const { name, phone, category, description } = req.body;
+
+    if (!name || !phone || !category) {
+      return res.status(400).json({ error: 'Заполните имя, телефон и категорию' });
+    }
+
+    // Проверяем, есть ли уже такой мастер
+    const existing = await pool.query(
+      'SELECT * FROM service_providers WHERE phone = $1',
+      [phone]
+    );
+
+    if (existing.rows.length > 0) {
+      return res.json({ 
+        provider: existing.rows[0], 
+        alreadyExists: true 
+      });
+    }
+
+    const result = await pool.query(
+      'INSERT INTO service_providers (name, phone, category, description) VALUES ($1, $2, $3, $4) RETURNING *',
+      [name, phone, category, description || null]
+    );
+
+    res.json({ provider: result.rows[0], alreadyExists: false });
+  } catch (error: any) {
+    console.error('Service register error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Список мастеров
+app.get('/api/services/list', async (req, res) => {
+  try {
+    const { category } = req.query;
+
+    let query = 'SELECT * FROM service_providers';
+    const params: any[] = [];
+
+    if (category) {
+      query += ' WHERE category = $1';
+      params.push(category);
+    }
+
+    query += ' ORDER BY created_at DESC';
+
+    const result = await pool.query(query, params);
+    res.json({ providers: result.rows });
+  } catch (error: any) {
+    console.error('Services list error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Оценить мастера (анонимно)
+app.post('/api/services/rate', async (req, res) => {
+  try {
+    const { providerId, rating } = req.body;
+
+    if (!providerId || !rating || rating < 1 || rating > 5) {
+      return res.status(400).json({ error: 'Неверная оценка' });
+    }
+
+    await pool.query(
+      'INSERT INTO service_ratings (provider_id, rating) VALUES ($1, $2)',
+      [providerId, rating]
+    );
+
+    res.json({ ok: true });
+  } catch (error: any) {
+    console.error('Service rate error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Средний рейтинг мастера
+app.get('/api/services/rating/:providerId', async (req, res) => {
+  try {
+    const { providerId } = req.params;
+
+    const result = await pool.query(
+      'SELECT AVG(rating) as avg_rating, COUNT(*) as count FROM service_ratings WHERE provider_id = $1',
+      [providerId]
+    );
+
+    const avg = result.rows[0].avg_rating ? Number(result.rows[0].avg_rating) : 0;
+    const count = Number(result.rows[0].count);
+
+    res.json({ avgRating: Math.round(avg * 10) / 10, count });
+  } catch (error: any) {
+    console.error('Service rating error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
 // ============ STATIC ============
 
 const distPath = path.join(process.cwd(), 'dist');

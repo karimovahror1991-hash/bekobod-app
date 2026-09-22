@@ -153,7 +153,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ onClose, userId }) => {
       </div>
 
       {/* Чат */}
-            <div className="flex-1 max-w-2xl w-full mx-auto px-4 py-4 pb-32">
+              <div className="flex-1 max-w-2xl w-full mx-auto px-4 py-4">
         {loading ? (
           <div className="flex justify-center py-12">
             <Loader2 className="w-6 h-6 animate-spin text-amber-600" />
@@ -204,8 +204,8 @@ export const AdminView: React.FC<AdminViewProps> = ({ onClose, userId }) => {
         )}
       </div>
 
-            {/* Форма ввода */}
-      <div className="sticky bottom-0 bg-white shadow-2xl border-t-2 border-amber-200 pb-4 pt-3">
+             {/* Форма ввода */}
+      <div className="bg-white shadow-2xl border-t-2 border-amber-200 pb-6 pt-4 mt-4">
         <form
           onSubmit={handleSend}
           className="max-w-2xl mx-auto px-4 flex items-end space-x-2"

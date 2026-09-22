@@ -98,30 +98,49 @@ function App() {
         </div>
       </div>
 
-      {/* Погода */}
+            {/* Погода */}
       <div className="max-w-2xl w-full mx-auto px-4 pt-4">
-        <div className="bg-white rounded-2xl p-4 shadow-sm border border-stone-100 flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            {weather && getWeatherIcon(weather.current?.weather_code || 0)}
-            <div>
-              <div className="text-sm font-bold text-stone-900">Bekobod</div>
-              <div className="text-xs text-stone-500">
-                {weatherLoading ? 'Yuklanmoqda...' : 
-                  weather ? `${Math.round(weather.current?.temperature_2m || 0)}°C` : '—'}
-              </div>
+        <div className="bg-linear-to-br from-sky-400 to-blue-600 rounded-3xl p-6 shadow-xl text-white">
+          <div className="flex items-center justify-between mb-4">
+            <div className="text-sm font-bold">Bekobod</div>
+            <div className="text-xs text-white/80">
+              {new Date().toLocaleDateString('uz-UZ', { 
+                day: 'numeric', 
+                month: 'long', 
+                year: 'numeric' 
+              })}
             </div>
           </div>
-          {weather && (
-            <div className="flex items-center space-x-3 text-xs text-stone-500">
-              <div className="flex items-center space-x-1">
-                <Droplets className="w-3 h-3" />
-                <span>{weather.current?.relative_humidity_2m || 0}%</span>
+          
+          {weatherLoading ? (
+            <div className="text-center py-4 text-white/80">Yuklanmoqda...</div>
+          ) : weather ? (
+            <div className="flex flex-col items-center">
+              <div className="mb-2">
+                {getWeatherIcon(weather.current?.weather_code || 0)}
               </div>
-              <div className="flex items-center space-x-1">
-                <Wind className="w-3 h-3" />
-                <span>{weather.current?.wind_speed_10m || 0} km/h</span>
+              <div className="text-5xl font-bold mb-2">
+                {Math.round(weather.current?.temperature_2m || 0)}°C
               </div>
+              <div className="flex items-center space-x-4 text-xs text-white/90">
+                <div className="flex items-center space-x-1">
+                  <Droplets className="w-3 h-3" />
+                  <span>{weather.current?.relative_humidity_2m || 0}%</span>
+                </div>
+                <div className="flex items-center space-x-1">
+                  <Wind className="w-3 h-3" />
+                  <span>{weather.current?.wind_speed_10m || 0} km/h</span>
+                </div>
+              </div>
+              {weather.daily && (
+                <div className="flex items-center space-x-3 text-xs text-white/80 mt-3 pt-3 border-t border-white/20">
+                  <span>↑ {Math.round(weather.daily.temperature_2m_max?.[0] || 0)}°</span>
+                  <span>↓ {Math.round(weather.daily.temperature_2m_min?.[0] || 0)}°</span>
+                </div>
+              )}
             </div>
+          ) : (
+            <div className="text-center py-4 text-white/80">—</div>
           )}
         </div>
       </div>

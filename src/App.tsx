@@ -92,8 +92,8 @@ function App() {
   if (activeSection === 'transport') {
     return <TransportView onClose={() => setActiveSection(null)} />;
   }
-    if (activeSection === 'services') {
-    return <ServicesView onClose={() => setActiveSection(null)} />;
+   if (activeSection === 'admin') {
+    return <AdminView onClose={() => setActiveSection(null)} userId={userId} />;
   }
   return (
     <div className="min-h-screen bg-linear-to-b from-stone-50 to-stone-100 text-stone-900 flex flex-col">

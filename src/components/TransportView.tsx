@@ -1,3 +1,4 @@
+import { TaxiView } from './TaxiView';
 import React, { useState } from 'react';
 import { ArrowLeft, ChevronRight, Clock, MapPin } from 'lucide-react';
 import { transport, TransportCategory } from '../data/transport';
@@ -8,6 +9,10 @@ interface TransportViewProps {
 
 export const TransportView: React.FC<TransportViewProps> = ({ onClose }) => {
   const [selectedCategory, setSelectedCategory] = useState<TransportCategory | null>(null);
+  const [showTaxi, setShowTaxi] = useState(false);
+    if (showTaxi) {
+    return <TaxiView onClose={() => setShowTaxi(false)} />;
+  }
 
   if (selectedCategory) {
     return (
@@ -27,7 +32,18 @@ export const TransportView: React.FC<TransportViewProps> = ({ onClose }) => {
         </div>
 
         <div className="max-w-2xl mx-auto px-4 py-6 space-y-4">
-          {selectedCategory.items.length === 0 ? (
+                   {selectedCategory.title.includes('Taksi') ? (
+            <button
+              onClick={() => setShowTaxi(true)}
+              className="w-full bg-linear-to-br from-amber-500 to-orange-600 text-white rounded-3xl p-6 shadow-lg active:scale-95 transition-transform"
+            >
+              <div className="text-4xl mb-2">🚕</div>
+              <div className="font-bold text-lg">Taksi reyslarini ko'rish</div>
+              <div className="text-xs text-white/80 mt-1">
+                Haydovchilar va yo'lovchilar uchun
+              </div>
+            </button>
+          ) : selectedCategory.items.length === 0 ? (
             <div className="text-center py-12 text-stone-400">
               Ma'lumot tez orada qo'shiladi
             </div>

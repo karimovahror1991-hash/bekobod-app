@@ -107,33 +107,39 @@ export const TaxiView: React.FC<TaxiViewProps> = ({ onClose }) => {
 
   return (
     <div className="min-h-screen bg-linear-to-b from-stone-50 to-stone-100">
-      <div className="bg-white/80 backdrop-blur-lg border-b border-stone-200 sticky top-0 z-20">
-        <div className="max-w-2xl mx-auto px-4 py-3 flex items-center space-x-3">
+           <div className="bg-white/95 backdrop-blur-lg border-b border-stone-200 sticky top-0 z-20 shadow-sm">
+        <div className="max-w-2xl mx-auto px-4 py-4 flex items-center space-x-3">
           <button
             onClick={onClose}
-            className="w-9 h-9 rounded-full bg-stone-100 hover:bg-amber-100 flex items-center justify-center transition-colors"
+            className="w-11 h-11 rounded-2xl bg-stone-100 hover:bg-amber-100 flex items-center justify-center transition-colors"
           >
-            <ArrowLeft className="w-5 h-5 text-stone-700" />
+            <ArrowLeft className="w-6 h-6 text-stone-700" />
           </button>
-          <h1 className="font-bold text-lg text-stone-900">Taksi</h1>
+          <h1 className="font-bold text-2xl text-stone-900">🚕 Taksi</h1>
         </div>
 
-        <div className="max-w-2xl mx-auto px-4 pb-3 flex space-x-2">
+        <div className="max-w-2xl mx-auto px-4 pb-4 flex space-x-3">
           <button
             onClick={() => setTab('list')}
-            className={`flex-1 py-2 rounded-xl text-sm font-semibold transition ${
-              tab === 'list' ? 'bg-amber-600 text-white' : 'bg-stone-100 text-stone-600'
+            className={`flex-1 py-4 rounded-2xl text-base font-bold transition-all flex items-center justify-center space-x-2 ${
+              tab === 'list' 
+                ? 'bg-linear-to-br from-amber-500 to-orange-600 text-white shadow-lg scale-105' 
+                : 'bg-stone-100 text-stone-600'
             }`}
           >
-            Qidirish
+            <span className="text-xl">🔍</span>
+            <span>Qidirish</span>
           </button>
           <button
             onClick={() => setTab('create')}
-            className={`flex-1 py-2 rounded-xl text-sm font-semibold transition ${
-              tab === 'create' ? 'bg-amber-600 text-white' : 'bg-stone-100 text-stone-600'
+            className={`flex-1 py-4 rounded-2xl text-base font-bold transition-all flex items-center justify-center space-x-2 ${
+              tab === 'create' 
+                ? 'bg-linear-to-br from-emerald-500 to-green-600 text-white shadow-lg scale-105' 
+                : 'bg-stone-100 text-stone-600'
             }`}
           >
-            Haydovchi
+            <span className="text-xl">🚗</span>
+            <span>Haydovchi</span>
           </button>
         </div>
       </div>
@@ -141,30 +147,36 @@ export const TaxiView: React.FC<TaxiViewProps> = ({ onClose }) => {
       <div className="max-w-2xl mx-auto px-4 py-6">
         {tab === 'list' && (
           <>
-            <div className="flex space-x-2 mb-4 overflow-x-auto">
+                    <div className="grid grid-cols-3 gap-2 mb-5">
               <button
                 onClick={() => setDirection('all')}
-                className={`px-3 py-1.5 rounded-xl text-xs font-medium whitespace-nowrap ${
-                  direction === 'all' ? 'bg-stone-900 text-white' : 'bg-white text-stone-600 border border-stone-200'
+                className={`py-3 rounded-2xl text-sm font-bold transition-all ${
+                  direction === 'all' 
+                    ? 'bg-stone-900 text-white shadow-md' 
+                    : 'bg-white text-stone-600 border border-stone-200'
                 }`}
               >
                 Barchasi
               </button>
               <button
                 onClick={() => setDirection('bekobod_toshkent')}
-                className={`px-3 py-1.5 rounded-xl text-xs font-medium whitespace-nowrap ${
-                  direction === 'bekobod_toshkent' ? 'bg-stone-900 text-white' : 'bg-white text-stone-600 border border-stone-200'
+                className={`py-3 rounded-2xl text-xs font-bold transition-all leading-tight ${
+                  direction === 'bekobod_toshkent' 
+                    ? 'bg-stone-900 text-white shadow-md' 
+                    : 'bg-white text-stone-600 border border-stone-200'
                 }`}
               >
-                Bekobod → Toshkent
+                Bekobod<br/>→ Toshkent
               </button>
               <button
                 onClick={() => setDirection('toshkent_bekobod')}
-                className={`px-3 py-1.5 rounded-xl text-xs font-medium whitespace-nowrap ${
-                  direction === 'toshkent_bekobod' ? 'bg-stone-900 text-white' : 'bg-white text-stone-600 border border-stone-200'
+                className={`py-3 rounded-2xl text-xs font-bold transition-all leading-tight ${
+                  direction === 'toshkent_bekobod' 
+                    ? 'bg-stone-900 text-white shadow-md' 
+                    : 'bg-white text-stone-600 border border-stone-200'
                 }`}
               >
-                Toshkent → Bekobod
+                Toshkent<br/>→ Bekobod
               </button>
             </div>
 

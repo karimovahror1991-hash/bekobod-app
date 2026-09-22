@@ -1,6 +1,3 @@
-import { AdminView } from './components/AdminView';
-import { ServicesView } from './components/ServicesView';
-import { TransportView } from './components/TransportView';
 import React, { useEffect, useState } from 'react';
 import { Cloud, Sun, CloudRain, Snowflake, Wind, Droplets } from 'lucide-react';
 import { 
@@ -13,11 +10,14 @@ import {
   Wrench, 
   Briefcase, 
   AlertTriangle, 
-  UtensilsCrossed, 
+  UtensilsCrossed,
   Phone,
   Mail
 } from 'lucide-react';
 import { EmergencyView } from './components/EmergencyView';
+import { TransportView } from './components/TransportView';
+import { ServicesView } from './components/ServicesView';
+import { AdminView } from './components/AdminView';
 
 interface Section {
   id: string;
@@ -51,7 +51,13 @@ function App() {
   const [weather, setWeather] = useState<any>(null);
   const [weatherLoading, setWeatherLoading] = useState(true);
   const [activeSection, setActiveSection] = useState<string | null>(null);
-
+  const [userId, setUserId] = useState<number | null>(null);
+    useEffect(() => {
+    const tg = (window as any).Telegram?.WebApp;
+    if (tg?.initDataUnsafe?.user?.id) {
+      setUserId(tg.initDataUnsafe.user.id);
+    }
+  }, []);
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentAd((prev) => (prev + 1) % ads.length);

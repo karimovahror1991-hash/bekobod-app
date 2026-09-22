@@ -58,7 +58,6 @@ export const AdminView: React.FC<AdminViewProps> = ({ onClose, userId }) => {
 
   useEffect(() => {
     loadMessages();
-    // Обновляем каждые 15 секунд, чтобы видеть ответы админа
     const interval = setInterval(loadMessages, 15000);
     return () => clearInterval(interval);
   }, [userId]);
@@ -107,7 +106,6 @@ export const AdminView: React.FC<AdminViewProps> = ({ onClose, userId }) => {
     });
   };
 
-  // Собираем все сообщения в один чат (сначала старые)
   const buildChat = (): ChatItem[] => {
     const chat: ChatItem[] = [];
     const sorted = [...messages].sort(
@@ -136,24 +134,24 @@ export const AdminView: React.FC<AdminViewProps> = ({ onClose, userId }) => {
 
   return (
     <div className="min-h-screen bg-linear-to-b from-stone-50 to-stone-100 flex flex-col">
-      {/* Заголовок */}
-      <div className="bg-white/95 backdrop-blur-lg border-b border-stone-200 sticky top-0 z-20 shadow-sm">
-        <div className="max-w-2xl mx-auto px-4 py-4 flex items-center space-x-3">
+      {/* Заголовок с кнопкой назад */}
+      <div className="bg-white shadow-md border-b border-stone-200 sticky top-0 z-20">
+        <div className="px-4 py-4 flex items-center space-x-3">
           <button
             onClick={onClose}
-            className="w-11 h-11 rounded-2xl bg-stone-100 hover:bg-amber-100 flex items-center justify-center transition-colors"
+            className="w-11 h-11 rounded-2xl bg-stone-100 hover:bg-amber-100 flex items-center justify-center transition-colors shrink-0"
           >
             <ArrowLeft className="w-6 h-6 text-stone-700" />
           </button>
-          <div>
-            <h1 className="font-bold text-lg text-stone-900">✉️ Administrator</h1>
-            <p className="text-xs text-stone-500">Murojaat va takliflar</p>
+          <div className="min-w-0">
+            <h1 className="font-bold text-lg text-stone-900 truncate">✉️ Administrator</h1>
+            <p className="text-xs text-stone-500 truncate">Murojaat va takliflar</p>
           </div>
         </div>
       </div>
 
       {/* Чат */}
-              <div className="flex-1 max-w-2xl w-full mx-auto px-4 py-4">
+      <div className="flex-1 overflow-y-auto px-4 py-4">
         {loading ? (
           <div className="flex justify-center py-12">
             <Loader2 className="w-6 h-6 animate-spin text-amber-600" />
@@ -164,13 +162,13 @@ export const AdminView: React.FC<AdminViewProps> = ({ onClose, userId }) => {
             <p className="text-sm">Xabar yozing, administrator javob beradi</p>
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-4 max-w-2xl mx-auto">
             {chat.map((item, index) => (
               <div
                 key={index}
                 className={`flex ${item.type === 'user' ? 'justify-start' : 'justify-end'}`}
               >
-                <div className={`max-w-[80%] ${item.type === 'user' ? '' : 'text-right'}`}>
+                <div className="max-w-[80%]">
                   <div className={`flex items-center space-x-1.5 mb-1 text-xs ${
                     item.type === 'user' ? 'text-stone-500' : 'text-emerald-600 justify-end'
                   }`}>
@@ -186,14 +184,16 @@ export const AdminView: React.FC<AdminViewProps> = ({ onClose, userId }) => {
                       </>
                     )}
                   </div>
-                  <div className={`rounded-2xl px-4 py-3 text-sm ${
+                  <div className={`rounded-2xl px-4 py-3 text-sm break-words ${
                     item.type === 'user'
-                      ? 'bg-white border border-stone-200 text-stone-800 rounded-tl-sm'
+                      ? 'bg-white border border-stone-200 text-stone-800 rounded-tl-sm shadow-sm'
                       : 'bg-linear-to-br from-emerald-500 to-green-600 text-white rounded-tr-sm shadow-md'
                   }`}>
                     {item.text}
                   </div>
-                  <div className="text-[10px] text-stone-400 mt-1">
+                  <div className={`text-[10px] text-stone-400 mt-1 ${
+                    item.type === 'admin' ? 'text-right' : ''
+                  }`}>
                     {item.time}
                   </div>
                 </div>
@@ -204,18 +204,18 @@ export const AdminView: React.FC<AdminViewProps> = ({ onClose, userId }) => {
         )}
       </div>
 
-             {/* Форма ввода */}
-      <div className="w-full max-w-2xl mx-auto px-4 pb-32 pt-4">
+      {/* Форма ввода */}
+      <div className="bg-white border-t border-stone-200 px-4 py-3 shadow-lg">
         <form
           onSubmit={handleSend}
-          className="bg-white shadow-2xl border-2 border-amber-200 rounded-3xl px-4 py-3 flex items-end space-x-2"
+          className="max-w-2xl mx-auto flex items-end space-x-2"
         >
           <textarea
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             placeholder="Xabar yozing..."
             rows={1}
-            className="flex-1 px-4 py-3.5 rounded-2xl border-2 border-stone-200 text-sm focus:outline-hidden focus:border-amber-500 resize-none max-h-32 bg-stone-50"
+            className="flex-1 px-4 py-3 rounded-2xl border-2 border-stone-200 text-sm focus:outline-hidden focus:border-amber-500 resize-none max-h-32 bg-stone-50"
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
@@ -226,15 +226,15 @@ export const AdminView: React.FC<AdminViewProps> = ({ onClose, userId }) => {
           <button
             type="submit"
             disabled={sending || !newMessage.trim() || !userId}
-            className="w-14 h-14 rounded-2xl bg-linear-to-br from-amber-500 to-orange-600 text-white flex items-center justify-center disabled:opacity-50 transition shadow-lg shrink-0 active:scale-95"
+            className="w-12 h-12 rounded-2xl bg-linear-to-br from-amber-500 to-orange-600 text-white flex items-center justify-center disabled:opacity-50 transition shadow-lg shrink-0 active:scale-95"
           >
             {sending ? (
-              <Loader2 className="w-6 h-6 animate-spin" />
+              <Loader2 className="w-5 h-5 animate-spin" />
             ) : (
-              <Send className="w-6 h-6" />
+              <Send className="w-5 h-5" />
             )}
           </button>
-         </form>
+        </form>
       </div>
     </div>
   );

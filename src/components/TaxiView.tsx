@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Phone, User, Plus, Loader2 } from 'lucide-react';
+import { ArrowLeft, Phone, User, Plus, Loader2, Star } from 'lucide-react';
 
 interface TaxiViewProps {
   onClose: () => void;
@@ -16,20 +16,31 @@ interface Ride {
   created_at: string;
 }
 
+interface Driver {
+  id: number;
+  name: string;
+  phone: string;
+}
+
 export const TaxiView: React.FC<TaxiViewProps> = ({ onClose }) => {
   const [tab, setTab] = useState<'list' | 'create'>('list');
   const [rides, setRides] = useState<Ride[]>([]);
+  const [drivers, setDrivers] = useState<Driver[]>([]);
   const [loading, setLoading] = useState(true);
   const [direction, setDirection] = useState<'all' | 'bekobod_toshkent' | 'toshkent_bekobod'>('all');
 
+  // Состояние формы
   const [driverName, setDriverName] = useState('');
   const [driverPhone, setDriverPhone] = useState('');
   const [newDirection, setNewDirection] = useState('bekobod_toshkent');
   const [totalSeats, setTotalSeats] = useState(4);
   const [creating, setCreating] = useState(false);
-  const [ratings, setRatings] = useState<{[key: number]: {avg: number, count: number}}>({});
-  const [showRatingModal, setShowRatingModal] = useState<number | null>(null);
+
+  // Рейтинги
+  const [ratings, setRatings] = useState<{[key: string]: {avg: number, count: number}}>({});
+  const [showRatingModal, setShowRatingModal] = useState<string | null>(null);
   const [selectedRating, setSelectedRating] = useState(0);
+
   const API_URL = 'https://bekobod-app-1.onrender.com';
 
   const loadRides = async () => {
@@ -40,20 +51,23 @@ export const TaxiView: React.FC<TaxiViewProps> = ({ onClose }) => {
         : `${API_URL}/api/taxi/list?direction=${direction}`;
       const res = await fetch(url);
       const data = await res.json();
-      setRides(data.rides || []);
-            // Загружаем рейтинги для каждого рейса
       const ridesList = data.rides || [];
-      const ratingsData: {[key: number]: {avg: number, count: number}} = {};
+      setRides(ridesList);
+
+      // Загружаем рейтинги по телефону таксиста
+      const ratingsData: {[key: string]: {avg: number, count: number}} = {};
       
-      await Promise.all(ridesList.map(async (ride: Ride) => {
-        try {
-          const r = await fetch(`${API_URL}/api/taxi/rating/${ride.id}`);
-          const d = await r.json();
-          ratingsData[ride.id] = { avg: d.avgRating || 0, count: d.count || 0 };
-        } catch (e) {
-          ratingsData[ride.id] = { avg: 0, count: 0 };
+      for (const ride of ridesList) {
+        if (!ratingsData[ride.driver_phone]) {
+          try {
+            const r = await fetch(`${API_URL}/api/taxi/driver-rating/${encodeURIComponent(ride.driver_phone)}`);
+            const d = await r.json();
+            ratingsData[ride.driver_phone] = { avg: d.avgRating || 0, count: d.count || 0 };
+          } catch (e) {
+            ratingsData[ride.driver_phone] = { avg: 0, count: 0 };
+          }
         }
-      }));
+      }
       
       setRatings(ratingsData);
     } catch (err) {
@@ -63,9 +77,23 @@ export const TaxiView: React.FC<TaxiViewProps> = ({ onClose }) => {
     }
   };
 
+  const loadDrivers = async () => {
+    try {
+      const res = await fetch(`${API_URL}/api/taxi/drivers`);
+      const data = await res.json();
+      setDrivers(data.drivers || []);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   useEffect(() => {
     loadRides();
   }, [direction]);
+
+  useEffect(() => {
+    loadDrivers();
+  }, []);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -73,6 +101,17 @@ export const TaxiView: React.FC<TaxiViewProps> = ({ onClose }) => {
 
     setCreating(true);
     try {
+      // Сначала регистрируем таксиста (если его нет)
+      await fetch(`${API_URL}/api/taxi/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: driverName.trim(),
+          phone: driverPhone.trim(),
+        }),
+      });
+
+      // Потом создаём рейс
       const res = await fetch(`${API_URL}/api/taxi/create`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -92,6 +131,7 @@ export const TaxiView: React.FC<TaxiViewProps> = ({ onClose }) => {
       setDriverPhone('');
       setTab('list');
       loadRides();
+      loadDrivers();
     } catch (err) {
       console.error(err);
       alert('Xatolik yuz berdi');
@@ -112,20 +152,23 @@ export const TaxiView: React.FC<TaxiViewProps> = ({ onClose }) => {
         alert(data.error);
         return;
       }
-         loadRides();
-      setShowRatingModal(rideId);
+      loadRides();
     } catch (err) {
       console.error(err);
     }
   };
+
   const handleRate = async (rating: number) => {
     if (!showRatingModal) return;
+    
+    // showRatingModal хранит rideId
+    const rideId = Number(showRatingModal);
     
     try {
       await fetch(`${API_URL}/api/taxi/rate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ rideId: showRatingModal, rating }),
+        body: JSON.stringify({ rideId, rating }),
       });
       
       setShowRatingModal(null);
@@ -135,13 +178,14 @@ export const TaxiView: React.FC<TaxiViewProps> = ({ onClose }) => {
       console.error(err);
     }
   };
+
   const getDirectionLabel = (dir: string) => {
     return dir === 'bekobod_toshkent' ? 'Bekobod → Toshkent' : 'Toshkent → Bekobod';
   };
 
   return (
     <div className="min-h-screen bg-linear-to-b from-stone-50 to-stone-100">
-           <div className="bg-white/95 backdrop-blur-lg border-b border-stone-200 sticky top-0 z-20 shadow-sm">
+      <div className="bg-white/95 backdrop-blur-lg border-b border-stone-200 sticky top-0 z-20 shadow-sm">
         <div className="max-w-2xl mx-auto px-4 py-4 flex items-center space-x-3">
           <button
             onClick={onClose}
@@ -181,7 +225,7 @@ export const TaxiView: React.FC<TaxiViewProps> = ({ onClose }) => {
       <div className="max-w-2xl mx-auto px-4 py-6">
         {tab === 'list' && (
           <>
-                    <div className="grid grid-cols-3 gap-2 mb-5">
+            <div className="grid grid-cols-3 gap-2 mb-5">
               <button
                 onClick={() => setDirection('all')}
                 className={`py-3 rounded-2xl text-sm font-bold transition-all ${
@@ -227,6 +271,7 @@ export const TaxiView: React.FC<TaxiViewProps> = ({ onClose }) => {
                 {rides.map((ride) => {
                   const freeSeats = ride.total_seats - ride.booked_seats;
                   const isFull = freeSeats <= 0;
+                  const driverRating = ratings[ride.driver_phone];
                   return (
                     <div
                       key={ride.id}
@@ -243,21 +288,20 @@ export const TaxiView: React.FC<TaxiViewProps> = ({ onClose }) => {
                         </div>
                       </div>
 
-                                            <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-2 text-sm text-stone-600">
                           <User className="w-4 h-4" />
                           <span>{ride.driver_name}</span>
                         </div>
-                        {ratings[ride.id] && ratings[ride.id].count > 0 && (
-                          <div className="flex items-center space-x-1 text-xs">
-                            <span className="text-amber-500">⭐</span>
-                            <span className="font-bold text-stone-700">
-                              {ratings[ride.id].avg}
-                            </span>
-                            <span className="text-stone-400">
-                              ({ratings[ride.id].count})
-                            </span>
-                          </div>
+                        {driverRating && driverRating.count > 0 && (
+                          <button
+                            onClick={() => setShowRatingModal(ride.id.toString())}
+                            className="flex items-center space-x-1 text-xs"
+                          >
+                            <Star className="w-4 h-4 fill-amber-500 text-amber-500" />
+                            <span className="font-bold text-stone-700">{driverRating.avg}</span>
+                            <span className="text-stone-400">({driverRating.count})</span>
+                          </button>
                         )}
                       </div>
 
@@ -382,7 +426,8 @@ export const TaxiView: React.FC<TaxiViewProps> = ({ onClose }) => {
           </form>
         )}
       </div>
-            {/* Модальное окно оценки */}
+
+      {/* Модальное окно оценки */}
       {showRatingModal && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl">
@@ -422,7 +467,7 @@ export const TaxiView: React.FC<TaxiViewProps> = ({ onClose }) => {
                 }}
                 className="px-5 py-3 text-stone-500 hover:text-stone-700"
               >
-                O'tkazib yuborish
+                Yopish
               </button>
             </div>
           </div>

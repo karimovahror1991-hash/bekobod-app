@@ -181,6 +181,72 @@ app.get('/api/taxi/rating/:rideId', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
+// Регистрация таксиста
+app.post('/api/taxi/register', async (req, res) => {
+  try {
+    const { name, phone } = req.body;
+
+    if (!name || !phone) {
+      return res.status(400).json({ error: 'Заполните имя и телефон' });
+    }
+
+    const existing = await pool.query(
+      'SELECT * FROM taxi_drivers WHERE phone = $1',
+      [phone]
+    );
+
+    if (existing.rows.length > 0) {
+      return res.json({ driver: existing.rows[0], alreadyExists: true });
+    }
+
+    const result = await pool.query(
+      'INSERT INTO taxi_drivers (name, phone) VALUES ($1, $2) RETURNING *',
+      [name, phone]
+    );
+
+    res.json({ driver: result.rows[0], alreadyExists: false });
+  } catch (error: any) {
+    console.error('Taxi register error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Список всех таксистов
+app.get('/api/taxi/drivers', async (req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT * FROM taxi_drivers ORDER BY name ASC'
+    );
+    res.json({ drivers: result.rows });
+  } catch (error: any) {
+    console.error('Taxi drivers error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Рейтинг таксиста по телефону
+app.get('/api/taxi/driver-rating/:phone', async (req, res) => {
+  try {
+    const { phone } = req.params;
+
+    const result = await pool.query(
+      `SELECT AVG(r.rating) as avg_rating, COUNT(*) as count 
+       FROM taxi_ratings r
+       JOIN taxi_rides tr ON r.ride_id = tr.id
+       WHERE tr.driver_phone = $1`,
+      [phone]
+    );
+
+    const avg = result.rows[0].avg_rating ? Number(result.rows[0].avg_rating) : 0;
+    const count = Number(result.rows[0].count);
+
+    res.json({ avgRating: Math.round(avg * 10) / 10, count });
+  } catch (error: any) {
+    console.error('Driver rating error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
 // ============ STATIC ============
 
 const distPath = path.join(process.cwd(), 'dist');

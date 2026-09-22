@@ -64,7 +64,7 @@ export const contacts: ContactCategory[] = [
     title: 'Soliq va boshqa xizmatlar',
     icon: '🏢',
     contacts: [
-      { name: 'MI B (Ipoteka Bank)', phone: '+998 71 514 01 60', address: "Ibrohimov ko'chasi, 19 (3-maktab yonida, Milliy bank filiali binosi)" },
+      { name: 'MIB', phone: '+998 71 514 01 60', address: "Ibrohimov ko'chasi, 19 (3-maktab yonida, Milliy bank filiali binosi)" },
       { name: 'Soliq inspeksiyasi', phone: '+998 70 214 19 16', address: "Istiqlol ko'chasi, 40-uy (Markaziy poliklinika yonida)" },
     ],
   },

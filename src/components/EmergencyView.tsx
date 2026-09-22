@@ -71,7 +71,7 @@ export const EmergencyView: React.FC<EmergencyViewProps> = ({ onClose }) => {
           >
             <ArrowLeft className="w-5 h-5 text-stone-700" />
           </button>
-          <h1 className="font-bold text-lg text-stone-900">Favqulodda</h1>
+                   <h1 className="font-bold text-lg text-stone-900">Shahar telefonlari</h1>
         </div>
       </div>
 

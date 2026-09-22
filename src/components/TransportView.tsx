@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, ChevronRight, Clock, MapPin, Phone } from 'lucide-react';
+import { ArrowLeft, ChevronRight, Clock, MapPin } from 'lucide-react';
 import { transport, TransportCategory } from '../data/transport';
 
 interface TransportViewProps {
@@ -9,7 +9,6 @@ interface TransportViewProps {
 export const TransportView: React.FC<TransportViewProps> = ({ onClose }) => {
   const [selectedCategory, setSelectedCategory] = useState<TransportCategory | null>(null);
 
-  // Если выбрана категория — показываем информацию
   if (selectedCategory) {
     return (
       <div className="min-h-screen bg-linear-to-b from-stone-50 to-stone-100">
@@ -69,7 +68,6 @@ export const TransportView: React.FC<TransportViewProps> = ({ onClose }) => {
     );
   }
 
-  // Список категорий
   return (
     <div className="min-h-screen bg-linear-to-b from-stone-50 to-stone-100">
       <div className="bg-white/80 backdrop-blur-lg border-b border-stone-200 sticky top-0 z-20">

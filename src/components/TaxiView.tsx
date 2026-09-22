@@ -306,21 +306,26 @@ export const TaxiView: React.FC<TaxiViewProps> = ({ onClose }) => {
                         </div>
                       </div>
 
-                      <div className="flex items-center justify-between">
+                                            <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-2 text-sm text-stone-600">
                           <User className="w-4 h-4" />
                           <span>{ride.driver_name}</span>
                         </div>
-                        {driverRating && driverRating.count > 0 && (
+                        <div className="flex items-center space-x-2">
+                          {driverRating && driverRating.count > 0 && (
+                            <div className="flex items-center space-x-1 text-xs">
+                              <Star className="w-4 h-4 fill-amber-500 text-amber-500" />
+                              <span className="font-bold text-stone-700">{driverRating.avg}</span>
+                              <span className="text-stone-400">({driverRating.count})</span>
+                            </div>
+                          )}
                           <button
                             onClick={() => setShowRatingModal(ride.id.toString())}
-                            className="flex items-center space-x-1 text-xs"
+                            className="px-2 py-1 bg-amber-100 hover:bg-amber-200 text-amber-800 rounded-lg text-xs font-semibold transition"
                           >
-                            <Star className="w-4 h-4 fill-amber-500 text-amber-500" />
-                            <span className="font-bold text-stone-700">{driverRating.avg}</span>
-                            <span className="text-stone-400">({driverRating.count})</span>
+                            ⭐ Baholash
                           </button>
-                        )}
+                        </div>
                       </div>
 
                       <div className="w-full bg-stone-100 rounded-full h-2">

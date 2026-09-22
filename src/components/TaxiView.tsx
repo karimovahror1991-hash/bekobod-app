@@ -101,13 +101,23 @@ export const TaxiView: React.FC<TaxiViewProps> = ({ onClose }) => {
 
     setCreating(true);
     try {
+          // Нормализуем телефон: добавляем +998, если его нет
+      let normalizedPhone = driverPhone.trim().replace(/\s/g, '');
+      if (!normalizedPhone.startsWith('+')) {
+        if (normalizedPhone.startsWith('998')) {
+          normalizedPhone = '+' + normalizedPhone;
+        } else {
+          normalizedPhone = '+998' + normalizedPhone;
+        }
+      }
+
       // Сначала регистрируем таксиста (если его нет)
       await fetch(`${API_URL}/api/taxi/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: driverName.trim(),
-          phone: driverPhone.trim(),
+          phone: normalizedPhone,
         }),
       });
 
@@ -117,7 +127,7 @@ export const TaxiView: React.FC<TaxiViewProps> = ({ onClose }) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           driverName: driverName.trim(),
-          driverPhone: driverPhone.trim(),
+                    driverPhone: normalizedPhone,
           direction: newDirection,
           totalSeats,
         }),

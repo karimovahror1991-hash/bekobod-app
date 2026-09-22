@@ -162,7 +162,8 @@ export const TaxiView: React.FC<TaxiViewProps> = ({ onClose }) => {
         alert(data.error);
         return;
       }
-      loadRides();
+          loadRides();
+      setBookedRides((prev) => [...prev, rideId]);
     } catch (err) {
       console.error(err);
     }

@@ -180,7 +180,8 @@ export const TaxiView: React.FC<TaxiViewProps> = ({ onClose }) => {
         return;
       }
       setBookedRides((prev) => prev.filter((id) => id !== rideId));
-      loadRides();
+          loadRides();
+      setBookedRides((prev) => [...prev, rideId]);
     } catch (err) {
       console.error(err);
     }

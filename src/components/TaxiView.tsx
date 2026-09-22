@@ -111,8 +111,8 @@ export const TaxiView: React.FC<TaxiViewProps> = ({ onClose }) => {
         }
       }
 
-      // Сначала регистрируем таксиста (если его нет)
-      await fetch(`${API_URL}/api/taxi/register`, {
+            // Сначала регистрируем таксиста (если его нет)
+      const regRes = await fetch(`${API_URL}/api/taxi/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -120,6 +120,11 @@ export const TaxiView: React.FC<TaxiViewProps> = ({ onClose }) => {
           phone: normalizedPhone,
         }),
       });
+      const regData = await regRes.json();
+      
+      if (regData.alreadyExists) {
+        alert('Siz allaqachon ro\'yxatdan o\'tgansiz. Reys yaratilmoqda...');
+      }
 
       // Потом создаём рейс
       const res = await fetch(`${API_URL}/api/taxi/create`, {

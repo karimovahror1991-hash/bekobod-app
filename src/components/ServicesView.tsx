@@ -191,30 +191,30 @@ export const ServicesView: React.FC<ServicesViewProps> = ({ onClose }) => {
       <div className="max-w-2xl mx-auto px-4 py-6">
         {tab === 'list' && (
           <>
-            {/* Категории */}
-            <div className="grid grid-cols-3 gap-2 mb-5">
+                 {/* Категории */}
+            <div className="grid grid-cols-2 gap-3 mb-6">
               <button
                 onClick={() => setSelectedCategory('all')}
-                className={`py-3 rounded-2xl text-xs font-bold transition-all ${
+                className={`py-5 rounded-3xl text-base font-bold transition-all ${
                   selectedCategory === 'all'
-                    ? 'bg-stone-900 text-white shadow-md'
+                    ? 'bg-stone-900 text-white shadow-lg scale-105'
                     : 'bg-white text-stone-600 border border-stone-200'
                 }`}
               >
                 Barchasi
               </button>
-              {CATEGORIES.slice(0, 5).map((cat) => (
+              {CATEGORIES.map((cat) => (
                 <button
                   key={cat.id}
                   onClick={() => setSelectedCategory(cat.id)}
-                  className={`py-3 rounded-2xl text-xs font-bold transition-all leading-tight ${
+                  className={`py-5 rounded-3xl text-sm font-bold transition-all ${
                     selectedCategory === cat.id
-                      ? 'bg-stone-900 text-white shadow-md'
+                      ? 'bg-stone-900 text-white shadow-lg scale-105'
                       : 'bg-white text-stone-600 border border-stone-200'
                   }`}
                 >
-                  <div>{cat.icon}</div>
-                  <div className="text-[10px] mt-0.5">{cat.label}</div>
+                  <div className="text-3xl mb-1">{cat.icon}</div>
+                  <div className="text-xs">{cat.label}</div>
                 </button>
               ))}
             </div>

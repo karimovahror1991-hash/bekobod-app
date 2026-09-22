@@ -35,9 +35,9 @@ const sections: Section[] = [
 
 // Рекламные баннеры (заглушки)
 const ads = [
-  { id: 1, title: 'Reklama 1', subtitle: 'Bu yerda sizning reklamangiz', gradient: 'from-purple-600 to-indigo-700' },
-  { id: 2, title: 'Reklama 2', subtitle: 'Bu yerda sizning reklamangiz', gradient: 'from-amber-600 to-orange-700' },
-  { id: 3, title: 'Reklama 3', subtitle: 'Bu yerda sizning reklamangiz', gradient: 'from-emerald-600 to-teal-700' },
+  { id: 1, title: 'Reklama 1', subtitle: "Bu yerda sizning reklamangiz bo'lishi mumkin", gradient: 'from-purple-600 to-indigo-700' },
+  { id: 2, title: 'Reklama 2', subtitle: "Bu yerda sizning reklamangiz bo'lishi mumkin", gradient: 'from-amber-600 to-orange-700' },
+  { id: 3, title: 'Reklama 3', subtitle: "Bu yerda sizning reklamangiz bo'lishi mumkin", gradient: 'from-emerald-600 to-teal-700' },
 ];
 
 function App() {

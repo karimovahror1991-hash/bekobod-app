@@ -106,6 +106,32 @@ app.post('/api/telegram-webhook', async (req, res) => {
           [category, title, description, eventDate, location, phone]
         );
 
+    // Команда /delete_event ID
+    if (message?.text?.startsWith('/delete_event') && message.from.id === 988368940) {
+      const parts = message.text.split(' ');
+      const eventId = Number(parts[1]);
+
+      if (!eventId) {
+        await sendTelegramMessage(
+          message.from.id,
+          "❌ <code>/delete_event ID</code>\nMisol: <code>/delete_event 1</code>"
+        );
+      } else {
+        const result = await pool.query(
+          'DELETE FROM events WHERE id = $1 RETURNING title',
+          [eventId]
+        );
+
+        if (result.rows.length === 0) {
+          await sendTelegramMessage(message.from.id, `❌ Tadbir topilmadi (ID: ${eventId})`);
+        } else {
+          await sendTelegramMessage(
+            message.from.id,
+            `✅ Tadbir o'chirildi: <b>${result.rows[0].title}</b>`
+          );
+        }
+      }
+    }
         await sendTelegramMessage(
           message.from.id,
           `✅ <b>Tadbir qo'shildi!</b>\n\n` +

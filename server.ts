@@ -571,6 +571,50 @@ app.get('/api/fetch-news', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
+// Автоматический сбор мировых новостей (BBC O'zbek)
+app.get('/api/fetch-world-news', async (req, res) => {
+  try {
+    const response = await fetch('https://feeds.bbci.co.uk/uzbek/rss.xml');
+    const xml = await response.text();
+
+    // Простой парсинг RSS через регулярные выражения
+    const items = xml.match(/<item>[\s\S]*?<\/item>/g) || [];
+    let added = 0;
+
+    for (const item of items.slice(0, 20)) {
+      const titleMatch = item.match(/<title><!\[CDATA\[(.*?)\]\]><\/title>/) || item.match(/<title>(.*?)<\/title>/);
+      const linkMatch = item.match(/<link>(.*?)<\/link>/);
+      const descMatch = item.match(/<description><!\[CDATA\[(.*?)\]\]><\/description>/) || item.match(/<description>(.*?)<\/description>/);
+      const imageMatch = item.match(/<media:thumbnail[^>]*url="([^"]*)"/) || item.match(/<enclosure[^>]*url="([^"]*)"/);
+
+      if (!titleMatch || !linkMatch) continue;
+
+      const title = titleMatch[1].replace(/<[^>]*>/g, '').trim();
+      const link = linkMatch[1].trim();
+      const description = descMatch ? descMatch[1].replace(/<[^>]*>/g, '').trim() : null;
+      const image = imageMatch ? imageMatch[1] : null;
+
+      const existing = await pool.query(
+        'SELECT id FROM news WHERE source = $1',
+        [link]
+      );
+
+      if (existing.rows.length === 0) {
+        await pool.query(
+          `INSERT INTO news (category, title, content, image_url, source) VALUES ($1, $2, $3, $4, $5)`,
+          ['jahon', title, description, image, link]
+        );
+        added++;
+      }
+    }
+
+    res.json({ added });
+  } catch (error: any) {
+    console.error('Fetch world news error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
 // ============ STATIC (ЛОВУШКА В САМОМ КОНЦЕ!) ============
 const distPath = path.join(process.cwd(), 'dist');
 app.use(express.static(distPath));

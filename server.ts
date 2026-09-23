@@ -533,21 +533,33 @@ app.get('/api/fetch-news', async (req, res) => {
     const response = await fetch('https://freenewsapi.ai/v1/search?host=uz.sputniknews.ru&size=20');
     const data = await response.json();
 
-    if (!data.articles || data.articles.length === 0) {
+    if (!data.results || data.results.length === 0) {
       return res.json({ added: 0 });
     }
 
     let added = 0;
-    for (const article of data.articles) {
+    for (const article of data.results) {
       const existing = await pool.query(
         'SELECT id FROM news WHERE source = $1',
-        [article.link]
+        [article.url]
       );
 
       if (existing.rows.length === 0) {
+        // Определяем категорию по заголовку
+        let category = 'uzbekistan';
+        const title = (article.title || '').toLowerCase();
+        
+        if (title.includes('спорт') || title.includes('футбол') || title.includes('чемпионат')) {
+          category = 'sport';
+        } else if (title.includes('мир') || title.includes('сша') || title.includes('китай') || title.includes('европ')) {
+          category = 'jahon';
+        } else if (title.includes('бекабад') || title.includes('бекабадск')) {
+          category = 'bekobod';
+        }
+
         await pool.query(
-          `INSERT INTO news (category, title, content, source) VALUES ($1, $2, $3, $4)`,
-          ['uzbekistan', article.title, article.lead || null, article.link]
+          `INSERT INTO news (category, title, content, image_url, source) VALUES ($1, $2, $3, $4, $5)`,
+          [category, article.title, article.description || null, article.image || null, article.url]
         );
         added++;
       }

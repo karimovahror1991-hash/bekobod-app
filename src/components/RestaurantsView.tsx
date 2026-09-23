@@ -16,13 +16,13 @@ interface Restaurant {
 }
 
 const CATEGORIES = [
-  { id: 'fastfood', label: 'Fast food', icon: '🍔' },
-  { id: 'milliy', label: 'Milliy taomlar', icon: '🍚' },
-  { id: 'kafe', label: 'Kafe', icon: '☕' },
-  { id: 'restoran', label: 'Restoran', icon: '🍷' },
-  { id: 'chayxana', label: 'Chayxana', icon: '🫖' },
-  { id: 'shirinlik', label: 'Shirinliklar', icon: '🍰' },
-  { id: 'yarim_tayyor', label: 'Yarim tayyor mahsulotlar', icon: '🥟' },
+  { id: 'fastfood', label: 'Fast food', icon: '🍔', gradient: 'from-orange-500 to-red-600' },
+  { id: 'milliy', label: 'Milliy taomlar', icon: '🍚', gradient: 'from-emerald-500 to-teal-600' },
+  { id: 'kafe', label: 'Kafe', icon: '☕', gradient: 'from-amber-500 to-orange-600' },
+  { id: 'restoran', label: 'Restoran', icon: '🍷', gradient: 'from-rose-500 to-pink-600' },
+  { id: 'chayxana', label: 'Chayxana', icon: '🫖', gradient: 'from-cyan-500 to-blue-600' },
+  { id: 'shirinlik', label: 'Shirinliklar', icon: '🍰', gradient: 'from-violet-500 to-purple-600' },
+  { id: 'yarim_tayyor', label: 'Yarim tayyor mahsulotlar', icon: '🥟', gradient: 'from-indigo-500 to-blue-700' },
 ];
 
 export const RestaurantsView: React.FC<RestaurantsViewProps> = ({ onClose }) => {
@@ -58,17 +58,22 @@ export const RestaurantsView: React.FC<RestaurantsViewProps> = ({ onClose }) => 
     const catInfo = CATEGORIES.find(c => c.id === selectedCategory);
     return (
       <div className="min-h-screen bg-linear-to-b from-stone-50 to-stone-100">
-        <div className="bg-white/95 backdrop-blur-lg border-b border-stone-200 sticky top-0 z-20 shadow-sm">
+        <div className={`bg-linear-to-br ${catInfo?.gradient} text-white sticky top-0 z-20 shadow-md`}>
           <div className="max-w-2xl mx-auto px-4 py-4 flex items-center space-x-3">
             <button
               onClick={() => setSelectedCategory(null)}
-              className="w-11 h-11 rounded-2xl bg-stone-100 hover:bg-amber-100 flex items-center justify-center transition-colors"
+              className="w-11 h-11 rounded-2xl bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"
             >
-              <ArrowLeft className="w-6 h-6 text-stone-700" />
+              <ArrowLeft className="w-6 h-6 text-white" />
             </button>
-            <h1 className="font-bold text-xl text-stone-900">
-              {catInfo?.icon} {catInfo?.label}
-            </h1>
+            <div>
+              <h1 className="font-bold text-xl text-white">
+                {catInfo?.label}
+              </h1>
+              <p className="text-xs text-white/80">
+                {filteredRestaurants.length} ta joy
+              </p>
+            </div>
           </div>
         </div>
 
@@ -124,7 +129,7 @@ export const RestaurantsView: React.FC<RestaurantsViewProps> = ({ onClose }) => 
     );
   }
 
-  // Иначе — показываем категории
+  // Экран категорий (большие иконки)
   return (
     <div className="min-h-screen bg-linear-to-b from-stone-50 to-stone-100">
       <div className="bg-white/95 backdrop-blur-lg border-b border-stone-200 sticky top-0 z-20 shadow-sm">
@@ -140,27 +145,22 @@ export const RestaurantsView: React.FC<RestaurantsViewProps> = ({ onClose }) => 
       </div>
 
       <div className="max-w-2xl mx-auto px-4 py-6">
-        <div className="space-y-3">
+        <div className="space-y-4">
           {CATEGORIES.map((cat) => {
             const count = restaurants.filter(r => r.category === cat.id).length;
             return (
               <button
                 key={cat.id}
                 onClick={() => setSelectedCategory(cat.id)}
-                className="w-full bg-white rounded-3xl p-5 flex items-center justify-between shadow-sm hover:shadow-xl transition-all duration-300 active:scale-95 border border-stone-100"
+                className={`w-full bg-linear-to-br ${cat.gradient} text-white rounded-3xl p-8 flex flex-col items-center justify-center shadow-xl hover:shadow-2xl transition-all duration-300 active:scale-95 min-h-50`}
               >
-                <div className="flex items-center space-x-4">
-                  <div className="text-4xl">{cat.icon}</div>
-                  <div className="text-left">
-                    <div className="font-bold text-lg text-stone-900">
-                      {cat.label}
-                    </div>
-                    <div className="text-xs text-stone-400">
-                      {count} ta joy
-                    </div>
-                  </div>
+                <div className="text-7xl mb-4">{cat.icon}</div>
+                <div className="font-bold text-xl text-white text-center leading-tight">
+                  {cat.label}
                 </div>
-                <ChevronRight className="w-6 h-6 text-stone-300" />
+                <div className="text-sm text-white/80 mt-2">
+                  {count} ta joy
+                </div>
               </button>
             );
           })}

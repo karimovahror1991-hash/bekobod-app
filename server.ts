@@ -613,3 +613,43 @@ app.post('/api/jobs/create', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
+// ============ RESTAURANTS ============
+
+// Список ресторанов
+app.get('/api/restaurants/list', async (req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT * FROM restaurants ORDER BY created_at DESC'
+    );
+    res.json({ restaurants: result.rows });
+  } catch (error: any) {
+    console.error('Restaurants list error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Добавить ресторан (только для админа)
+app.post('/api/restaurants/create', async (req, res) => {
+  try {
+    const { adminId, name, category, address, phone, description } = req.body;
+
+    if (Number(adminId) !== 988368940) {
+      return res.status(403).json({ error: 'Доступ запрещён' });
+    }
+
+    if (!name) {
+      return res.status(400).json({ error: 'Укажите название' });
+    }
+
+    const result = await pool.query(
+      'INSERT INTO restaurants (name, category, address, phone, description) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+      [name, category || null, address || null, phone || null, description || null]
+    );
+
+    res.json({ restaurant: result.rows[0] });
+  } catch (error: any) {
+    console.error('Restaurant create error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});

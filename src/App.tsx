@@ -1,3 +1,4 @@
+import { RestaurantsView } from './components/RestaurantsView';
 import { JobsView } from './components/JobsView';
 import React, { useEffect, useState } from 'react';
 import { Cloud, Sun, CloudRain, Snowflake, Wind, Droplets } from 'lucide-react';
@@ -104,6 +105,9 @@ function App() {
   }
     if (activeSection === 'jobs') {
     return <JobsView onClose={() => setActiveSection(null)} />;
+  }
+    if (activeSection === 'restaurants') {
+    return <RestaurantsView onClose={() => setActiveSection(null)} />;
   }
   if (activeSection === 'services') {
   return <ServicesView onClose={() => setActiveSection(null)} />;

@@ -680,6 +680,111 @@ app.get('/api/fetch-world-news', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
+// ============ EVENTS (TADBIRLAR) ============
+
+// Список событий
+app.get('/api/events/list', async (req, res) => {
+  try {
+    const { category } = req.query;
+
+    let query = "SELECT * FROM events WHERE status = 'active'";
+    const params: any[] = [];
+
+    if (category && category !== 'all') {
+      query += ' AND category = $1';
+      params.push(category);
+    }
+
+    query += ' ORDER BY event_date ASC';
+
+    const result = await pool.query(query, params);
+    res.json({ events: result.rows });
+  } catch (error: any) {
+    console.error('Events list error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Добавить событие (только для админа)
+app.post('/api/events/create', async (req, res) => {
+  try {
+    const { adminId, category, title, description, eventDate, location, phone, imageUrl } = req.body;
+
+    if (Number(adminId) !== 988368940) {
+      return res.status(403).json({ error: 'Доступ запрещён' });
+    }
+
+    if (!category || !title) {
+      return res.status(400).json({ error: 'Укажите категорию и название' });
+    }
+
+    const result = await pool.query(
+      `INSERT INTO events (category, title, description, event_date, location, phone, image_url) 
+       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+      [category, title, description || null, eventDate || null, location || null, phone || null, imageUrl || null]
+    );
+
+    res.json({ event: result.rows[0] });
+  } catch (error: any) {
+    console.error('Event create error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Отправить заявку на поздравление (для дней рождения)
+app.post('/api/events/birthday-request', async (req, res) => {
+  try {
+    const { userId, userName, name, birthDate, message, phone } = req.body;
+
+    if (!name || !birthDate || !message) {
+      return res.status(400).json({ error: 'Заполните имя, дату и поздравление' });
+    }
+
+    const result = await pool.query(
+      `INSERT INTO events (category, title, description, event_date, phone, status) 
+       VALUES ($1, $2, $3, $4, $5, 'pending') RETURNING *`,
+      ['tugilgan_kun', name, message, birthDate, phone || null]
+    );
+
+    // Уведомляем админа
+    await sendTelegramMessage(
+      988368940,
+      `🎂 <b>Yangi tug'ilgan kun so'rovi!</b>\n\n` +
+      `👤 Ism: ${name}\n` +
+      `📅 Sana: ${birthDate}\n` +
+      `💬 Xabar: ${message}\n` +
+      `📞 Telefon: ${phone || 'ko\'rsatilmagan'}\n\n` +
+      `✅ Tasdiqlash: <code>/approve_event ${result.rows[0].id}</code>`
+    );
+
+    res.json({ ok: true, event: result.rows[0] });
+  } catch (error: any) {
+    console.error('Birthday request error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Одобрить событие (только для админа)
+app.post('/api/events/approve', async (req, res) => {
+  try {
+    const { adminId, eventId } = req.body;
+
+    if (Number(adminId) !== 988368940) {
+      return res.status(403).json({ error: 'Доступ запрещён' });
+    }
+
+    await pool.query(
+      "UPDATE events SET status = 'active' WHERE id = $1",
+      [eventId]
+    );
+
+    res.json({ ok: true });
+  } catch (error: any) {
+    console.error('Event approve error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
 // ============ STATIC (ЛОВУШКА В САМОМ КОНЦЕ!) ============
 const distPath = path.join(process.cwd(), 'dist');
 app.use(express.static(distPath));

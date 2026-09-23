@@ -19,8 +19,7 @@ const CATEGORIES = [
   { id: 'bekobod', label: 'Bekobod yangiliklari', icon: '🏙️' },
   { id: 'uzbekistan', label: "O'zbekiston yangiliklari", icon: '🇺🇿' },
   { id: 'jahon', label: 'Jahon yangiliklari', icon: '🌍' },
-  { id: 'sport', label: 'Sport yangiliklari', icon: '⚽' },
-];
+  ];
 
 export const NewsView: React.FC<NewsViewProps> = ({ onClose }) => {
   const [news, setNews] = useState<NewsItem[]>([]);

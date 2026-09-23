@@ -549,9 +549,7 @@ app.get('/api/fetch-news', async (req, res) => {
         let category = 'uzbekistan';
         const title = (article.title || '').toLowerCase();
         
-        if (title.includes('спорт') || title.includes('футбол') || title.includes('чемпионат')) {
-          category = 'sport';
-        } else if (title.includes('мир') || title.includes('сша') || title.includes('китай') || title.includes('европ')) {
+        if (title.includes('мир') || title.includes('сша') || title.includes('китай') || title.includes('европ')) {
           category = 'jahon';
         } else if (title.includes('бекабад') || title.includes('бекабадск')) {
           category = 'bekobod';

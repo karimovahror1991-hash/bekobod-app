@@ -634,7 +634,7 @@ app.get('/api/fetch-world-news', async (req, res) => {
       if (existing.rows.length === 0) {
         await pool.query(
           `INSERT INTO news (category, title, content, image_url, source) VALUES ($1, $2, $3, $4, $5)`,
-          ['jahon', title, description, image, link]
+          ['uzbekistan', title, description, image, link]
         );
         added++;
       }

@@ -123,14 +123,14 @@ app.post('/api/telegram-webhook', async (req, res) => {
 // ============ TAXI ============
 app.post('/api/taxi/create', async (req, res) => {
   try {
-    const { driverName, driverPhone, direction, totalSeats } = req.body;
+    const { driverName, driverPhone, direction, totalSeats, userId } = req.body;
     if (!driverName || !driverPhone || !direction) {
       return res.status(400).json({ error: 'Заполните все поля' });
     }
     const result = await pool.query(
-      `INSERT INTO taxi_rides (driver_name, driver_phone, direction, total_seats, booked_seats, status)
-       VALUES ($1, $2, $3, $4, 0, 'active') RETURNING *`,
-      [driverName, driverPhone, direction, totalSeats || 4]
+      `INSERT INTO taxi_rides (driver_name, driver_phone, direction, total_seats, booked_seats, status, user_id)
+       VALUES ($1, $2, $3, $4, 0, 'active', $5) RETURNING *`,
+      [driverName, driverPhone, direction, totalSeats || 4, userId || null]
     );
     res.json({ ride: result.rows[0] });
   } catch (error: any) {
@@ -201,6 +201,35 @@ app.post('/api/taxi/cancel-booking', async (req, res) => {
       );
     }
 
+// Удалить рейс (только владелец)
+app.post('/api/taxi/delete', async (req, res) => {
+  try {
+    const { rideId, userId } = req.body;
+    if (!rideId || !userId) {
+      return res.status(400).json({ error: 'Не указан рейс или пользователь' });
+    }
+
+    // Проверяем, что рейс принадлежит этому пользователю
+    const rideResult = await pool.query(
+      'SELECT user_id FROM taxi_rides WHERE id = $1',
+      [rideId]
+    );
+
+    if (rideResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Рейс не найден' });
+    }
+
+    if (Number(rideResult.rows[0].user_id) !== Number(userId)) {
+      return res.status(403).json({ error: 'Bu reys sizga tegishli emas' });
+    }
+
+    await pool.query('DELETE FROM taxi_rides WHERE id = $1', [rideId]);
+    res.json({ ok: true });
+  } catch (error: any) {
+    console.error('Taxi delete error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
     const rideResult = await pool.query('SELECT booked_seats FROM taxi_rides WHERE id = $1', [rideId]);
     if (rideResult.rows.length > 0) {
       const newBooked = Math.max(0, rideResult.rows[0].booked_seats - 1);

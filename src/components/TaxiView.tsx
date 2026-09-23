@@ -24,6 +24,7 @@ interface Driver {
 
 export const TaxiView: React.FC<TaxiViewProps> = ({ onClose }) => {
   const [tab, setTab] = useState<'list' | 'create'>('list');
+    const [userId, setUserId] = useState<number | null>(null);  
   const [rides, setRides] = useState<Ride[]>([]);
   const [drivers, setDrivers] = useState<Driver[]>([]);
   const [loading, setLoading] = useState(true);
@@ -87,6 +88,12 @@ export const TaxiView: React.FC<TaxiViewProps> = ({ onClose }) => {
     }
   };
 
+    useEffect(() => {
+    const tg = (window as any).Telegram?.WebApp;
+    if (tg?.initDataUnsafe?.user?.id) {
+      setUserId(tg.initDataUnsafe.user.id);
+    }
+  }, []);
   useEffect(() => {
     loadRides();
   }, [direction]);
@@ -115,9 +122,12 @@ export const TaxiView: React.FC<TaxiViewProps> = ({ onClose }) => {
       const regRes = await fetch(`${API_URL}/api/taxi/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: driverName.trim(),
-          phone: normalizedPhone,
+                body: JSON.stringify({
+          driverName: driverName.trim(),
+          driverPhone: normalizedPhone,
+          direction: newDirection,
+          totalSeats,
+          userId,
         }),
       });
           const regData = await regRes.json();
@@ -164,6 +174,26 @@ export const TaxiView: React.FC<TaxiViewProps> = ({ onClose }) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ rideId }),
       });
+        const handleDelete = async (rideId: number) => {
+    if (!userId) return;
+    if (!confirm('Reysni o\'chirishni tasdiqlaysizmi?')) return;
+
+    try {
+      const res = await fetch(`${API_URL}/api/taxi/delete`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rideId, userId }),
+      });
+      const data = await res.json();
+      if (data.error) {
+        alert(data.error);
+        return;
+      }
+      loadRides();
+    } catch (err) {
+      console.error(err);
+    }
+  };
       const data = await res.json();
       if (data.error) {
         alert(data.error);
@@ -172,6 +202,27 @@ export const TaxiView: React.FC<TaxiViewProps> = ({ onClose }) => {
       setBookedRides((prev) => prev.filter((id) => id !== rideId));
           loadRides();
      
+    } catch (err) {
+      console.error(err);
+    }
+  };
+  
+  const handleDelete = async (rideId: number) => {
+    if (!userId) return;
+    if (!confirm("Reysni o'chirishni tasdiqlaysizmi?")) return;
+
+    try {
+      const res = await fetch(`${API_URL}/api/taxi/delete`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rideId, userId }),
+      });
+      const data = await res.json();
+      if (data.error) {
+        alert(data.error);
+        return;
+      }
+      loadRides();
     } catch (err) {
       console.error(err);
     }
@@ -337,7 +388,14 @@ export const TaxiView: React.FC<TaxiViewProps> = ({ onClose }) => {
                       <div className="text-xs text-stone-400 text-center">
                         {ride.booked_seats} / {ride.total_seats} joy band
                       </div>
-
+                      {userId && ride.driver_phone === drivers.find(d => d.name === ride.driver_name)?.phone && (
+                        <button
+                          onClick={() => handleDelete(ride.id)}
+                          className="w-full py-2 bg-rose-100 hover:bg-rose-200 text-rose-700 rounded-xl text-xs font-semibold transition"
+                        >
+                          🗑 Reysni o'chirish
+                        </button>
+                      )}
                                     <div className="flex space-x-2">
                         <a
                           href={`tel:${ride.driver_phone}`}

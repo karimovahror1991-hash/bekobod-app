@@ -575,25 +575,29 @@ app.get('/api/fetch-news', async (req, res) => {
 // Автоматический сбор мировых новостей (BBC O'zbek)
 app.get('/api/fetch-world-news', async (req, res) => {
   try {
-    const response = await fetch('https://feeds.bbci.co.uk/uzbek/rss.xml');
+    const response = await fetch('https://feeds.bbci.co.uk/uzbek/cyr/rss.xml');
     const xml = await response.text();
 
-    // Простой парсинг RSS через регулярные выражения
-    const items = xml.match(/<item>[\s\S]*?<\/item>/g) || [];
+    // Разбиваем на items по тегу <item>
+    const items = xml.split('<item>').slice(1);
     let added = 0;
 
-    for (const item of items.slice(0, 20)) {
-      const titleMatch = item.match(/<title><!\[CDATA\[(.*?)\]\]><\/title>/) || item.match(/<title>(.*?)<\/title>/);
-      const linkMatch = item.match(/<link>(.*?)<\/link>/);
-      const descMatch = item.match(/<description><!\[CDATA\[(.*?)\]\]><\/description>/) || item.match(/<description>(.*?)<\/description>/);
-      const imageMatch = item.match(/<media:thumbnail[^>]*url="([^"]*)"/) || item.match(/<enclosure[^>]*url="([^"]*)"/);
+    for (const item of items.slice(0, 30)) {
+      // Заголовок
+      const titleMatch = item.match(/<title>\s*<!\[CDATA\[(.*?)\]\]>\s*<\/title>/s);
+      // Ссылка
+      const linkMatch = item.match(/<link>(.*?)<\/link>/s);
+      // Описание
+      const descMatch = item.match(/<description>\s*<!\[CDATA\[(.*?)\]\]>\s*<\/description>/s);
+      // Картинка
+      const imgMatch = item.match(/<media:thumbnail[^>]*url="([^"]*)"/);
 
       if (!titleMatch || !linkMatch) continue;
 
-      const title = titleMatch[1].replace(/<[^>]*>/g, '').trim();
+      const title = titleMatch[1].trim();
       const link = linkMatch[1].trim();
-      const description = descMatch ? descMatch[1].replace(/<[^>]*>/g, '').trim() : null;
-      const image = imageMatch ? imageMatch[1] : null;
+      const description = descMatch ? descMatch[1].trim() : null;
+      const image = imgMatch ? imgMatch[1] : null;
 
       const existing = await pool.query(
         'SELECT id FROM news WHERE source = $1',

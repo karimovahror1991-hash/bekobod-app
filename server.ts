@@ -520,6 +520,13 @@ app.post('/api/news/create', async (req, res) => {
       [category, title, content || null, imageUrl || null, source || null]
     );
 
+    res.json({ news: result.rows[0] });
+  } catch (error: any) {
+    console.error('News create error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Автоматический сбор новостей
 app.get('/api/fetch-news', async (req, res) => {
   try {
@@ -549,12 +556,6 @@ app.get('/api/fetch-news', async (req, res) => {
     res.json({ added });
   } catch (error: any) {
     console.error('Fetch news error:', error);
-    res.status(500).json({ error: error.message });
-  }
-});
-    res.json({ news: result.rows[0] });
-  } catch (error: any) {
-    console.error('News create error:', error);
     res.status(500).json({ error: error.message });
   }
 });

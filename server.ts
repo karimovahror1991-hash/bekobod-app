@@ -574,13 +574,12 @@ app.get('/api/fetch-news', async (req, res) => {
       );
 
       if (existing.rows.length === 0) {
-        // Определяем категорию по заголовку
+                // Определяем категорию по заголовку
         let category = 'uzbekistan';
         const title = (article.title || '').toLowerCase();
         
-        if (title.includes('мир') || title.includes('сша') || title.includes('китай') || title.includes('европ')) {
-          category = 'jahon';
-        } else if (title.includes('бекабад') || title.includes('бекабадск')) {
+        // Только если явно про Бекабад
+        if (title.includes('бекабад') || title.includes('бекабадск')) {
           category = 'bekobod';
         }
 
@@ -634,7 +633,7 @@ app.get('/api/fetch-world-news', async (req, res) => {
       if (existing.rows.length === 0) {
         await pool.query(
           `INSERT INTO news (category, title, content, image_url, source) VALUES ($1, $2, $3, $4, $5)`,
-          ['uzbekistan', title, description, image, link]
+          ['jahon', title, description, image, link]
         );
         added++;
       }

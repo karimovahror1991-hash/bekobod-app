@@ -224,27 +224,22 @@ export const NewsView: React.FC<NewsViewProps> = ({ onClose }) => {
       </div>
 
       <div className="max-w-2xl mx-auto px-4 py-6">
-        <div className="space-y-3">
+        <div className="space-y-4">
           {CATEGORIES.map((cat) => {
             const count = news.filter(n => n.category === cat.id).length;
             return (
-                         <button
+              <button
                 key={cat.id}
                 onClick={() => setSelectedCategory(cat.id)}
-                className={`w-full bg-linear-to-br ${cat.gradient} text-white rounded-3xl p-6 flex items-center justify-between shadow-lg hover:shadow-2xl transition-all duration-300 active:scale-95`}
+                className={`w-full bg-linear-to-br ${cat.gradient} text-white rounded-3xl p-8 flex flex-col items-center justify-center shadow-xl hover:shadow-2xl transition-all duration-300 active:scale-95 min-h-50`}
               >
-                <div className="flex items-center space-x-5">
-                  <div className="text-5xl shrink-0">{cat.icon}</div>
-                  <div className="text-left">
-                    <div className="font-bold text-lg text-white leading-tight">
-                      {cat.label}
-                    </div>
-                    <div className="text-xs text-white/80 mt-1">
-                      {count} ta yangilik
-                    </div>
-                  </div>
+                <div className="text-7xl mb-4">{cat.icon}</div>
+                <div className="font-bold text-xl text-white text-center leading-tight">
+                  {cat.label}
                 </div>
-                <ChevronRight className="w-6 h-6 text-white/80 shrink-0 ml-2" />
+                <div className="text-sm text-white/80 mt-2">
+                  {count} ta yangilik
+                </div>
               </button>
             );
           })}

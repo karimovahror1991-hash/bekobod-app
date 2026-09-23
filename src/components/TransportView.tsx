@@ -1,3 +1,4 @@
+import { TaxiView } from './TaxiView';
 import React, { useState } from 'react';
 import { ArrowLeft, Clock, MapPin } from 'lucide-react';
 import { transport, TransportCategory } from '../data/transport';
@@ -14,8 +15,16 @@ const CATEGORY_GRADIENTS: { [key: string]: string } = {
 
 export const TransportView: React.FC<TransportViewProps> = ({ onClose }) => {
   const [selectedCategory, setSelectedCategory] = useState<TransportCategory | null>(null);
+  const [showTaxi, setShowTaxi] = useState(false);
+   if (showTaxi) {
+    return <TaxiView onClose={() => setShowTaxi(false)} />;
+  }
 
   if (selectedCategory) {
+    if (selectedCategory.title.includes('Taksi')) {
+      setShowTaxi(true);
+      return null;
+    }
     const gradient = CATEGORY_GRADIENTS[selectedCategory.title] || 'from-stone-500 to-stone-700';
     
     return (

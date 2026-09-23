@@ -520,6 +520,38 @@ app.post('/api/news/create', async (req, res) => {
       [category, title, content || null, imageUrl || null, source || null]
     );
 
+// Автоматический сбор новостей
+app.get('/api/fetch-news', async (req, res) => {
+  try {
+    const response = await fetch('https://freenewsapi.ai/v1/search?host=uz.sputniknews.ru&size=20');
+    const data = await response.json();
+
+    if (!data.articles || data.articles.length === 0) {
+      return res.json({ added: 0 });
+    }
+
+    let added = 0;
+    for (const article of data.articles) {
+      const existing = await pool.query(
+        'SELECT id FROM news WHERE source = $1',
+        [article.link]
+      );
+
+      if (existing.rows.length === 0) {
+        await pool.query(
+          `INSERT INTO news (category, title, content, source) VALUES ($1, $2, $3, $4)`,
+          ['uzbekistan', article.title, article.lead || null, article.link]
+        );
+        added++;
+      }
+    }
+
+    res.json({ added });
+  } catch (error: any) {
+    console.error('Fetch news error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
     res.json({ news: result.rows[0] });
   } catch (error: any) {
     console.error('News create error:', error);

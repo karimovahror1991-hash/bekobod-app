@@ -14,6 +14,17 @@ const pool = new Pool({
   ssl: { rejectUnauthorized: false }
 });
 
+// Отправка сообщения в Telegram
+async function sendTelegramMessage(chatId: number, text: string) {
+  const botToken = process.env.TELEGRAM_BOT_TOKEN;
+  if (!botToken) return;
+  
+  await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'HTML' })
+  });
+}
 app.use(express.json());
 
 // CORS
@@ -30,6 +41,86 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' });
 });
 
+// Webhook от Telegram
+app.post('/api/telegram-webhook', async (req, res) => {
+  try {
+    const { message } = req.body;
+    
+    if (!message?.from) {
+      return res.sendStatus(200);
+    }
+
+    // Сохраняем пользователя
+    await pool.query(
+      `INSERT INTO bot_users (user_id, username, first_name, last_interaction) 
+       VALUES ($1, $2, $3, NOW()) 
+       ON CONFLICT (user_id) 
+       DO UPDATE SET 
+         username = EXCLUDED.username,
+         first_name = EXCLUDED.first_name,
+         last_interaction = NOW()`,
+      [message.from.id, message.from.username || null, message.from.first_name || null]
+    );
+
+    // Команда /admin
+    if (message?.text === '/admin' && message.from.id === 988368940) {
+      const messagesResult = await pool.query(
+        "SELECT * FROM admin_messages WHERE status = 'new' ORDER BY created_at DESC LIMIT 10"
+      );
+
+      if (messagesResult.rows.length === 0) {
+        await sendTelegramMessage(message.from.id, "📭 Yangi xabarlar yo'q");
+      } else {
+        let text = `📬 <b>Yangi xabarlar (${messagesResult.rows.length})</b>\n\n`;
+        messagesResult.rows.forEach((msg, i) => {
+          text += `<b>${i + 1}.</b> ${msg.user_name || 'Foydalanuvchi'} (ID: <code>${msg.user_id}</code>)\n`;
+          text += `💬 ${msg.message}\n`;
+          text += `📅 ${new Date(msg.created_at).toLocaleString('uz-UZ')}\n`;
+          text += `✍️ Javob: <code>/reply ${msg.id} Ваш ответ</code>\n\n`;
+        });
+        await sendTelegramMessage(message.from.id, text);
+      }
+    }
+
+    // Команда /reply ID текст
+    if (message?.text?.startsWith('/reply') && message.from.id === 988368940) {
+      const parts = message.text.split(' ');
+      const messageId = Number(parts[1]);
+      const replyText = parts.slice(2).join(' ');
+
+      if (!messageId || !replyText) {
+        await sendTelegramMessage(
+          message.from.id,
+          "❌ <code>/reply ID текст</code>\nMasalan: <code>/reply 5 Rahmat!</code>"
+        );
+      } else {
+        await pool.query(
+          "UPDATE admin_messages SET reply = $1, status = 'answered', replied_at = NOW() WHERE id = $2",
+          [replyText, messageId]
+        );
+
+        const msgResult = await pool.query(
+          'SELECT user_id FROM admin_messages WHERE id = $1',
+          [messageId]
+        );
+
+        if (msgResult.rows.length > 0) {
+          await sendTelegramMessage(
+            msgResult.rows[0].user_id,
+            `📩 <b>Administrator javobi:</b>\n\n${replyText}`
+          );
+        }
+
+        await sendTelegramMessage(message.from.id, `✅ Javob yuborildi (ID: ${messageId})`);
+      }
+    }
+
+    res.sendStatus(200);
+  } catch (error: any) {
+    console.error('Webhook error:', error);
+    res.sendStatus(200);
+  }
+});
 // ============ TAXI ============
 
 // Создать рейс (таксист)

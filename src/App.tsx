@@ -1,3 +1,4 @@
+import { EventsView } from './components/EventsView';
 import { NewsView } from './components/NewsView';
 import { RestaurantsView } from './components/RestaurantsView';
 import { JobsView } from './components/JobsView';
@@ -112,6 +113,9 @@ function App() {
   }
     if (activeSection === 'news') {
     return <NewsView onClose={() => setActiveSection(null)} />;
+  }
+    if (activeSection === 'events') {
+    return <EventsView onClose={() => setActiveSection(null)} userId={userId} />;
   }
   if (activeSection === 'services') {
   return <ServicesView onClose={() => setActiveSection(null)} />;

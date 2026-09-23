@@ -505,33 +505,20 @@ app.listen(PORT, () => {
 // Создать вакансию
 app.post('/api/jobs/create', async (req, res) => {
   try {
-    const { companyName, position, salary, description, phone } = req.body;
+    const { companyName, position, salary, description, phone, category } = req.body;
 
     if (!companyName || !position || !phone) {
       return res.status(400).json({ error: 'Заполните компанию, должность и телефон' });
     }
 
     const result = await pool.query(
-      'INSERT INTO jobs (company_name, position, salary, description, phone) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-      [companyName, position, salary || null, description || null, phone]
+      'INSERT INTO jobs (company_name, position, salary, description, phone, category) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+      [companyName, position, salary || null, description || null, phone, category || 'boshqa']
     );
 
     res.json({ job: result.rows[0] });
   } catch (error: any) {
     console.error('Job create error:', error);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Список вакансий
-app.get('/api/jobs/list', async (req, res) => {
-  try {
-    const result = await pool.query(
-      "SELECT * FROM jobs WHERE status = 'active' ORDER BY created_at DESC"
-    );
-    res.json({ jobs: result.rows });
-  } catch (error: any) {
-    console.error('Jobs list error:', error);
     res.status(500).json({ error: error.message });
   }
 });

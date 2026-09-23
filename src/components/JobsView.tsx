@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Phone, Briefcase, Plus, Loader2, Building2, Wallet } from 'lucide-react';
+import { ArrowLeft, Phone, Briefcase, Plus, Loader2, Building2, Wallet, Clock } from 'lucide-react';
 
 interface JobsViewProps {
   onClose: () => void;
@@ -12,20 +12,33 @@ interface Job {
   salary: string | null;
   description: string | null;
   phone: string;
+  category: string;
   status: string;
   created_at: string;
 }
+
+const CATEGORIES = [
+  { id: 'all', label: 'Barchasi', icon: '📋' },
+  { id: 'qurilish', label: 'Qurilish', icon: '🏗️' },
+  { id: 'savdo', label: 'Savdo', icon: '🛒' },
+  { id: 'talim', label: "Ta'lim", icon: '🎓' },
+  { id: 'tibbiyot', label: 'Tibbiyot', icon: '🏥' },
+  { id: 'transport', label: 'Transport', icon: '🚗' },
+  { id: 'boshqa', label: 'Boshqa', icon: '💼' },
+];
 
 export const JobsView: React.FC<JobsViewProps> = ({ onClose }) => {
   const [tab, setTab] = useState<'list' | 'create'>('list');
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedCategory, setSelectedCategory] = useState('all');
 
   const [companyName, setCompanyName] = useState('');
   const [position, setPosition] = useState('');
   const [salary, setSalary] = useState('');
   const [description, setDescription] = useState('');
   const [phone, setPhone] = useState('');
+  const [category, setCategory] = useState('boshqa');
   const [creating, setCreating] = useState(false);
 
   const API_URL = 'https://bekobod-app-1.onrender.com';
@@ -71,6 +84,7 @@ export const JobsView: React.FC<JobsViewProps> = ({ onClose }) => {
           salary: salary.trim() || null,
           description: description.trim() || null,
           phone: normalizedPhone,
+          category,
         }),
       });
       const data = await res.json();
@@ -91,6 +105,29 @@ export const JobsView: React.FC<JobsViewProps> = ({ onClose }) => {
     } finally {
       setCreating(false);
     }
+  };
+
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffHours / 24);
+
+    if (diffHours < 1) return 'Hozir';
+    if (diffHours < 24) return `${diffHours} soat oldin`;
+    if (diffDays === 1) return 'Kecha';
+    if (diffDays < 7) return `${diffDays} kun oldin`;
+    return date.toLocaleDateString('uz-UZ', { day: 'numeric', month: 'short' });
+  };
+
+  const filteredJobs = selectedCategory === 'all'
+    ? jobs
+    : jobs.filter(j => j.category === selectedCategory);
+
+  const getCategoryLabel = (catId: string) => {
+    const cat = CATEGORIES.find(c => c.id === catId);
+    return cat ? `${cat.icon} ${cat.label}` : catId;
   };
 
   return (
@@ -135,18 +172,36 @@ export const JobsView: React.FC<JobsViewProps> = ({ onClose }) => {
       <div className="max-w-2xl mx-auto px-4 py-6">
         {tab === 'list' && (
           <>
+            {/* Категории */}
+            <div className="grid grid-cols-3 gap-2 mb-5">
+              {CATEGORIES.map((cat) => (
+                <button
+                  key={cat.id}
+                  onClick={() => setSelectedCategory(cat.id)}
+                  className={`py-3 rounded-2xl text-xs font-bold transition-all ${
+                    selectedCategory === cat.id
+                      ? 'bg-stone-900 text-white shadow-md scale-105'
+                      : 'bg-white text-stone-600 border border-stone-200'
+                  }`}
+                >
+                  <div className="text-xl mb-0.5">{cat.icon}</div>
+                  <div className="text-[10px]">{cat.label}</div>
+                </button>
+              ))}
+            </div>
+
             {loading ? (
               <div className="flex justify-center py-12">
                 <Loader2 className="w-6 h-6 animate-spin text-amber-600" />
               </div>
-            ) : jobs.length === 0 ? (
+            ) : filteredJobs.length === 0 ? (
               <div className="text-center py-16 text-stone-400">
                 <div className="text-5xl mb-3">💼</div>
                 <p className="text-sm">Hozircha vakansiyalar yo'q</p>
               </div>
             ) : (
               <div className="space-y-3">
-                {jobs.map((job) => (
+                {filteredJobs.map((job) => (
                   <div
                     key={job.id}
                     className="bg-white rounded-3xl p-5 shadow-sm border border-stone-100 space-y-3"
@@ -160,6 +215,15 @@ export const JobsView: React.FC<JobsViewProps> = ({ onClose }) => {
                           <Building2 className="w-4 h-4 shrink-0" />
                           <span className="truncate">{job.company_name}</span>
                         </div>
+                      </div>
+                      <div className="text-xs text-stone-400 shrink-0 ml-2">
+                        {formatDate(job.created_at)}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center space-x-2">
+                      <div className="text-xs font-semibold text-amber-700 bg-amber-50 px-2 py-1 rounded-lg">
+                        {getCategoryLabel(job.category)}
                       </div>
                     </div>
 
@@ -222,6 +286,23 @@ export const JobsView: React.FC<JobsViewProps> = ({ onClose }) => {
                 placeholder="Masalan: Tikuvchi"
                 className="w-full px-4 py-3 rounded-xl border border-stone-300 text-sm focus:outline-hidden focus:border-amber-500"
               />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-stone-700 mb-1">
+                Soha
+              </label>
+              <select
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                className="w-full px-4 py-3 rounded-xl border border-stone-300 text-sm focus:outline-hidden focus:border-amber-500 bg-white"
+              >
+                {CATEGORIES.filter(c => c.id !== 'all').map((cat) => (
+                  <option key={cat.id} value={cat.id}>
+                    {cat.icon} {cat.label}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div>

@@ -1,3 +1,4 @@
+import { JobsView } from './components/JobsView';
 import React, { useEffect, useState } from 'react';
 import { Cloud, Sun, CloudRain, Snowflake, Wind, Droplets } from 'lucide-react';
 import { 
@@ -100,6 +101,9 @@ function App() {
   }
    if (activeSection === 'admin') {
     return <AdminView onClose={() => setActiveSection(null)} userId={userId} />;
+  }
+    if (activeSection === 'jobs') {
+    return <JobsView onClose={() => setActiveSection(null)} />;
   }
   if (activeSection === 'services') {
   return <ServicesView onClose={() => setActiveSection(null)} />;

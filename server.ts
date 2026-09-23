@@ -477,6 +477,55 @@ app.post('/api/restaurants/create', async (req, res) => {
   }
 });
 
+// ============ NEWS ============
+
+// Список новостей
+app.get('/api/news/list', async (req, res) => {
+  try {
+    const { category } = req.query;
+
+    let query = 'SELECT * FROM news';
+    const params: any[] = [];
+
+    if (category && category !== 'all') {
+      query += ' WHERE category = $1';
+      params.push(category);
+    }
+
+    query += ' ORDER BY created_at DESC LIMIT 50';
+
+    const result = await pool.query(query, params);
+    res.json({ news: result.rows });
+  } catch (error: any) {
+    console.error('News list error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Добавить новость (только для админа)
+app.post('/api/news/create', async (req, res) => {
+  try {
+    const { adminId, category, title, content, imageUrl, source } = req.body;
+
+    if (Number(adminId) !== 988368940) {
+      return res.status(403).json({ error: 'Доступ запрещён' });
+    }
+
+    if (!category || !title) {
+      return res.status(400).json({ error: 'Укажите категорию и заголовок' });
+    }
+
+    const result = await pool.query(
+      'INSERT INTO news (category, title, content, image_url, source) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+      [category, title, content || null, imageUrl || null, source || null]
+    );
+
+    res.json({ news: result.rows[0] });
+  } catch (error: any) {
+    console.error('News create error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
 // ============ STATIC (ЛОВУШКА В САМОМ КОНЦЕ!) ============
 const distPath = path.join(process.cwd(), 'dist');
 app.use(express.static(distPath));

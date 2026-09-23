@@ -1,3 +1,4 @@
+import { NewsView } from './components/NewsView';
 import { RestaurantsView } from './components/RestaurantsView';
 import { JobsView } from './components/JobsView';
 import React, { useEffect, useState } from 'react';
@@ -108,6 +109,9 @@ function App() {
   }
     if (activeSection === 'restaurants') {
     return <RestaurantsView onClose={() => setActiveSection(null)} />;
+  }
+    if (activeSection === 'news') {
+    return <NewsView onClose={() => setActiveSection(null)} />;
   }
   if (activeSection === 'services') {
   return <ServicesView onClose={() => setActiveSection(null)} />;

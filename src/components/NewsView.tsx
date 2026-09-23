@@ -228,23 +228,23 @@ export const NewsView: React.FC<NewsViewProps> = ({ onClose }) => {
           {CATEGORIES.map((cat) => {
             const count = news.filter(n => n.category === cat.id).length;
             return (
-              <button
+                         <button
                 key={cat.id}
                 onClick={() => setSelectedCategory(cat.id)}
-                className={`w-full bg-linear-to-br ${cat.gradient} text-white rounded-3xl p-5 flex items-center justify-between shadow-lg hover:shadow-2xl transition-all duration-300 active:scale-95`}
+                className={`w-full bg-linear-to-br ${cat.gradient} text-white rounded-3xl p-6 flex items-center justify-between shadow-lg hover:shadow-2xl transition-all duration-300 active:scale-95`}
               >
-                <div className="flex items-center space-x-4">
-                  <div className="text-4xl">{cat.icon}</div>
+                <div className="flex items-center space-x-5">
+                  <div className="text-5xl shrink-0">{cat.icon}</div>
                   <div className="text-left">
-                    <div className="font-bold text-lg text-white">
+                    <div className="font-bold text-lg text-white leading-tight">
                       {cat.label}
                     </div>
-                    <div className="text-xs text-white/80">
+                    <div className="text-xs text-white/80 mt-1">
                       {count} ta yangilik
                     </div>
                   </div>
                 </div>
-                <ChevronRight className="w-6 h-6 text-white/80" />
+                <ChevronRight className="w-6 h-6 text-white/80 shrink-0 ml-2" />
               </button>
             );
           })}

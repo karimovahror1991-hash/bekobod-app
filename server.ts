@@ -81,16 +81,18 @@ app.post('/api/telegram-webhook', async (req, res) => {
       }
     }
 
-        // Команда /add_event
-    if (message?.text?.startsWith('/add_event') && message.from.id === 988368940) {
-      const parts = message.text.split('|').map((s: string) => s.trim());
+          // Команда /add_event (с поддержкой фото)
+    if ((message?.text?.startsWith('/add_event') || message?.caption?.startsWith('/add_event')) && message.from.id === 988368940) {
+      const text = message.text || message.caption || '';
+      const parts = text.split('|').map((s: string) => s.trim());
       
       if (parts.length < 4) {
         await sendTelegramMessage(
           message.from.id,
           `❌ <b>Format:</b>\n<code>/add_event kategoriya | sarlavha | tavsif | sana | joy | telefon</code>\n\n` +
           `<b>Misol:</b>\n<code>/add_event madaniyat | Konsert | Shahar kuni | 2026-09-25 18:00 | Mustaqillik maydoni | +998901234567</code>\n\n` +
-          `<b>Kategoriyalar:</b> madaniyat, sport, bayram, talim, rasmiy, bozor`
+          `<b>Rasm bilan:</b> Rasm yuboring va izohga shu formatni yozing.\n\n` +
+          `<b>Kategoriyalar:</b> madaniyat, sport, bayram, talim, rasmiy, bozor, tugilgan_kun`
         );
       } else {
         const category = parts[0].replace('/add_event', '').trim();
@@ -100,10 +102,18 @@ app.post('/api/telegram-webhook', async (req, res) => {
         const location = parts[4] || null;
         const phone = parts[5] || null;
 
+        // Получаем file_id фото, если оно есть
+        let imageUrl = null;
+        if (message.photo && message.photo.length > 0) {
+          // Берём самое большое фото
+          const largestPhoto = message.photo[message.photo.length - 1];
+          imageUrl = largestPhoto.file_id;
+        }
+
         const result = await pool.query(
-          `INSERT INTO events (category, title, description, event_date, location, phone, status) 
-           VALUES ($1, $2, $3, $4, $5, $6, 'active') RETURNING *`,
-          [category, title, description, eventDate, location, phone]
+          `INSERT INTO events (category, title, description, event_date, location, phone, image_url, status) 
+           VALUES ($1, $2, $3, $4, $5, $6, $7, 'active') RETURNING *`,
+          [category, title, description, eventDate, location, phone, imageUrl]
         );
 
         await sendTelegramMessage(
@@ -112,6 +122,7 @@ app.post('/api/telegram-webhook', async (req, res) => {
           `📌 ${title}\n` +
           `📅 ${eventDate}\n` +
           `📍 ${location || 'ko\'rsatilmagan'}\n` +
+          `🖼 Rasm: ${imageUrl ? 'bor' : 'yo\'q'}\n` +
           `ID: <code>${result.rows[0].id}</code>`
         );
       }
@@ -752,35 +763,27 @@ app.get('/api/events/list', async (req, res) => {
     query += ' ORDER BY event_date ASC';
 
     const result = await pool.query(query, params);
-    res.json({ events: result.rows });
+    
+    // Преобразуем file_id в URL для фото
+    const botToken = process.env.TELEGRAM_BOT_TOKEN;
+    const events = await Promise.all(result.rows.map(async (event) => {
+      if (event.image_url && !event.image_url.startsWith('http') && botToken) {
+        try {
+          const fileRes = await fetch(`https://api.telegram.org/bot${botToken}/getFile?file_id=${event.image_url}`);
+          const fileData = await fileRes.json();
+          if (fileData.ok) {
+            event.image_url = `https://api.telegram.org/file/bot${botToken}/${fileData.result.file_path}`;
+          }
+        } catch (e) {
+          console.error('File fetch error:', e);
+        }
+      }
+      return event;
+    }));
+
+    res.json({ events });
   } catch (error: any) {
     console.error('Events list error:', error);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Добавить событие (только для админа)
-app.post('/api/events/create', async (req, res) => {
-  try {
-    const { adminId, category, title, description, eventDate, location, phone, imageUrl } = req.body;
-
-    if (Number(adminId) !== 988368940) {
-      return res.status(403).json({ error: 'Доступ запрещён' });
-    }
-
-    if (!category || !title) {
-      return res.status(400).json({ error: 'Укажите категорию и название' });
-    }
-
-    const result = await pool.query(
-      `INSERT INTO events (category, title, description, event_date, location, phone, image_url) 
-       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
-      [category, title, description || null, eventDate || null, location || null, phone || null, imageUrl || null]
-    );
-
-    res.json({ event: result.rows[0] });
-  } catch (error: any) {
-    console.error('Event create error:', error);
     res.status(500).json({ error: error.message });
   }
 });

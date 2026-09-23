@@ -613,7 +613,6 @@ app.post('/api/jobs/create', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
-
 // ============ RESTAURANTS ============
 
 // Список ресторанов

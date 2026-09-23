@@ -22,6 +22,7 @@ const CATEGORIES = [
   { id: 'restoran', label: 'Restoran', icon: '🍷' },
   { id: 'chayxana', label: 'Chayxana', icon: '🫖' },
   { id: 'shirinlik', label: 'Shirinliklar', icon: '🍰' },
+  { id: 'yarim_tayyor', label: 'Yarim tayyor mahsulotlar', icon: '🥟' },
 ];
 
 export const RestaurantsView: React.FC<RestaurantsViewProps> = ({ onClose }) => {

@@ -256,12 +256,14 @@ export const EventsView: React.FC<EventsViewProps> = ({ onClose, userId }) => {
                 key={event.id}
                 className="bg-white rounded-3xl overflow-hidden shadow-sm border border-stone-100"
               >
-                {event.image_url && (
-                  <img
-                    src={event.image_url}
-                    alt={event.title}
-                    className="w-full h-48 object-cover"
-                  />
+                                {event.image_url && (
+                  <div className="w-full h-64 bg-stone-100 flex items-center justify-center overflow-hidden">
+                    <img
+                      src={event.image_url}
+                      alt={event.title}
+                      className="max-w-full max-h-full object-contain"
+                    />
+                  </div>
                 )}
                 <div className="p-5 space-y-3">
                   <h3 className="font-bold text-lg text-stone-900">

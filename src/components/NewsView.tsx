@@ -46,20 +46,15 @@ export const NewsView: React.FC<NewsViewProps> = ({ onClose }) => {
     loadNews();
   }, []);
 
-  const formatDate = (dateStr: string) => {
+    const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.floor(diffMs / (1000 * 60));
-    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-    const diffDays = Math.floor(diffHours / 24);
-
-    if (diffMins < 1) return 'Hozir';
-    if (diffMins < 60) return `${diffMins} daqiqa oldin`;
-    if (diffHours < 24) return `${diffHours} soat oldin`;
-    if (diffDays === 1) return 'Kecha';
-    if (diffDays < 7) return `${diffDays} kun oldin`;
-    return date.toLocaleDateString('uz-UZ', { day: 'numeric', month: 'short', year: 'numeric' });
+    return date.toLocaleString('uz-UZ', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
   };
 
   const formatFullDate = (dateStr: string) => {

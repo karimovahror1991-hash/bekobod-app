@@ -81,6 +81,41 @@ app.post('/api/telegram-webhook', async (req, res) => {
       }
     }
 
+    // Команда /add_event
+    if (message?.text?.startsWith('/add_event') && message.from.id === 988368940) {
+      const parts = message.text.split('|').map((s: string) => s.trim());
+      
+      if (parts.length < 4) {
+        await sendTelegramMessage(
+          message.from.id,
+          `❌ <b>Format:</b>\n<code>/add_event kategoriya | sarlavha | tavsif | sana | joy | telefon</code>\n\n` +
+          `<b>Misol:</b>\n<code>/add_event madaniyat | Konsert | Shahar kuni | 2026-09-25 18:00 | Mustaqillik maydoni | +998901234567</code>\n\n` +
+          `<b>Kategoriyalar:</b> madaniyat, sport, bayram, talim, rasmiy, bozor`
+        );
+      } else {
+        const category = parts[0].replace('/add_event', '').trim();
+        const title = parts[1];
+        const description = parts[2];
+        const eventDate = parts[3];
+        const location = parts[4] || null;
+        const phone = parts[5] || null;
+
+        const result = await pool.query(
+          `INSERT INTO events (category, title, description, event_date, location, phone, status) 
+           VALUES ($1, $2, $3, $4, $5, $6, 'active') RETURNING *`,
+          [category, title, description, eventDate, location, phone]
+        );
+
+        await sendTelegramMessage(
+          message.from.id,
+          `✅ <b>Tadbir qo'shildi!</b>\n\n` +
+          `📌 ${title}\n` +
+          `📅 ${eventDate}\n` +
+          `📍 ${location || 'ko\'rsatilmagan'}\n` +
+          `ID: <code>${result.rows[0].id}</code>`
+        );
+      }
+    }
     if (message?.text?.startsWith('/reply') && message.from.id === 988368940) {
       const parts = message.text.split(' ');
       const messageId = Number(parts[1]);

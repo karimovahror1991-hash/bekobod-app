@@ -81,7 +81,7 @@ app.post('/api/telegram-webhook', async (req, res) => {
       }
     }
 
-    // Команда /add_event
+        // Команда /add_event
     if (message?.text?.startsWith('/add_event') && message.from.id === 988368940) {
       const parts = message.text.split('|').map((s: string) => s.trim());
       
@@ -105,6 +105,17 @@ app.post('/api/telegram-webhook', async (req, res) => {
            VALUES ($1, $2, $3, $4, $5, $6, 'active') RETURNING *`,
           [category, title, description, eventDate, location, phone]
         );
+
+        await sendTelegramMessage(
+          message.from.id,
+          `✅ <b>Tadbir qo'shildi!</b>\n\n` +
+          `📌 ${title}\n` +
+          `📅 ${eventDate}\n` +
+          `📍 ${location || 'ko\'rsatilmagan'}\n` +
+          `ID: <code>${result.rows[0].id}</code>`
+        );
+      }
+    }
 
     // Команда /delete_event ID
     if (message?.text?.startsWith('/delete_event') && message.from.id === 988368940) {
@@ -132,16 +143,7 @@ app.post('/api/telegram-webhook', async (req, res) => {
         }
       }
     }
-        await sendTelegramMessage(
-          message.from.id,
-          `✅ <b>Tadbir qo'shildi!</b>\n\n` +
-          `📌 ${title}\n` +
-          `📅 ${eventDate}\n` +
-          `📍 ${location || 'ko\'rsatilmagan'}\n` +
-          `ID: <code>${result.rows[0].id}</code>`
-        );
-      }
-    }
+
     if (message?.text?.startsWith('/reply') && message.from.id === 988368940) {
       const parts = message.text.split(' ');
       const messageId = Number(parts[1]);

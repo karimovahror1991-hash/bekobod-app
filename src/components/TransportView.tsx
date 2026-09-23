@@ -16,8 +16,11 @@ const CATEGORY_GRADIENTS: { [key: string]: string } = {
 export const TransportView: React.FC<TransportViewProps> = ({ onClose }) => {
   const [selectedCategory, setSelectedCategory] = useState<TransportCategory | null>(null);
   const [showTaxi, setShowTaxi] = useState(false);
-   if (showTaxi) {
-    return <TaxiView onClose={() => setShowTaxi(false)} />;
+     if (showTaxi) {
+    return <TaxiView onClose={() => {
+      setShowTaxi(false);
+      setSelectedCategory(null);
+    }} />;
   }
 
   if (selectedCategory) {

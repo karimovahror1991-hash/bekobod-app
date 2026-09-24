@@ -8,17 +8,14 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Подключение к PostgreSQL (Neon)
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false }
 });
 
-// Отправка сообщения в Telegram
 async function sendTelegramMessage(chatId: number, text: string) {
   const botToken = process.env.TELEGRAM_BOT_TOKEN;
   if (!botToken) return;
-  
   await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -28,7 +25,6 @@ async function sendTelegramMessage(chatId: number, text: string) {
 
 app.use(express.json());
 
-// CORS
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Headers', 'Content-Type');
@@ -37,7 +33,6 @@ app.use((req, res, next) => {
   next();
 });
 
-// ============ HEALTH ============
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' });
 });
@@ -46,7 +41,7 @@ app.get('/api/health', (req, res) => {
 app.post('/api/telegram-webhook', async (req, res) => {
   try {
     const { message } = req.body;
-    
+
     if (!message?.from) {
       return res.sendStatus(200);
     }
@@ -55,10 +50,7 @@ app.post('/api/telegram-webhook', async (req, res) => {
       `INSERT INTO bot_users (user_id, username, first_name, last_interaction) 
        VALUES ($1, $2, $3, NOW()) 
        ON CONFLICT (user_id) 
-       DO UPDATE SET 
-         username = EXCLUDED.username,
-         first_name = EXCLUDED.first_name,
-         last_interaction = NOW()`,
+       DO UPDATE SET username = EXCLUDED.username, first_name = EXCLUDED.first_name, last_interaction = NOW()`,
       [message.from.id, message.from.username || null, message.from.first_name || null]
     );
 
@@ -66,7 +58,6 @@ app.post('/api/telegram-webhook', async (req, res) => {
       const messagesResult = await pool.query(
         "SELECT * FROM admin_messages WHERE status = 'new' ORDER BY created_at DESC LIMIT 10"
       );
-
       if (messagesResult.rows.length === 0) {
         await sendTelegramMessage(message.from.id, "📭 Yangi xabarlar yo'q");
       } else {
@@ -81,19 +72,11 @@ app.post('/api/telegram-webhook', async (req, res) => {
       }
     }
 
-          // Команда /add_event (с поддержкой фото)
     if ((message?.text?.startsWith('/add_event') || message?.caption?.startsWith('/add_event')) && message.from.id === 988368940) {
       const text = message.text || message.caption || '';
       const parts = text.split('|').map((s: string) => s.trim());
-      
       if (parts.length < 4) {
-        await sendTelegramMessage(
-          message.from.id,
-          `❌ <b>Format:</b>\n<code>/add_event kategoriya | sarlavha | tavsif | sana | joy | telefon</code>\n\n` +
-          `<b>Misol:</b>\n<code>/add_event madaniyat | Konsert | Shahar kuni | 2026-09-25 18:00 | Mustaqillik maydoni | +998901234567</code>\n\n` +
-          `<b>Rasm bilan:</b> Rasm yuboring va izohga shu formatni yozing.\n\n` +
-          `<b>Kategoriyalar:</b> madaniyat, sport, bayram, talim, rasmiy, bozor, tugilgan_kun`
-        );
+        await sendTelegramMessage(message.from.id, `❌ Format: /add_event kategoriya | sarlavha | tavsif | sana | joy | telefon`);
       } else {
         const category = parts[0].replace('/add_event', '').trim();
         const title = parts[1];
@@ -101,151 +84,81 @@ app.post('/api/telegram-webhook', async (req, res) => {
         const eventDate = parts[3];
         const location = parts[4] || null;
         const phone = parts[5] || null;
-
-        // Получаем file_id фото, если оно есть
         let imageUrl = null;
         if (message.photo && message.photo.length > 0) {
-          // Берём самое большое фото
-          const largestPhoto = message.photo[message.photo.length - 1];
-          imageUrl = largestPhoto.file_id;
+          imageUrl = message.photo[message.photo.length - 1].file_id;
         }
-
         const result = await pool.query(
           `INSERT INTO events (category, title, description, event_date, location, phone, image_url, status) 
            VALUES ($1, $2, $3, $4, $5, $6, $7, 'active') RETURNING *`,
           [category, title, description, eventDate, location, phone, imageUrl]
         );
-
-        await sendTelegramMessage(
-          message.from.id,
-          `✅ <b>Tadbir qo'shildi!</b>\n\n` +
-          `📌 ${title}\n` +
-          `📅 ${eventDate}\n` +
-          `📍 ${location || 'ko\'rsatilmagan'}\n` +
-          `🖼 Rasm: ${imageUrl ? 'bor' : 'yo\'q'}\n` +
-          `ID: <code>${result.rows[0].id}</code>`
-        );
+        await sendTelegramMessage(message.from.id, `✅ Tadbir qo'shildi! ID: ${result.rows[0].id}`);
       }
     }
 
-    // Команда /delete_event ID
     if (message?.text?.startsWith('/delete_event') && message.from.id === 988368940) {
-      const parts = message.text.split(' ');
-      const eventId = Number(parts[1]);
-
+      const eventId = Number(message.text.split(' ')[1]);
       if (!eventId) {
-        await sendTelegramMessage(
-          message.from.id,
-          "❌ <code>/delete_event ID</code>\nMisol: <code>/delete_event 1</code>"
-        );
+        await sendTelegramMessage(message.from.id, "❌ /delete_event ID");
       } else {
-        const result = await pool.query(
-          'DELETE FROM events WHERE id = $1 RETURNING title',
-          [eventId]
-        );
-
+        const result = await pool.query('DELETE FROM events WHERE id = $1 RETURNING title', [eventId]);
         if (result.rows.length === 0) {
           await sendTelegramMessage(message.from.id, `❌ Tadbir topilmadi (ID: ${eventId})`);
         } else {
-          await sendTelegramMessage(
-            message.from.id,
-            `✅ Tadbir o'chirildi: <b>${result.rows[0].title}</b>`
-          );
+          await sendTelegramMessage(message.from.id, `✅ Tadbir o'chirildi: ${result.rows[0].title}`);
         }
       }
     }
 
-       if (message?.text?.startsWith('/reply') && message.from.id === 988368940) {
+    if (message?.text?.startsWith('/reply') && message.from.id === 988368940) {
       const parts = message.text.split(' ');
       const messageId = Number(parts[1]);
       const replyText = parts.slice(2).join(' ');
       if (!messageId || !replyText) {
-        await sendTelegramMessage(
-          message.from.id,
-          "❌ <code>/reply ID текст</code>\nMasalan: <code>/reply 5 Rahmat!</code>"
-        );
+        await sendTelegramMessage(message.from.id, "❌ /reply ID текст");
       } else {
-        await pool.query(
-          "UPDATE admin_messages SET reply = $1, status = 'answered', replied_at = NOW() WHERE id = $2",
-          [replyText, messageId]
-        );
-
-        const msgResult = await pool.query(
-          'SELECT user_id FROM admin_messages WHERE id = $1',
-          [messageId]
-        );
-
+        await pool.query("UPDATE admin_messages SET reply = $1, status = 'answered', replied_at = NOW() WHERE id = $2", [replyText, messageId]);
+        const msgResult = await pool.query('SELECT user_id FROM admin_messages WHERE id = $1', [messageId]);
         if (msgResult.rows.length > 0) {
-          await sendTelegramMessage(
-            msgResult.rows[0].user_id,
-            `📩 <b>Administrator javobi:</b>\n\n${replyText}`
-          );
+          await sendTelegramMessage(msgResult.rows[0].user_id, `📩 Administrator javobi:\n\n${replyText}`);
         }
-
         await sendTelegramMessage(message.from.id, `✅ Javob yuborildi (ID: ${messageId})`);
       }
     }
 
-    // Команда /add_doctor
-    if (message?.text?.startsWith('/add_doctor') && message.from.id === 988368940) {
+    if (message?.text?.startsWith('/add_med') && message.from.id === 988368940) {
       const parts = message.text.split('|').map((s: string) => s.trim());
-      
       if (parts.length < 3) {
-        await sendTelegramMessage(
-          message.from.id,
-          `❌ <b>Format:</b>\n<code>/add_doctor ism | mutaxassislik | telefon | manzil</code>\n\n` +
-          `<b>Misol:</b>\n<code>/add_doctor Karimov Anvar | terapevt | +998901234567 | Bunyodkor 10</code>\n\n` +
-          `<b>Mutaxassisliklar:</b> terapevt, stomatolog, pediatr, nevropatolog, okulist, lor, dermatolog, kardiolog`
-        );
+        await sendTelegramMessage(message.from.id, `❌ /add_med tur | nomi | manzil | telefon | tavsif`);
       } else {
-        const name = parts[0].replace('/add_doctor', '').trim();
-        const specialty = parts[1];
-        const phone = parts[2] || null;
-        const address = parts[3] || null;
-
+        const type = parts[0].replace('/add_med', '').trim();
+        const name = parts[1];
+        const address = parts[2] || null;
+        const phone = parts[3] || null;
+        const description = parts[4] || null;
         const result = await pool.query(
-          'INSERT INTO doctors (name, specialty, phone, address) VALUES ($1, $2, $3, $4) RETURNING *',
-          [name, specialty, phone, address]
+          'INSERT INTO doctors (type, name, specialty, phone, address, description) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+          [type, name, type, phone, address, description]
         );
-
-        await sendTelegramMessage(
-          message.from.id,
-          `✅ <b>Shifokor qo'shildi!</b>\n\n` +
-          `👨‍⚕️ ${name}\n` +
-          `🩺 ${specialty}\n` +
-          `📞 ${phone || "ko'rsatilmagan"}\n` +
-          `📍 ${address || "ko'rsatilmagan"}\n` +
-          `ID: <code>${result.rows[0].id}</code>`
-        );
+        await sendTelegramMessage(message.from.id, `✅ ${type} qo'shildi! ID: ${result.rows[0].id}`);
       }
     }
 
-    // Команда /delete_doctor ID
-    if (message?.text?.startsWith('/delete_doctor') && message.from.id === 988368940) {
-      const parts = message.text.split(' ');
-      const doctorId = Number(parts[1]);
-
-      if (!doctorId) {
-        await sendTelegramMessage(
-          message.from.id,
-          "❌ <code>/delete_doctor ID</code>\nMisol: <code>/delete_doctor 1</code>"
-        );
+    if (message?.text?.startsWith('/delete_med') && message.from.id === 988368940) {
+      const medId = Number(message.text.split(' ')[1]);
+      if (!medId) {
+        await sendTelegramMessage(message.from.id, "❌ /delete_med ID");
       } else {
-        const result = await pool.query(
-          'DELETE FROM doctors WHERE id = $1 RETURNING name',
-          [doctorId]
-        );
-
+        const result = await pool.query('DELETE FROM doctors WHERE id = $1 RETURNING name', [medId]);
         if (result.rows.length === 0) {
-          await sendTelegramMessage(message.from.id, `❌ Shifokor topilmadi (ID: ${doctorId})`);
+          await sendTelegramMessage(message.from.id, `❌ Topilmadi (ID: ${medId})`);
         } else {
-          await sendTelegramMessage(
-            message.from.id,
-            `✅ Shifokor o'chirildi: <b>${result.rows[0].name}</b>`
-          );
+          await sendTelegramMessage(message.from.id, `✅ O'chirildi: ${result.rows[0].name}`);
         }
       }
     }
+
     res.sendStatus(200);
   } catch (error: any) {
     console.error('Webhook error:', error);
@@ -257,9 +170,7 @@ app.post('/api/telegram-webhook', async (req, res) => {
 app.post('/api/taxi/create', async (req, res) => {
   try {
     const { driverName, driverPhone, direction, totalSeats, userId } = req.body;
-    if (!driverName || !driverPhone || !direction) {
-      return res.status(400).json({ error: 'Заполните все поля' });
-    }
+    if (!driverName || !driverPhone || !direction) return res.status(400).json({ error: 'Заполните все поля' });
     const result = await pool.query(
       `INSERT INTO taxi_rides (driver_name, driver_phone, direction, total_seats, booked_seats, status, user_id)
        VALUES ($1, $2, $3, $4, 0, 'active', $5) RETURNING *`,
@@ -294,25 +205,14 @@ app.post('/api/taxi/book', async (req, res) => {
   try {
     const { rideId, passengerName, passengerPhone } = req.body;
     if (!rideId) return res.status(400).json({ error: 'Не указан рейс' });
-
     const rideResult = await pool.query('SELECT * FROM taxi_rides WHERE id = $1', [rideId]);
     if (rideResult.rows.length === 0) return res.status(404).json({ error: 'Рейс не найден' });
-
     const ride = rideResult.rows[0];
     if (ride.booked_seats >= ride.total_seats) return res.status(400).json({ error: 'Мест больше нет' });
-
-    await pool.query(
-      'INSERT INTO taxi_bookings (ride_id, passenger_name, passenger_phone) VALUES ($1, $2, $3)',
-      [rideId, passengerName || null, passengerPhone || null]
-    );
-
+    await pool.query('INSERT INTO taxi_bookings (ride_id, passenger_name, passenger_phone) VALUES ($1, $2, $3)', [rideId, passengerName || null, passengerPhone || null]);
     const newBooked = ride.booked_seats + 1;
     const newStatus = newBooked >= ride.total_seats ? 'full' : 'active';
-    await pool.query(
-      'UPDATE taxi_rides SET booked_seats = $1, status = $2 WHERE id = $3',
-      [newBooked, newStatus, rideId]
-    );
-
+    await pool.query('UPDATE taxi_rides SET booked_seats = $1, status = $2 WHERE id = $3', [newBooked, newStatus, rideId]);
     res.json({ ok: true, bookedSeats: newBooked, status: newStatus });
   } catch (error: any) {
     console.error('Taxi book error:', error);
@@ -324,55 +224,35 @@ app.post('/api/taxi/cancel-booking', async (req, res) => {
   try {
     const { rideId, passengerPhone } = req.body;
     if (!rideId) return res.status(400).json({ error: 'Не указан рейс' });
-
     if (passengerPhone) {
       await pool.query('DELETE FROM taxi_bookings WHERE ride_id = $1 AND passenger_phone = $2', [rideId, passengerPhone]);
     } else {
-      await pool.query(
-        `DELETE FROM taxi_bookings WHERE id = (SELECT id FROM taxi_bookings WHERE ride_id = $1 ORDER BY created_at DESC LIMIT 1)`,
-        [rideId]
-      );
+      await pool.query(`DELETE FROM taxi_bookings WHERE id = (SELECT id FROM taxi_bookings WHERE ride_id = $1 ORDER BY created_at DESC LIMIT 1)`, [rideId]);
     }
-
-// Удалить рейс (только владелец)
-app.post('/api/taxi/delete', async (req, res) => {
-  try {
-    const { rideId, userId } = req.body;
-    if (!rideId || !userId) {
-      return res.status(400).json({ error: 'Не указан рейс или пользователь' });
-    }
-
-    // Проверяем, что рейс принадлежит этому пользователю
-    const rideResult = await pool.query(
-      'SELECT user_id FROM taxi_rides WHERE id = $1',
-      [rideId]
-    );
-
-    if (rideResult.rows.length === 0) {
-      return res.status(404).json({ error: 'Рейс не найден' });
-    }
-
-    if (Number(rideResult.rows[0].user_id) !== Number(userId)) {
-      return res.status(403).json({ error: 'Bu reys sizga tegishli emas' });
-    }
-
-    await pool.query('DELETE FROM taxi_rides WHERE id = $1', [rideId]);
-    res.json({ ok: true });
-  } catch (error: any) {
-    console.error('Taxi delete error:', error);
-    res.status(500).json({ error: error.message });
-  }
-});
     const rideResult = await pool.query('SELECT booked_seats FROM taxi_rides WHERE id = $1', [rideId]);
     if (rideResult.rows.length > 0) {
       const newBooked = Math.max(0, rideResult.rows[0].booked_seats - 1);
       const newStatus = newBooked < 4 ? 'active' : 'full';
       await pool.query('UPDATE taxi_rides SET booked_seats = $1, status = $2 WHERE id = $3', [newBooked, newStatus, rideId]);
     }
-
     res.json({ ok: true });
   } catch (error: any) {
     console.error('Cancel booking error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/taxi/delete', async (req, res) => {
+  try {
+    const { rideId, userId } = req.body;
+    if (!rideId || !userId) return res.status(400).json({ error: 'Не указан рейс или пользователь' });
+    const rideResult = await pool.query('SELECT user_id FROM taxi_rides WHERE id = $1', [rideId]);
+    if (rideResult.rows.length === 0) return res.status(404).json({ error: 'Рейс не найден' });
+    if (Number(rideResult.rows[0].user_id) !== Number(userId)) return res.status(403).json({ error: 'Bu reys sizga tegishli emas' });
+    await pool.query('DELETE FROM taxi_rides WHERE id = $1', [rideId]);
+    res.json({ ok: true });
+  } catch (error: any) {
+    console.error('Taxi delete error:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -392,10 +272,7 @@ app.post('/api/taxi/rate', async (req, res) => {
 app.get('/api/taxi/rating/:rideId', async (req, res) => {
   try {
     const { rideId } = req.params;
-    const result = await pool.query(
-      'SELECT AVG(rating) as avg_rating, COUNT(*) as count FROM taxi_ratings WHERE ride_id = $1',
-      [rideId]
-    );
+    const result = await pool.query('SELECT AVG(rating) as avg_rating, COUNT(*) as count FROM taxi_ratings WHERE ride_id = $1', [rideId]);
     const avg = result.rows[0].avg_rating ? Number(result.rows[0].avg_rating) : 0;
     const count = Number(result.rows[0].count);
     res.json({ avgRating: Math.round(avg * 10) / 10, count });
@@ -409,20 +286,11 @@ app.post('/api/taxi/register', async (req, res) => {
   try {
     const { name, phone } = req.body;
     if (!name || !phone) return res.status(400).json({ error: 'Заполните имя и телефон' });
-
     const existing = await pool.query('SELECT * FROM taxi_drivers WHERE phone = $1', [phone]);
     if (existing.rows.length > 0) {
-      return res.status(400).json({ 
-        error: `Bu raqam allaqachon ${existing.rows[0].name} nomiga ro'yxatdan o'tgan.`,
-        alreadyExists: true,
-        driver: existing.rows[0]
-      });
+      return res.status(400).json({ error: `Bu raqam allaqachon ${existing.rows[0].name} nomiga ro'yxatdan o'tgan.`, alreadyExists: true, driver: existing.rows[0] });
     }
-
-    const result = await pool.query(
-      'INSERT INTO taxi_drivers (name, phone) VALUES ($1, $2) RETURNING *',
-      [name, phone]
-    );
+    const result = await pool.query('INSERT INTO taxi_drivers (name, phone) VALUES ($1, $2) RETURNING *', [name, phone]);
     res.json({ driver: result.rows[0], alreadyExists: false });
   } catch (error: any) {
     console.error('Taxi register error:', error);
@@ -444,10 +312,7 @@ app.get('/api/taxi/driver-rating/:phone', async (req, res) => {
   try {
     const { phone } = req.params;
     const result = await pool.query(
-      `SELECT AVG(r.rating) as avg_rating, COUNT(*) as count 
-       FROM taxi_ratings r
-       JOIN taxi_rides tr ON r.ride_id = tr.id
-       WHERE tr.driver_phone = $1`,
+      `SELECT AVG(r.rating) as avg_rating, COUNT(*) as count FROM taxi_ratings r JOIN taxi_rides tr ON r.ride_id = tr.id WHERE tr.driver_phone = $1`,
       [phone]
     );
     const avg = result.rows[0].avg_rating ? Number(result.rows[0].avg_rating) : 0;
@@ -464,16 +329,9 @@ app.post('/api/services/register', async (req, res) => {
   try {
     const { name, phone, category, description } = req.body;
     if (!name || !phone || !category) return res.status(400).json({ error: 'Заполните имя, телефон и категорию' });
-
     const existing = await pool.query('SELECT * FROM service_providers WHERE phone = $1', [phone]);
-    if (existing.rows.length > 0) {
-      return res.json({ provider: existing.rows[0], alreadyExists: true });
-    }
-
-    const result = await pool.query(
-      'INSERT INTO service_providers (name, phone, category, description) VALUES ($1, $2, $3, $4) RETURNING *',
-      [name, phone, category, description || null]
-    );
+    if (existing.rows.length > 0) return res.json({ provider: existing.rows[0], alreadyExists: true });
+    const result = await pool.query('INSERT INTO service_providers (name, phone, category, description) VALUES ($1, $2, $3, $4) RETURNING *', [name, phone, category, description || null]);
     res.json({ provider: result.rows[0], alreadyExists: false });
   } catch (error: any) {
     console.error('Service register error:', error);
@@ -514,10 +372,7 @@ app.post('/api/services/rate', async (req, res) => {
 app.get('/api/services/rating/:providerId', async (req, res) => {
   try {
     const { providerId } = req.params;
-    const result = await pool.query(
-      'SELECT AVG(rating) as avg_rating, COUNT(*) as count FROM service_ratings WHERE provider_id = $1',
-      [providerId]
-    );
+    const result = await pool.query('SELECT AVG(rating) as avg_rating, COUNT(*) as count FROM service_ratings WHERE provider_id = $1', [providerId]);
     const avg = result.rows[0].avg_rating ? Number(result.rows[0].avg_rating) : 0;
     const count = Number(result.rows[0].count);
     res.json({ avgRating: Math.round(avg * 10) / 10, count });
@@ -532,10 +387,7 @@ app.post('/api/admin/message', async (req, res) => {
   try {
     const { userId, userName, message } = req.body;
     if (!userId || !message || !message.trim()) return res.status(400).json({ error: 'Сообщение не может быть пустым' });
-    const result = await pool.query(
-      'INSERT INTO admin_messages (user_id, user_name, message) VALUES ($1, $2, $3) RETURNING *',
-      [userId, userName || null, message.trim()]
-    );
+    const result = await pool.query('INSERT INTO admin_messages (user_id, user_name, message) VALUES ($1, $2, $3) RETURNING *', [userId, userName || null, message.trim()]);
     res.json({ message: result.rows[0] });
   } catch (error: any) {
     console.error('Admin message error:', error);
@@ -547,10 +399,7 @@ app.get('/api/admin/my-messages', async (req, res) => {
   try {
     const { userId } = req.query;
     if (!userId) return res.status(400).json({ error: 'Не указан пользователь' });
-    const result = await pool.query(
-      'SELECT * FROM admin_messages WHERE user_id = $1 ORDER BY created_at DESC',
-      [userId]
-    );
+    const result = await pool.query('SELECT * FROM admin_messages WHERE user_id = $1 ORDER BY created_at DESC', [userId]);
     res.json({ messages: result.rows });
   } catch (error: any) {
     console.error('My messages error:', error);
@@ -575,10 +424,7 @@ app.post('/api/admin/reply', async (req, res) => {
     const { adminId, messageId, reply } = req.body;
     if (Number(adminId) !== 988368940) return res.status(403).json({ error: 'Доступ запрещён' });
     if (!messageId || !reply || !reply.trim()) return res.status(400).json({ error: 'Ответ не может быть пустым' });
-    await pool.query(
-      "UPDATE admin_messages SET reply = $1, status = 'answered', replied_at = NOW() WHERE id = $2",
-      [reply.trim(), messageId]
-    );
+    await pool.query("UPDATE admin_messages SET reply = $1, status = 'answered', replied_at = NOW() WHERE id = $2", [reply.trim(), messageId]);
     res.json({ ok: true });
   } catch (error: any) {
     console.error('Admin reply error:', error);
@@ -591,10 +437,7 @@ app.post('/api/jobs/create', async (req, res) => {
   try {
     const { companyName, position, salary, description, phone, category } = req.body;
     if (!companyName || !position || !phone) return res.status(400).json({ error: 'Заполните компанию, должность и телефон' });
-    const result = await pool.query(
-      'INSERT INTO jobs (company_name, position, salary, description, phone, category) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
-      [companyName, position, salary || null, description || null, phone, category || 'boshqa']
-    );
+    const result = await pool.query('INSERT INTO jobs (company_name, position, salary, description, phone, category) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *', [companyName, position, salary || null, description || null, phone, category || 'boshqa']);
     res.json({ job: result.rows[0] });
   } catch (error: any) {
     console.error('Job create error:', error);
@@ -628,10 +471,7 @@ app.post('/api/restaurants/create', async (req, res) => {
     const { adminId, name, category, address, phone, description } = req.body;
     if (Number(adminId) !== 988368940) return res.status(403).json({ error: 'Доступ запрещён' });
     if (!name) return res.status(400).json({ error: 'Укажите название' });
-    const result = await pool.query(
-      'INSERT INTO restaurants (name, category, address, phone, description) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-      [name, category || null, address || null, phone || null, description || null]
-    );
+    const result = await pool.query('INSERT INTO restaurants (name, category, address, phone, description) VALUES ($1, $2, $3, $4, $5) RETURNING *', [name, category || null, address || null, phone || null, description || null]);
     res.json({ restaurant: result.rows[0] });
   } catch (error: any) {
     console.error('Restaurant create error:', error);
@@ -640,22 +480,16 @@ app.post('/api/restaurants/create', async (req, res) => {
 });
 
 // ============ NEWS ============
-
-// Список новостей
 app.get('/api/news/list', async (req, res) => {
   try {
     const { category } = req.query;
-
     let query = 'SELECT * FROM news';
     const params: any[] = [];
-
     if (category && category !== 'all') {
       query += ' WHERE category = $1';
       params.push(category);
     }
-
     query += ' ORDER BY created_at DESC LIMIT 50';
-
     const result = await pool.query(query, params);
     res.json({ news: result.rows });
   } catch (error: any) {
@@ -664,24 +498,12 @@ app.get('/api/news/list', async (req, res) => {
   }
 });
 
-// Добавить новость (только для админа)
 app.post('/api/news/create', async (req, res) => {
   try {
     const { adminId, category, title, content, imageUrl, source } = req.body;
-
-    if (Number(adminId) !== 988368940) {
-      return res.status(403).json({ error: 'Доступ запрещён' });
-    }
-
-    if (!category || !title) {
-      return res.status(400).json({ error: 'Укажите категорию и заголовок' });
-    }
-
-    const result = await pool.query(
-      'INSERT INTO news (category, title, content, image_url, source) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-      [category, title, content || null, imageUrl || null, source || null]
-    );
-
+    if (Number(adminId) !== 988368940) return res.status(403).json({ error: 'Доступ запрещён' });
+    if (!category || !title) return res.status(400).json({ error: 'Укажите категорию и заголовок' });
+    const result = await pool.query('INSERT INTO news (category, title, content, image_url, source) VALUES ($1, $2, $3, $4, $5) RETURNING *', [category, title, content || null, imageUrl || null, source || null]);
     res.json({ news: result.rows[0] });
   } catch (error: any) {
     console.error('News create error:', error);
@@ -689,74 +511,41 @@ app.post('/api/news/create', async (req, res) => {
   }
 });
 
-// Автоматический сбор новостей (Sputnik через Telegram)
 app.get('/api/fetch-news', async (req, res) => {
   try {
     const response = await fetch('https://t.me/s/sputnik_lotin');
     const html = await response.text();
-
-    // Разбиваем на сообщения
     const messages = html.split('tgme_widget_message_wrap').slice(1);
     let added = 0;
-
     for (const msg of messages.slice(0, 20)) {
-      // Текст поста
       const textMatch = msg.match(/tgme_widget_message_text[^>]*>([\s\S]*?)<\/div>/);
-      // Ссылка на пост
       const linkMatch = msg.match(/data-post="([^"]*)"/);
-
       if (!textMatch || !linkMatch) continue;
-
-      // Очищаем текст от HTML
       let text = textMatch[1].replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
-      
-      // Первая строка — заголовок
       const lines = text.split('\n').filter((l: string) => l.trim());
       const title = lines[0] ? lines[0].substring(0, 200) : 'Yangilik';
       const content = lines.slice(1).join('\n').substring(0, 1000);
-
       const link = `https://t.me/${linkMatch[1]}`;
-
-      const existing = await pool.query(
-        'SELECT id FROM news WHERE source = $1',
-        [link]
-      );
-
+      const existing = await pool.query('SELECT id FROM news WHERE source = $1', [link]);
       if (existing.rows.length === 0) {
-             let category = 'uzbekistan';
+        let category = 'uzbekistan';
         const lowerTitle = title.toLowerCase();
-        
         if (lowerTitle.includes('бекабад') || lowerTitle.includes('bekobod')) {
           category = 'bekobod';
         } else if (
-          lowerTitle.includes('россия') || 
-          lowerTitle.includes('сша') || 
-          lowerTitle.includes('китай') || 
-          lowerTitle.includes('европ') ||
-          lowerTitle.includes('украин') ||
-          lowerTitle.includes('трамп') ||
-          lowerTitle.includes('путин') ||
-          lowerTitle.includes('латвия') ||
-          lowerTitle.includes('германия') ||
-          lowerTitle.includes('доминикан') ||
-          lowerTitle.includes('кабардин') ||
-          lowerTitle.includes('москв') ||
-          lowerTitle.includes('nato') ||
-          lowerTitle.includes('нато') ||
-          lowerTitle.includes('курск') ||
-          lowerTitle.includes('израил') ||
-          lowerTitle.includes('палестин')
-         ) {
+          lowerTitle.includes('россия') || lowerTitle.includes('сша') || lowerTitle.includes('китай') ||
+          lowerTitle.includes('европ') || lowerTitle.includes('украин') || lowerTitle.includes('трамп') ||
+          lowerTitle.includes('путин') || lowerTitle.includes('латвия') || lowerTitle.includes('германия') ||
+          lowerTitle.includes('доминикан') || lowerTitle.includes('кабардин') || lowerTitle.includes('москв') ||
+          lowerTitle.includes('nato') || lowerTitle.includes('нато') || lowerTitle.includes('курск') ||
+          lowerTitle.includes('израил') || lowerTitle.includes('палестин')
+        ) {
           continue;
         }
-        await pool.query(
-          `INSERT INTO news (category, title, content, source) VALUES ($1, $2, $3, $4)`,
-          [category, title, content, link]
-        );
+        await pool.query(`INSERT INTO news (category, title, content, source) VALUES ($1, $2, $3, $4)`, [category, title, content, link]);
         added++;
       }
     }
-
     res.json({ added });
   } catch (error: any) {
     console.error('Fetch news error:', error);
@@ -764,69 +553,46 @@ app.get('/api/fetch-news', async (req, res) => {
   }
 });
 
-// Автоматический сбор мировых новостей (BBC через Telegram)
 app.get('/api/fetch-world-news', async (req, res) => {
   try {
     const response = await fetch('https://t.me/s/bbcuzbek');
     const html = await response.text();
-
     const messages = html.split('tgme_widget_message_wrap').slice(1);
     let added = 0;
-
     for (const msg of messages.slice(0, 20)) {
       const textMatch = msg.match(/tgme_widget_message_text[^>]*>([\s\S]*?)<\/div>/);
       const linkMatch = msg.match(/data-post="([^"]*)"/);
-
       if (!textMatch || !linkMatch) continue;
-
       let text = textMatch[1].replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
-      
       const lines = text.split('\n').filter((l: string) => l.trim());
       const title = lines[0] ? lines[0].substring(0, 200) : 'Jahon yangiligi';
       const content = lines.slice(1).join('\n').substring(0, 1000);
-
       const link = `https://t.me/${linkMatch[1]}`;
-
-      const existing = await pool.query(
-        'SELECT id FROM news WHERE source = $1',
-        [link]
-      );
-
+      const existing = await pool.query('SELECT id FROM news WHERE source = $1', [link]);
       if (existing.rows.length === 0) {
-        await pool.query(
-          `INSERT INTO news (category, title, content, source) VALUES ($1, $2, $3, $4)`,
-          ['jahon', title, content, link]
-        );
+        await pool.query(`INSERT INTO news (category, title, content, source) VALUES ($1, $2, $3, $4)`, ['jahon', title, content, link]);
         added++;
       }
     }
-
     res.json({ added });
   } catch (error: any) {
     console.error('Fetch world news error:', error);
     res.status(500).json({ error: error.message });
   }
 });
-// ============ EVENTS (TADBIRLAR) ============
 
-// Список событий
+// ============ EVENTS ============
 app.get('/api/events/list', async (req, res) => {
   try {
     const { category } = req.query;
-
     let query = "SELECT * FROM events WHERE status = 'active'";
     const params: any[] = [];
-
     if (category && category !== 'all') {
       query += ' AND category = $1';
       params.push(category);
     }
-
     query += ' ORDER BY event_date ASC';
-
     const result = await pool.query(query, params);
-    
-    // Преобразуем file_id в URL для фото
     const botToken = process.env.TELEGRAM_BOT_TOKEN;
     const events = await Promise.all(result.rows.map(async (event) => {
       if (event.image_url && !event.image_url.startsWith('http') && botToken) {
@@ -836,13 +602,10 @@ app.get('/api/events/list', async (req, res) => {
           if (fileData.ok) {
             event.image_url = `https://api.telegram.org/file/bot${botToken}/${fileData.result.file_path}`;
           }
-        } catch (e) {
-          console.error('File fetch error:', e);
-        }
+        } catch (e) {}
       }
       return event;
     }));
-
     res.json({ events });
   } catch (error: any) {
     console.error('Events list error:', error);
@@ -850,32 +613,15 @@ app.get('/api/events/list', async (req, res) => {
   }
 });
 
-// Отправить заявку на поздравление (для дней рождения)
 app.post('/api/events/birthday-request', async (req, res) => {
   try {
     const { userId, userName, name, birthDate, message, phone } = req.body;
-
-    if (!name || !birthDate || !message) {
-      return res.status(400).json({ error: 'Заполните имя, дату и поздравление' });
-    }
-
+    if (!name || !birthDate || !message) return res.status(400).json({ error: 'Заполните имя, дату и поздравление' });
     const result = await pool.query(
-      `INSERT INTO events (category, title, description, event_date, phone, status) 
-       VALUES ($1, $2, $3, $4, $5, 'pending') RETURNING *`,
+      `INSERT INTO events (category, title, description, event_date, phone, status) VALUES ($1, $2, $3, $4, $5, 'pending') RETURNING *`,
       ['tugilgan_kun', name, message, birthDate, phone || null]
     );
-
-    // Уведомляем админа
-    await sendTelegramMessage(
-      988368940,
-      `🎂 <b>Yangi tug'ilgan kun so'rovi!</b>\n\n` +
-      `👤 Ism: ${name}\n` +
-      `📅 Sana: ${birthDate}\n` +
-      `💬 Xabar: ${message}\n` +
-      `📞 Telefon: ${phone || 'ko\'rsatilmagan'}\n\n` +
-      `✅ Tasdiqlash: <code>/approve_event ${result.rows[0].id}</code>`
-    );
-
+    await sendTelegramMessage(988368940, `🎂 Yangi tug'ilgan kun so'rovi! Ism: ${name}, Sana: ${birthDate}, Xabar: ${message}, Tel: ${phone || 'yo\'q'}\n\nTasdiqlash: /approve_event ${result.rows[0].id}`);
     res.json({ ok: true, event: result.rows[0] });
   } catch (error: any) {
     console.error('Birthday request error:', error);
@@ -883,20 +629,11 @@ app.post('/api/events/birthday-request', async (req, res) => {
   }
 });
 
-// Одобрить событие (только для админа)
 app.post('/api/events/approve', async (req, res) => {
   try {
     const { adminId, eventId } = req.body;
-
-    if (Number(adminId) !== 988368940) {
-      return res.status(403).json({ error: 'Доступ запрещён' });
-    }
-
-    await pool.query(
-      "UPDATE events SET status = 'active' WHERE id = $1",
-      [eventId]
-    );
-
+    if (Number(adminId) !== 988368940) return res.status(403).json({ error: 'Доступ запрещён' });
+    await pool.query("UPDATE events SET status = 'active' WHERE id = $1", [eventId]);
     res.json({ ok: true });
   } catch (error: any) {
     console.error('Event approve error:', error);
@@ -905,41 +642,18 @@ app.post('/api/events/approve', async (req, res) => {
 });
 
 // ============ IBODAT (NAMOZ VAQTLARI) ============
-
-// Расписание намаза для Бекабада
 app.get('/api/prayer-times', async (req, res) => {
   try {
-    const response = await fetch(
-      'https://api.aladhan.com/v1/timings?latitude=40.22&longitude=69.22&method=2'
-    );
+    const response = await fetch('https://api.aladhan.com/v1/timings?latitude=40.22&longitude=69.22&method=2');
     const data = await response.json();
-
-    if (data.code !== 200) {
-      throw new Error('API error');
-    }
-
+    if (data.code !== 200) throw new Error('API error');
     const timings = data.data.timings;
     const hijri = data.data.date.hijri;
     const gregorian = data.data.date.gregorian;
-
     res.json({
-      timings: {
-        Fajr: timings.Fajr,
-        Sunrise: timings.Sunrise,
-        Dhuhr: timings.Dhuhr,
-        Asr: timings.Asr,
-        Maghrib: timings.Maghrib,
-        Isha: timings.Isha,
-      },
-      hijri: {
-        day: hijri.day,
-        month: hijri.month.en,
-        year: hijri.year,
-      },
-      gregorian: {
-        date: gregorian.date,
-        weekday: gregorian.weekday.en,
-      },
+      timings: { Fajr: timings.Fajr, Sunrise: timings.Sunrise, Dhuhr: timings.Dhuhr, Asr: timings.Asr, Maghrib: timings.Maghrib, Isha: timings.Isha },
+      hijri: { day: hijri.day, month: hijri.month.en, year: hijri.year },
+      gregorian: { date: gregorian.date, weekday: gregorian.weekday.en },
     });
   } catch (error: any) {
     console.error('Prayer times error:', error);
@@ -947,18 +661,12 @@ app.get('/api/prayer-times', async (req, res) => {
   }
 });
 
-// ============ SURALAR (QUR'ON) ============
-
-// Список всех сур
+// ============ SURALAR ============
 app.get('/api/surahs', async (req, res) => {
   try {
     const response = await fetch('https://api.alquran.cloud/v1/surah');
     const data = await response.json();
-
-    if (data.code !== 200) {
-      throw new Error('API error');
-    }
-
+    if (data.code !== 200) throw new Error('API error');
     res.json({ surahs: data.data });
   } catch (error: any) {
     console.error('Surahs error:', error);
@@ -966,28 +674,19 @@ app.get('/api/surahs', async (req, res) => {
   }
 });
 
-// Текст конкретной суры (транскрипция + перевод)
 app.get('/api/surah/:number', async (req, res) => {
   try {
     const { number } = req.params;
-    const response = await fetch(
-      `https://api.alquran.cloud/v1/surah/${number}/editions/en.transliteration,ru.kuliev`
-    );
+    const response = await fetch(`https://api.alquran.cloud/v1/surah/${number}/editions/en.transliteration,ru.kuliev`);
     const data = await response.json();
-
-    if (data.code !== 200) {
-      throw new Error('API error');
-    }
-
+    if (data.code !== 200) throw new Error('API error');
     const transliteration = data.data[0];
     const translation = data.data[1];
-
     const ayahs = transliteration.ayahs.map((ayah: any, index: number) => ({
       number: ayah.numberInSurah,
       transliteration: ayah.text || '',
       translation: translation.ayahs[index]?.text || '',
     }));
-
     res.json({
       number: transliteration.number,
       name: transliteration.name,
@@ -1003,63 +702,79 @@ app.get('/api/surah/:number', async (req, res) => {
   }
 });
 
-// ============ TIBBIYOT (SHIFOKORLAR) ============
-
-// Список врачей
-app.get('/api/doctors/list', async (req, res) => {
+// ============ TIBBIYOT ============
+app.get('/api/med/list', async (req, res) => {
   try {
-    const { specialty } = req.query;
-
+    const { type, specialty } = req.query;
     let query = 'SELECT * FROM doctors';
     const params: any[] = [];
-
+    const conditions: string[] = [];
+    if (type && type !== 'all') {
+      conditions.push(`type = $${params.length + 1}`);
+      params.push(type);
+    }
     if (specialty && specialty !== 'all') {
-      query += ' WHERE specialty = $1';
+      conditions.push(`specialty = $${params.length + 1}`);
       params.push(specialty);
     }
-
+    if (conditions.length > 0) {
+      query += ' WHERE ' + conditions.join(' AND ');
+    }
     query += ' ORDER BY name ASC';
-
     const result = await pool.query(query, params);
-    res.json({ doctors: result.rows });
+    res.json({ med: result.rows });
   } catch (error: any) {
-    console.error('Doctors list error:', error);
+    console.error('Med list error:', error);
     res.status(500).json({ error: error.message });
   }
 });
 
-// Добавить врача (только для админа)
-app.post('/api/doctors/create', async (req, res) => {
+// Добавить медучреждение (только для админа)
+app.post('/api/med/create', async (req, res) => {
   try {
-    const { adminId, name, specialty, phone, address, description } = req.body;
+    const { adminId, type, name, specialty, phone, address, description } = req.body;
 
     if (Number(adminId) !== 988368940) {
       return res.status(403).json({ error: 'Доступ запрещён' });
     }
 
-    if (!name || !specialty) {
-      return res.status(400).json({ error: 'Укажите имя и специальность' });
+    if (!name || !type) {
+      return res.status(400).json({ error: 'Укажите название и тип' });
     }
 
     const result = await pool.query(
-      'INSERT INTO doctors (name, specialty, phone, address, description) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-      [name, specialty, phone || null, address || null, description || null]
+      'INSERT INTO doctors (type, name, specialty, phone, address, description) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+      [type, name, specialty || type, phone || null, address || null, description || null]
     );
 
-    res.json({ doctor: result.rows[0] });
+    res.json({ med: result.rows[0] });
   } catch (error: any) {
-    console.error('Doctor create error:', error);
+    console.error('Med create error:', error);
     res.status(500).json({ error: error.message });
   }
 });
-// ============ STATIC (ЛОВУШКА В САМОМ КОНЦЕ!) ============
+app.post('/api/med/create', async (req, res) => {
+  try {
+    const { adminId, type, name, specialty, phone, address, description } = req.body;
+    if (Number(adminId) !== 988368940) return res.status(403).json({ error: 'Доступ запрещён' });
+    if (!name || !type) return res.status(400).json({ error: 'Укажите название и тип' });
+    const result = await pool.query(
+      'INSERT INTO doctors (type, name, specialty, phone, address, description) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+      [type, name, specialty || type, phone || null, address || null, description || null]
+    );
+    res.json({ med: result.rows[0] });
+  } catch (error: any) {
+    console.error('Med create error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ============ STATIC ============
 const distPath = path.join(process.cwd(), 'dist');
 app.use(express.static(distPath));
-
 app.use((req, res) => {
   res.sendFile(path.join(distPath, 'index.html'));
 });
-
 app.listen(PORT, () => {
   console.log(`Bekobod server running on port ${PORT}`);
 });

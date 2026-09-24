@@ -160,12 +160,12 @@ export const SuralarView: React.FC<SuralarViewProps> = ({ onClose }) => {
                   <div className="w-10 h-10 rounded-xl bg-linear-to-br from-amber-500 to-orange-600 text-white flex items-center justify-center font-bold text-sm shrink-0">
                     {surah.number}
                   </div>
-                  <div className="text-left">
+                                    <div className="text-left">
                     <div className="font-bold text-stone-900">
-                      {surah.englishName}
+                      {surah.number}. {surah.name}
                     </div>
                     <div className="text-xs text-stone-500">
-                      {surah.englishNameTranslation} • {surah.numberOfAyahs} oyat
+                      {surah.numberOfAyahs} oyat • {surah.revelationType === 'Meccan' ? 'Makkiy' : 'Madaniy'}
                     </div>
                   </div>
                 </div>

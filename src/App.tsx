@@ -68,11 +68,22 @@ function App() {
     }
   }, []);
   useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentAd((prev) => (prev + 1) % ads.length);
-    }, 4000);
-    return () => clearInterval(interval);
-  }, []);
+  const tg = (window as any).Telegram?.WebApp;
+  
+  if (tg?.initDataUnsafe?.user?.id) {
+    setUserId(tg.initDataUnsafe.user.id);
+  }
+  
+  // Отключаем свайп вниз для закрытия приложения
+  if (tg?.disableVerticalSwipes) {
+    tg.disableVerticalSwipes();
+  }
+  
+  // Расширяем на весь экран
+  if (tg?.expand) {
+    tg.expand();
+  }
+}, []);
 
   useEffect(() => {
     const lat = 40.22;

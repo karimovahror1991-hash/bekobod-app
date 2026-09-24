@@ -45,7 +45,51 @@ app.post('/api/telegram-webhook', async (req, res) => {
     if (!message?.from) {
       return res.sendStatus(200);
     }
+ // Команда /add_place (рестораны, кафе и т.д.)
+    if (message?.text?.startsWith('/add_place') && message.from.id === 988368940) {
+      const parts = message.text.split('|').map((s: string) => s.trim());
+      
+      if (parts.length < 3) {
+        await sendTelegramMessage(
+          message.from.id,
+          `❌ <b>Format:</b>\n<code>/add_place kategoriya | nomi | manzil | telefon | tavsif</code>\n\n` +
+          `<b>Kategoriyalar:</b> fastfood, milliy, kafe, restoran, chayxana, shirinlik, yarim_tayyor\n\n` +
+          `<b>Misol:</b>\n<code>/add_place fastfood | AGASI FOOD | Bunyodkor 55 | +998903277714 | Mazali taomlar</code>`
+        );
+      } else {
+        const category = parts[0].replace('/add_place', '').trim();
+        const name = parts[1];
+        const address = parts[2] || null;
+        const phone = parts[3] || null;
+        const description = parts[4] || null;
 
+        const result = await pool.query(
+          'INSERT INTO restaurants (name, category, address, phone, description) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+          [name, category, address, phone, description]
+        );
+
+        await sendTelegramMessage(
+          message.from.id,
+          `✅ <b>Qo'shildi!</b>\n\n📌 ${name}\n📍 ${address || "yo'q"}\n📞 ${phone || "yo'q"}\nID: <code>${result.rows[0].id}</code>`
+        );
+      }
+    }
+
+    // Команда /delete_place ID
+    if (message?.text?.startsWith('/delete_place') && message.from.id === 988368940) {
+      const placeId = Number(message.text.split(' ')[1]);
+
+      if (!placeId) {
+        await sendTelegramMessage(message.from.id, "❌ /delete_place ID");
+      } else {
+        const result = await pool.query('DELETE FROM restaurants WHERE id = $1 RETURNING name', [placeId]);
+        if (result.rows.length === 0) {
+          await sendTelegramMessage(message.from.id, `❌ Topilmadi (ID: ${placeId})`);
+        } else {
+          await sendTelegramMessage(message.from.id, `✅ O'chirildi: <b>${result.rows[0].name}</b>`);
+        }
+      }
+    }
     await pool.query(
       `INSERT INTO bot_users (user_id, username, first_name, last_interaction) 
        VALUES ($1, $2, $3, NOW()) 
@@ -432,7 +476,7 @@ app.post('/api/admin/reply', async (req, res) => {
   }
 });
 
-// ============ JOBS (VAKANSIYA) ============
+   // ============ JOBS (VAKANSIYA) ============
 app.post('/api/jobs/create', async (req, res) => {
   try {
     const { companyName, position, salary, description, phone, category } = req.body;
@@ -774,22 +818,6 @@ app.post('/api/med/create', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
-app.post('/api/med/create', async (req, res) => {
-  try {
-    const { adminId, type, name, specialty, phone, address, description } = req.body;
-    if (Number(adminId) !== 988368940) return res.status(403).json({ error: 'Доступ запрещён' });
-    if (!name || !type) return res.status(400).json({ error: 'Укажите название и тип' });
-    const result = await pool.query(
-      'INSERT INTO doctors (type, name, specialty, phone, address, description) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
-      [type, name, specialty || type, phone || null, address || null, description || null]
-    );
-    res.json({ med: result.rows[0] });
-  } catch (error: any) {
-    console.error('Med create error:', error);
-    res.status(500).json({ error: error.message });
-  }
-});
-
 // ============ STATIC ============
 const distPath = path.join(process.cwd(), 'dist');
 app.use(express.static(distPath));

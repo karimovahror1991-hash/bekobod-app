@@ -171,6 +171,50 @@ app.post('/api/telegram-webhook', async (req, res) => {
       }
     }
 
+    // Команда /add_contact
+    if (message?.text?.startsWith('/add_contact') && message.from.id === 988368940) {
+      const parts = message.text.split('|').map((s: string) => s.trim());
+      
+      if (parts.length < 3) {
+        await sendTelegramMessage(
+          message.from.id,
+          `❌ <b>Format:</b>\n<code>/add_contact kategoriya | nomi | telefon | manzil</code>\n\n` +
+          `<b>Kategoriyalar:</b> favqulodda, hokimiyat, aloqa, banklar, soliq, boshqa\n\n` +
+          `<b>Misol:</b>\n<code>/add_contact banklar | Xalq banki | +998712102002 | Navoiy 5</code>`
+        );
+      } else {
+        const category = parts[0].replace('/add_contact', '').trim();
+        const name = parts[1];
+        const phone = parts[2] || null;
+        const address = parts[3] || null;
+
+        const result = await pool.query(
+          'INSERT INTO contacts (category, name, phone, address) VALUES ($1, $2, $3, $4) RETURNING *',
+          [category, name, phone, address]
+        );
+
+        await sendTelegramMessage(
+          message.from.id,
+          `✅ <b>Kontakt qo'shildi!</b>\n\n📌 ${name}\n📂 ${category}\n📞 ${phone || "yo'q"}\n📍 ${address || "yo'q"}\nID: <code>${result.rows[0].id}</code>`
+        );
+      }
+    }
+
+    // Команда /delete_contact ID
+    if (message?.text?.startsWith('/delete_contact') && message.from.id === 988368940) {
+      const contactId = Number(message.text.split(' ')[1]);
+
+      if (!contactId) {
+        await sendTelegramMessage(message.from.id, "❌ /delete_contact ID");
+      } else {
+        const result = await pool.query('DELETE FROM contacts WHERE id = $1 RETURNING name', [contactId]);
+        if (result.rows.length === 0) {
+          await sendTelegramMessage(message.from.id, `❌ Topilmadi (ID: ${contactId})`);
+        } else {
+          await sendTelegramMessage(message.from.id, `✅ O'chirildi: <b>${result.rows[0].name}</b>`);
+        }
+      }
+    }
     if (message?.text?.startsWith('/add_med') && message.from.id === 988368940) {
       const parts = message.text.split('|').map((s: string) => s.trim());
       if (parts.length < 3) {
@@ -476,6 +520,41 @@ app.post('/api/admin/reply', async (req, res) => {
   }
 });
 
+// ============ CONTACTS (SHAHAR TELEFONLARI) ============
+
+app.get('/api/contacts/list', async (req, res) => {
+  try {
+    const { category } = req.query;
+    let query = 'SELECT * FROM contacts';
+    const params: any[] = [];
+    if (category && category !== 'all') {
+      query += ' WHERE category = $1';
+      params.push(category);
+    }
+    query += ' ORDER BY name ASC';
+    const result = await pool.query(query, params);
+    res.json({ contacts: result.rows });
+  } catch (error: any) {
+    console.error('Contacts list error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/contacts/create', async (req, res) => {
+  try {
+    const { adminId, category, name, phone, address } = req.body;
+    if (Number(adminId) !== 988368940) return res.status(403).json({ error: 'Доступ запрещён' });
+    if (!category || !name) return res.status(400).json({ error: 'Укажите категорию и название' });
+    const result = await pool.query(
+      'INSERT INTO contacts (category, name, phone, address) VALUES ($1, $2, $3, $4) RETURNING *',
+      [category, name, phone || null, address || null]
+    );
+    res.json({ contact: result.rows[0] });
+  } catch (error: any) {
+    console.error('Contact create error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
    // ============ JOBS (VAKANSIYA) ============
 app.post('/api/jobs/create', async (req, res) => {
   try {
@@ -815,6 +894,56 @@ app.post('/api/med/create', async (req, res) => {
     res.json({ med: result.rows[0] });
   } catch (error: any) {
     console.error('Med create error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ============ CONTACTS (SHAHAR TELEFONLARI) ============
+
+// Список контактов
+app.get('/api/contacts/list', async (req, res) => {
+  try {
+    const { category } = req.query;
+
+    let query = 'SELECT * FROM contacts';
+    const params: any[] = [];
+
+    if (category && category !== 'all') {
+      query += ' WHERE category = $1';
+      params.push(category);
+    }
+
+    query += ' ORDER BY name ASC';
+
+    const result = await pool.query(query, params);
+    res.json({ contacts: result.rows });
+  } catch (error: any) {
+    console.error('Contacts list error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Добавить контакт (только для админа)
+app.post('/api/contacts/create', async (req, res) => {
+  try {
+    const { adminId, category, name, phone, address } = req.body;
+
+    if (Number(adminId) !== 988368940) {
+      return res.status(403).json({ error: 'Доступ запрещён' });
+    }
+
+    if (!category || !name) {
+      return res.status(400).json({ error: 'Укажите категорию и название' });
+    }
+
+    const result = await pool.query(
+      'INSERT INTO contacts (category, name, phone, address) VALUES ($1, $2, $3, $4) RETURNING *',
+      [category, name, phone || null, address || null]
+    );
+
+    res.json({ contact: result.rows[0] });
+  } catch (error: any) {
+    console.error('Contact create error:', error);
     res.status(500).json({ error: error.message });
   }
 });

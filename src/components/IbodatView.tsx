@@ -1,3 +1,4 @@
+import { SuralarView } from './SuralarView';
 import { DuolarView } from './DuolarView';
 import { QiblaView } from './QiblaView';
 import React, { useState, useEffect } from 'react';
@@ -41,6 +42,10 @@ export const IbodatView: React.FC<IbodatViewProps> = ({ onClose }) => {
   // Экран «Duolar»
   if (selectedCategory === 'duolar') {
     return <DuolarView onClose={() => setSelectedCategory(null)} />;
+  }
+    // Экран «Suralar»
+  if (selectedCategory === 'suralar') {
+    return <SuralarView onClose={() => setSelectedCategory(null)} />;
   }
     // Экран «Namoz vaqtlari»
   if (selectedCategory === 'namoz') {

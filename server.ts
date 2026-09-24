@@ -932,12 +932,12 @@ app.get('/api/surahs', async (req, res) => {
   }
 });
 
-// Текст конкретной суры
+// Текст конкретной суры (транскрипция + перевод)
 app.get('/api/surah/:number', async (req, res) => {
   try {
     const { number } = req.params;
     const response = await fetch(
-      `https://api.alquran.cloud/v1/surah/${number}/editions/quran-uthmani,en.transliteration,ru.kuliev`
+      `https://api.alquran.cloud/v1/surah/${number}/editions/en.transliteration,ru.kuliev`
     );
     const data = await response.json();
 
@@ -945,24 +945,22 @@ app.get('/api/surah/:number', async (req, res) => {
       throw new Error('API error');
     }
 
-    const arabic = data.data[0];
-    const transliteration = data.data[1];
-    const translation = data.data[2];
+    const transliteration = data.data[0];
+    const translation = data.data[1];
 
-    const ayahs = arabic.ayahs.map((ayah: any, index: number) => ({
+    const ayahs = transliteration.ayahs.map((ayah: any, index: number) => ({
       number: ayah.numberInSurah,
-      arabic: ayah.text,
-      transliteration: transliteration.ayahs[index]?.text || '',
+      transliteration: ayah.text || '',
       translation: translation.ayahs[index]?.text || '',
     }));
 
     res.json({
-      number: arabic.number,
-      name: arabic.name,
-      englishName: arabic.englishName,
-      englishNameTranslation: arabic.englishNameTranslation,
-      revelationType: arabic.revelationType,
-      numberOfAyahs: arabic.numberOfAyahs,
+      number: transliteration.number,
+      name: transliteration.name,
+      englishName: transliteration.englishName,
+      englishNameTranslation: transliteration.englishNameTranslation,
+      revelationType: transliteration.revelationType,
+      numberOfAyahs: transliteration.numberOfAyahs,
       ayahs,
     });
   } catch (error: any) {

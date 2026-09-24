@@ -1,3 +1,4 @@
+import { ShifokorlarView } from './ShifokorlarView';
 import React, { useState } from 'react';
 import { ArrowLeft, Loader2, ChevronRight, Phone, MapPin, User, Clock } from 'lucide-react';
 
@@ -30,7 +31,10 @@ const CATEGORIES = [
 
 export const TibbiyotView: React.FC<TibbiyotViewProps> = ({ onClose }) => {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-
+  // Экран «Shifokorlar»
+  if (selectedCategory === 'shifokorlar') {
+    return <ShifokorlarView onClose={() => setSelectedCategory(null)} />;
+  }
   // Экран «Tez yordam» (простой список номеров)
   if (selectedCategory === 'tez-yordam') {
     return (

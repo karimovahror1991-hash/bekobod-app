@@ -1,3 +1,4 @@
+import { TibbiyotView } from './components/TibbiyotView';
 import { IbodatView } from './components/IbodatView';
 import { EventsView } from './components/EventsView';
 import { NewsView } from './components/NewsView';
@@ -18,7 +19,8 @@ import {
   UtensilsCrossed,
   Phone,
   Mail,
-  Moon
+  Moon,
+  Heart
 } from 'lucide-react';
 import { EmergencyView } from './components/EmergencyView';
 import { TransportView } from './components/TransportView';
@@ -39,7 +41,7 @@ const sections: Section[] = [
   { id: 'events', titleUz: 'Tadbirlar', titleRu: 'События', icon: PartyPopper, gradient: 'from-pink-500 to-rose-500' },
   { id: 'transport', titleUz: 'Transport', titleRu: 'Транспорт', icon: Bus, gradient: 'from-emerald-500 to-green-600' },
     { id: 'admin', titleUz: 'Administrator', titleRu: 'Администратор', icon: Mail, gradient: 'from-indigo-500 to-violet-600' },
-  { id: 'market', titleUz: 'Oldi-sotdi', titleRu: 'Купля-продажа', icon: ShoppingCart, gradient: 'from-orange-500 to-red-500' },
+    { id: 'tibbiyot', titleUz: 'Tibbiyot', titleRu: 'Медицина', icon: Heart, gradient: 'from-rose-500 to-red-600' },
   { id: 'services', titleUz: 'Xizmatlar', titleRu: 'Услуги', icon: Wrench, gradient: 'from-cyan-500 to-teal-600' },
   { id: 'jobs', titleUz: 'Vakansiya', titleRu: 'Вакансии', icon: Briefcase, gradient: 'from-violet-500 to-purple-600' },
     { id: 'emergency', titleUz: 'Shahar telefonlari', titleRu: 'Справочная служба', icon: Phone, gradient: 'from-rose-500 to-red-600' },
@@ -121,6 +123,9 @@ function App() {
   }
     if (activeSection === 'ibodat') {
     return <IbodatView onClose={() => setActiveSection(null)} />;
+  }
+    if (activeSection === 'tibbiyot') {
+    return <TibbiyotView onClose={() => setActiveSection(null)} />;
   }
   if (activeSection === 'services') {
   return <ServicesView onClose={() => setActiveSection(null)} />;

@@ -912,6 +912,64 @@ app.get('/api/prayer-times', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
+// ============ SURALAR (QUR'ON) ============
+
+// Список всех сур
+app.get('/api/surahs', async (req, res) => {
+  try {
+    const response = await fetch('https://api.alquran.cloud/v1/surah');
+    const data = await response.json();
+
+    if (data.code !== 200) {
+      throw new Error('API error');
+    }
+
+    res.json({ surahs: data.data });
+  } catch (error: any) {
+    console.error('Surahs error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Текст конкретной суры
+app.get('/api/surah/:number', async (req, res) => {
+  try {
+    const { number } = req.params;
+    const response = await fetch(
+      `https://api.alquran.cloud/v1/surah/${number}/editions/quran-uthmani,en.transliteration,ru.kuliev`
+    );
+    const data = await response.json();
+
+    if (data.code !== 200) {
+      throw new Error('API error');
+    }
+
+    const arabic = data.data[0];
+    const transliteration = data.data[1];
+    const translation = data.data[2];
+
+    const ayahs = arabic.ayahs.map((ayah: any, index: number) => ({
+      number: ayah.numberInSurah,
+      arabic: ayah.text,
+      transliteration: transliteration.ayahs[index]?.text || '',
+      translation: translation.ayahs[index]?.text || '',
+    }));
+
+    res.json({
+      number: arabic.number,
+      name: arabic.name,
+      englishName: arabic.englishName,
+      englishNameTranslation: arabic.englishNameTranslation,
+      revelationType: arabic.revelationType,
+      numberOfAyahs: arabic.numberOfAyahs,
+      ayahs,
+    });
+  } catch (error: any) {
+    console.error('Surah error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
 // ============ STATIC (ЛОВУШКА В САМОМ КОНЦЕ!) ============
 const distPath = path.join(process.cwd(), 'dist');
 app.use(express.static(distPath));

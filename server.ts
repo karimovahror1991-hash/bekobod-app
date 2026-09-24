@@ -661,6 +661,27 @@ app.get('/api/prayer-times', async (req, res) => {
   }
 });
 
+// ============ KURS VALYUT ============
+app.get('/api/exchange-rates', async (req, res) => {
+  try {
+    const response = await fetch('https://cbu.uz/ru/arkhiv-kursov-valyut/json/');
+    const data = await response.json();
+
+    const usd = data.find((item: any) => item.Ccy === 'USD');
+    const eur = data.find((item: any) => item.Ccy === 'EUR');
+    const rub = data.find((item: any) => item.Ccy === 'RUB');
+
+    res.json({
+      usd: usd ? Number(usd.Rate) : null,
+      eur: eur ? Number(eur.Rate) : null,
+      rub: rub ? Number(rub.Rate) : null,
+      date: usd ? usd.Date : null,
+    });
+  } catch (error: any) {
+    console.error('Exchange rates error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
 // ============ SURALAR ============
 app.get('/api/surahs', async (req, res) => {
   try {

@@ -15,7 +15,6 @@ const CATEGORIES = [
   { id: 'duolar', label: 'Duolar', icon: '📿', gradient: 'from-purple-500 to-violet-600' },
   { id: 'suralar', label: 'Suralar', icon: '📖', gradient: 'from-amber-500 to-orange-600' },
   { id: 'hayitlar', label: 'Hayitlar', icon: '🎉', gradient: 'from-rose-500 to-pink-600' },
-  { id: 'ramazon', label: 'Ramazon', icon: '📅', gradient: 'from-cyan-500 to-blue-600' },
 ];
 
 export const IbodatView: React.FC<IbodatViewProps> = ({ onClose }) => {

@@ -1,134 +1,78 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Loader2, Clock, Calendar } from 'lucide-react';
+import { ArrowLeft, Loader2, ChevronRight, Clock } from 'lucide-react';
 
 interface IbodatViewProps {
   onClose: () => void;
 }
 
-interface PrayerTimes {
-  timings: {
-    Fajr: string;
-    Sunrise: string;
-    Dhuhr: string;
-    Asr: string;
-    Maghrib: string;
-    Isha: string;
-  };
-  hijri: {
-    day: string;
-    month: string;
-    year: string;
-  };
-  gregorian: {
-    date: string;
-    weekday: string;
-  };
-}
+const CATEGORIES = [
+  { id: 'namoz', label: 'Namoz vaqtlari', icon: '🕌', gradient: 'from-emerald-500 to-teal-600' },
+  { id: 'qibla', label: 'Qibla', icon: '🧭', gradient: 'from-blue-500 to-indigo-600' },
+  { id: 'duolar', label: 'Duolar', icon: '📿', gradient: 'from-purple-500 to-violet-600' },
+  { id: 'suralar', label: 'Suralar', icon: '📖', gradient: 'from-amber-500 to-orange-600' },
+  { id: 'hayitlar', label: 'Hayitlar', icon: '🎉', gradient: 'from-rose-500 to-pink-600' },
+  { id: 'ramazon', label: 'Ramazon', icon: '📅', gradient: 'from-cyan-500 to-blue-600' },
+];
 
 export const IbodatView: React.FC<IbodatViewProps> = ({ onClose }) => {
-  const [prayer, setPrayer] = useState<PrayerTimes | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
-  const API_URL = 'https://bekobod-app-1.onrender.com';
+  // Если выбрана категория — показываем заглушку (потом заполним)
+  if (selectedCategory) {
+    const catInfo = CATEGORIES.find(c => c.id === selectedCategory);
+    return (
+      <div className="min-h-screen bg-linear-to-b from-emerald-50 to-teal-100">
+        <div className={`bg-linear-to-br ${catInfo?.gradient} text-white sticky top-0 z-20 shadow-md`}>
+          <div className="max-w-2xl mx-auto px-4 py-4 flex items-center space-x-3">
+            <button
+              onClick={() => setSelectedCategory(null)}
+              className="w-11 h-11 rounded-2xl bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"
+            >
+              <ArrowLeft className="w-6 h-6 text-white" />
+            </button>
+            <h1 className="font-bold text-xl text-white">
+              {catInfo?.icon} {catInfo?.label}
+            </h1>
+          </div>
+        </div>
 
-  useEffect(() => {
-    const loadPrayerTimes = async () => {
-      try {
-        setLoading(true);
-        const res = await fetch(`${API_URL}/api/prayer-times`);
-        const data = await res.json();
-        setPrayer(data);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
+        <div className="max-w-2xl mx-auto px-4 py-16 text-center text-stone-400">
+          <div className="text-6xl mb-4">{catInfo?.icon}</div>
+          <p className="text-sm">Ma'lumot tez orada qo'shiladi</p>
+        </div>
+      </div>
+    );
+  }
 
-    loadPrayerTimes();
-  }, []);
-
-  const prayerNames = [
-    { key: 'Fajr', label: 'Bomdod', icon: '🌅' },
-    { key: 'Sunrise', label: 'Quyosh chiqishi', icon: '☀️' },
-    { key: 'Dhuhr', label: 'Peshin', icon: '🌞' },
-    { key: 'Asr', label: 'Asr', icon: '🌤' },
-    { key: 'Maghrib', label: 'Shom', icon: '🌆' },
-    { key: 'Isha', label: 'Xufton', icon: '🌙' },
-  ];
-
+  // Экран категорий (большие иконки)
   return (
     <div className="min-h-screen bg-linear-to-b from-emerald-50 to-teal-100">
-      {/* Заголовок */}
-      <div className="bg-linear-to-br from-emerald-600 to-teal-700 text-white sticky top-0 z-20 shadow-md">
+      <div className="bg-white/95 backdrop-blur-lg border-b border-stone-200 sticky top-0 z-20 shadow-sm">
         <div className="max-w-2xl mx-auto px-4 py-4 flex items-center space-x-3">
           <button
             onClick={onClose}
-            className="w-11 h-11 rounded-2xl bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"
+            className="w-11 h-11 rounded-2xl bg-stone-100 hover:bg-amber-100 flex items-center justify-center transition-colors"
           >
-            <ArrowLeft className="w-6 h-6 text-white" />
+            <ArrowLeft className="w-6 h-6 text-stone-700" />
           </button>
-          <div>
-            <h1 className="font-bold text-xl text-white">🕌 Ibodat</h1>
-            <p className="text-xs text-white/80">Namoz vaqtlari</p>
-          </div>
+          <h1 className="font-bold text-2xl text-stone-900">🕌 Ibodat</h1>
         </div>
       </div>
 
-      <div className="max-w-2xl mx-auto px-4 py-6 space-y-4">
-        {/* Дата */}
-        {prayer && (
-          <div className="bg-white rounded-3xl p-5 shadow-sm border border-stone-100 space-y-2">
-            <div className="flex items-center justify-center space-x-2 text-stone-700">
-              <Calendar className="w-4 h-4 text-emerald-600" />
-              <span className="font-bold">{prayer.gregorian.date}</span>
-              <span className="text-stone-400">•</span>
-              <span className="text-sm">{prayer.gregorian.weekday}</span>
-            </div>
-            <div className="text-center text-sm text-emerald-700 font-semibold">
-              {prayer.hijri.day} {prayer.hijri.month} {prayer.hijri.year} Ҳ
-            </div>
-          </div>
-        )}
-
-        {/* Времена намаза */}
-        {loading ? (
-          <div className="flex justify-center py-12">
-            <Loader2 className="w-6 h-6 animate-spin text-emerald-600" />
-          </div>
-        ) : prayer ? (
-          <div className="space-y-3">
-            {prayerNames.map((p) => (
-              <div
-                key={p.key}
-                className="bg-white rounded-3xl p-5 shadow-sm border border-stone-100 flex items-center justify-between"
-              >
-                <div className="flex items-center space-x-4">
-                  <div className="text-4xl">{p.icon}</div>
-                  <div>
-                    <div className="font-bold text-base text-stone-900">
-                      {p.label}
-                    </div>
-                    <div className="text-xs text-stone-400">
-                      {p.key}
-                    </div>
-                  </div>
-                </div>
-                <div className="text-3xl font-bold text-emerald-700">
-                  {prayer.timings[p.key as keyof typeof prayer.timings]}
-                </div>
+      <div className="max-w-2xl mx-auto px-4 py-6">
+        <div className="space-y-4">
+          {CATEGORIES.map((cat) => (
+            <button
+              key={cat.id}
+              onClick={() => setSelectedCategory(cat.id)}
+              className={`w-full bg-linear-to-br ${cat.gradient} text-white rounded-3xl p-8 flex flex-col items-center justify-center shadow-xl hover:shadow-2xl transition-all duration-300 active:scale-95 min-h-50`}
+            >
+              <div className="text-7xl mb-4">{cat.icon}</div>
+              <div className="font-bold text-xl text-white text-center leading-tight">
+                {cat.label}
               </div>
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-16 text-stone-400">
-            <p className="text-sm">Ma'lumot yuklanmadi</p>
-          </div>
-        )}
-
-        {/* Примечание */}
-        <div className="bg-emerald-50 rounded-3xl p-4 text-xs text-emerald-800 text-center">
-          Vaqtlar Bekobod shahri uchun hisoblangan
+            </button>
+          ))}
         </div>
       </div>
     </div>

@@ -37,12 +37,12 @@ export const ShifokorlarView: React.FC<ShifokorlarViewProps> = ({ onClose }) => 
   const loadDoctors = async () => {
     try {
       setLoading(true);
-      const url = selectedSpecialty === 'all'
-        ? `${API_URL}/api/doctors/list`
-        : `${API_URL}/api/doctors/list?specialty=${selectedSpecialty}`;
+            const url = selectedSpecialty === 'all'
+        ? `${API_URL}/api/med/list?type=shifokor`
+        : `${API_URL}/api/med/list?type=shifokor&specialty=${selectedSpecialty}`;
       const res = await fetch(url);
       const data = await res.json();
-      setDoctors(data.doctors || []);
+      setDoctors(data.med || []);
     } catch (err) {
       console.error(err);
     } finally {

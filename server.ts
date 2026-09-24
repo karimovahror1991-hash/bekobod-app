@@ -155,36 +155,10 @@ app.post('/api/telegram-webhook', async (req, res) => {
       }
     }
 
-    if (message?.text?.startsWith('/reply') && message.from.id === 988368940) {
+       if (message?.text?.startsWith('/reply') && message.from.id === 988368940) {
       const parts = message.text.split(' ');
       const messageId = Number(parts[1]);
       const replyText = parts.slice(2).join(' ');
-    // Команда /delete_event ID
-    if (message?.text?.startsWith('/delete_event') && message.from.id === 988368940) {
-      const parts = message.text.split(' ');
-      const eventId = Number(parts[1]);
-
-      if (!eventId) {
-        await sendTelegramMessage(
-          message.from.id,
-          "❌ <code>/delete_event ID</code>\nMisol: <code>/delete_event 1</code>"
-        );
-      } else {
-        const result = await pool.query(
-          'DELETE FROM events WHERE id = $1 RETURNING title',
-          [eventId]
-        );
-
-        if (result.rows.length === 0) {
-          await sendTelegramMessage(message.from.id, `❌ Tadbir topilmadi (ID: ${eventId})`);
-        } else {
-          await sendTelegramMessage(
-            message.from.id,
-            `✅ Tadbir o'chirildi: <b>${result.rows[0].title}</b>`
-          );
-        }
-      }
-    }
       if (!messageId || !replyText) {
         await sendTelegramMessage(
           message.from.id,
@@ -212,6 +186,66 @@ app.post('/api/telegram-webhook', async (req, res) => {
       }
     }
 
+    // Команда /add_doctor
+    if (message?.text?.startsWith('/add_doctor') && message.from.id === 988368940) {
+      const parts = message.text.split('|').map((s: string) => s.trim());
+      
+      if (parts.length < 3) {
+        await sendTelegramMessage(
+          message.from.id,
+          `❌ <b>Format:</b>\n<code>/add_doctor ism | mutaxassislik | telefon | manzil</code>\n\n` +
+          `<b>Misol:</b>\n<code>/add_doctor Karimov Anvar | terapevt | +998901234567 | Bunyodkor 10</code>\n\n` +
+          `<b>Mutaxassisliklar:</b> terapevt, stomatolog, pediatr, nevropatolog, okulist, lor, dermatolog, kardiolog`
+        );
+      } else {
+        const name = parts[0].replace('/add_doctor', '').trim();
+        const specialty = parts[1];
+        const phone = parts[2] || null;
+        const address = parts[3] || null;
+
+        const result = await pool.query(
+          'INSERT INTO doctors (name, specialty, phone, address) VALUES ($1, $2, $3, $4) RETURNING *',
+          [name, specialty, phone, address]
+        );
+
+        await sendTelegramMessage(
+          message.from.id,
+          `✅ <b>Shifokor qo'shildi!</b>\n\n` +
+          `👨‍⚕️ ${name}\n` +
+          `🩺 ${specialty}\n` +
+          `📞 ${phone || "ko'rsatilmagan"}\n` +
+          `📍 ${address || "ko'rsatilmagan"}\n` +
+          `ID: <code>${result.rows[0].id}</code>`
+        );
+      }
+    }
+
+    // Команда /delete_doctor ID
+    if (message?.text?.startsWith('/delete_doctor') && message.from.id === 988368940) {
+      const parts = message.text.split(' ');
+      const doctorId = Number(parts[1]);
+
+      if (!doctorId) {
+        await sendTelegramMessage(
+          message.from.id,
+          "❌ <code>/delete_doctor ID</code>\nMisol: <code>/delete_doctor 1</code>"
+        );
+      } else {
+        const result = await pool.query(
+          'DELETE FROM doctors WHERE id = $1 RETURNING name',
+          [doctorId]
+        );
+
+        if (result.rows.length === 0) {
+          await sendTelegramMessage(message.from.id, `❌ Shifokor topilmadi (ID: ${doctorId})`);
+        } else {
+          await sendTelegramMessage(
+            message.from.id,
+            `✅ Shifokor o'chirildi: <b>${result.rows[0].name}</b>`
+          );
+        }
+      }
+    }
     res.sendStatus(200);
   } catch (error: any) {
     console.error('Webhook error:', error);

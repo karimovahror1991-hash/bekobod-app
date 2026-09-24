@@ -139,7 +139,7 @@ app.post('/api/telegram-webhook', async (req, res) => {
         const description = parts[4] || null;
         const result = await pool.query(
           'INSERT INTO doctors (type, name, specialty, phone, address, description) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
-          [type, name, type, phone, address, description]
+          [type, name, description || type, phone, address, null]
         );
         await sendTelegramMessage(message.from.id, `✅ ${type} qo'shildi! ID: ${result.rows[0].id}`);
       }

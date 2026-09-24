@@ -968,6 +968,56 @@ app.get('/api/surah/:number', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
+// ============ TIBBIYOT (SHIFOKORLAR) ============
+
+// Список врачей
+app.get('/api/doctors/list', async (req, res) => {
+  try {
+    const { specialty } = req.query;
+
+    let query = 'SELECT * FROM doctors';
+    const params: any[] = [];
+
+    if (specialty && specialty !== 'all') {
+      query += ' WHERE specialty = $1';
+      params.push(specialty);
+    }
+
+    query += ' ORDER BY name ASC';
+
+    const result = await pool.query(query, params);
+    res.json({ doctors: result.rows });
+  } catch (error: any) {
+    console.error('Doctors list error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Добавить врача (только для админа)
+app.post('/api/doctors/create', async (req, res) => {
+  try {
+    const { adminId, name, specialty, phone, address, description } = req.body;
+
+    if (Number(adminId) !== 988368940) {
+      return res.status(403).json({ error: 'Доступ запрещён' });
+    }
+
+    if (!name || !specialty) {
+      return res.status(400).json({ error: 'Укажите имя и специальность' });
+    }
+
+    const result = await pool.query(
+      'INSERT INTO doctors (name, specialty, phone, address, description) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+      [name, specialty, phone || null, address || null, description || null]
+    );
+
+    res.json({ doctor: result.rows[0] });
+  } catch (error: any) {
+    console.error('Doctor create error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
 // ============ STATIC (ЛОВУШКА В САМОМ КОНЦЕ!) ============
 const distPath = path.join(process.cwd(), 'dist');
 app.use(express.static(distPath));

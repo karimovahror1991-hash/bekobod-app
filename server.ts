@@ -689,11 +689,22 @@ app.get('/api/fetch-news', async (req, res) => {
       );
 
       if (existing.rows.length === 0) {
-        let category = 'uzbekistan';
+             let category = 'uzbekistan';
         const lowerTitle = title.toLowerCase();
         
         if (lowerTitle.includes('бекабад') || lowerTitle.includes('bekobod')) {
           category = 'bekobod';
+        } else if (
+          lowerTitle.includes('россия') || 
+          lowerTitle.includes('сша') || 
+          lowerTitle.includes('китай') || 
+          lowerTitle.includes('европ') ||
+          lowerTitle.includes('украин') ||
+          lowerTitle.includes('трамп') ||
+          lowerTitle.includes('путин')
+        ) {
+          // Мировые новости — пропускаем (не добавляем)
+          continue;
         }
 
         await pool.query(

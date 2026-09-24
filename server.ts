@@ -701,12 +701,20 @@ app.get('/api/fetch-news', async (req, res) => {
           lowerTitle.includes('европ') ||
           lowerTitle.includes('украин') ||
           lowerTitle.includes('трамп') ||
-          lowerTitle.includes('путин')
-        ) {
-          // Мировые новости — пропускаем (не добавляем)
+          lowerTitle.includes('путин') ||
+          lowerTitle.includes('латвия') ||
+          lowerTitle.includes('германия') ||
+          lowerTitle.includes('доминикан') ||
+          lowerTitle.includes('кабардин') ||
+          lowerTitle.includes('москв') ||
+          lowerTitle.includes('nato') ||
+          lowerTitle.includes('нато') ||
+          lowerTitle.includes('курск') ||
+          lowerTitle.includes('израил') ||
+          lowerTitle.includes('палестин')
+         ) {
           continue;
         }
-
         await pool.query(
           `INSERT INTO news (category, title, content, source) VALUES ($1, $2, $3, $4)`,
           [category, title, content, link]

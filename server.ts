@@ -655,36 +655,50 @@ app.post('/api/news/create', async (req, res) => {
   }
 });
 
-// Автоматический сбор новостей
+// Автоматический сбор новостей (Sputnik через Telegram)
 app.get('/api/fetch-news', async (req, res) => {
   try {
-    const response = await fetch('https://freenewsapi.ai/v1/search?host=uz.sputniknews.ru&size=20');
-    const data = await response.json();
+    const response = await fetch('https://t.me/s/sputnik_lotin');
+    const html = await response.text();
 
-    if (!data.results || data.results.length === 0) {
-      return res.json({ added: 0 });
-    }
-
+    // Разбиваем на сообщения
+    const messages = html.split('tgme_widget_message_wrap').slice(1);
     let added = 0;
-    for (const article of data.results) {
+
+    for (const msg of messages.slice(0, 20)) {
+      // Текст поста
+      const textMatch = msg.match(/tgme_widget_message_text[^>]*>([\s\S]*?)<\/div>/);
+      // Ссылка на пост
+      const linkMatch = msg.match(/data-post="([^"]*)"/);
+
+      if (!textMatch || !linkMatch) continue;
+
+      // Очищаем текст от HTML
+      let text = textMatch[1].replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+      
+      // Первая строка — заголовок
+      const lines = text.split('\n').filter((l: string) => l.trim());
+      const title = lines[0] ? lines[0].substring(0, 200) : 'Yangilik';
+      const content = lines.slice(1).join('\n').substring(0, 1000);
+
+      const link = `https://t.me/${linkMatch[1]}`;
+
       const existing = await pool.query(
         'SELECT id FROM news WHERE source = $1',
-        [article.url]
+        [link]
       );
 
       if (existing.rows.length === 0) {
-                // Определяем категорию по заголовку
         let category = 'uzbekistan';
-        const title = (article.title || '').toLowerCase();
+        const lowerTitle = title.toLowerCase();
         
-        // Только если явно про Бекабад
-        if (title.includes('бекабад') || title.includes('бекабадск')) {
+        if (lowerTitle.includes('бекабад') || lowerTitle.includes('bekobod')) {
           category = 'bekobod';
         }
 
         await pool.query(
-          `INSERT INTO news (category, title, content, image_url, source) VALUES ($1, $2, $3, $4, $5)`,
-          [category, article.title, article.description || null, article.image || null, article.url]
+          `INSERT INTO news (category, title, content, source) VALUES ($1, $2, $3, $4)`,
+          [category, title, content, link]
         );
         added++;
       }
@@ -697,32 +711,28 @@ app.get('/api/fetch-news', async (req, res) => {
   }
 });
 
-// Автоматический сбор мировых новостей (BBC O'zbek)
+// Автоматический сбор мировых новостей (BBC через Telegram)
 app.get('/api/fetch-world-news', async (req, res) => {
   try {
-    const response = await fetch('https://feeds.bbci.co.uk/uzbek/cyr/rss.xml');
-    const xml = await response.text();
+    const response = await fetch('https://t.me/s/bbcuzbek');
+    const html = await response.text();
 
-    // Разбиваем на items по тегу <item>
-    const items = xml.split('<item>').slice(1);
+    const messages = html.split('tgme_widget_message_wrap').slice(1);
     let added = 0;
 
-    for (const item of items.slice(0, 30)) {
-      // Заголовок
-      const titleMatch = item.match(/<title>\s*<!\[CDATA\[(.*?)\]\]>\s*<\/title>/s);
-      // Ссылка
-      const linkMatch = item.match(/<link>(.*?)<\/link>/s);
-      // Описание
-      const descMatch = item.match(/<description>\s*<!\[CDATA\[(.*?)\]\]>\s*<\/description>/s);
-      // Картинка
-      const imgMatch = item.match(/<media:thumbnail[^>]*url="([^"]*)"/);
+    for (const msg of messages.slice(0, 20)) {
+      const textMatch = msg.match(/tgme_widget_message_text[^>]*>([\s\S]*?)<\/div>/);
+      const linkMatch = msg.match(/data-post="([^"]*)"/);
 
-      if (!titleMatch || !linkMatch) continue;
+      if (!textMatch || !linkMatch) continue;
 
-      const title = titleMatch[1].trim();
-      const link = linkMatch[1].trim();
-      const description = descMatch ? descMatch[1].trim() : null;
-      const image = imgMatch ? imgMatch[1] : null;
+      let text = textMatch[1].replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+      
+      const lines = text.split('\n').filter((l: string) => l.trim());
+      const title = lines[0] ? lines[0].substring(0, 200) : 'Jahon yangiligi';
+      const content = lines.slice(1).join('\n').substring(0, 1000);
+
+      const link = `https://t.me/${linkMatch[1]}`;
 
       const existing = await pool.query(
         'SELECT id FROM news WHERE source = $1',
@@ -731,8 +741,8 @@ app.get('/api/fetch-world-news', async (req, res) => {
 
       if (existing.rows.length === 0) {
         await pool.query(
-          `INSERT INTO news (category, title, content, image_url, source) VALUES ($1, $2, $3, $4, $5)`,
-          ['jahon', title, description, image, link]
+          `INSERT INTO news (category, title, content, source) VALUES ($1, $2, $3, $4)`,
+          ['jahon', title, content, link]
         );
         added++;
       }
@@ -744,7 +754,6 @@ app.get('/api/fetch-world-news', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
-
 // ============ EVENTS (TADBIRLAR) ============
 
 // Список событий

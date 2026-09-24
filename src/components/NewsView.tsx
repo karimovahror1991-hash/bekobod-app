@@ -17,8 +17,7 @@ interface NewsItem {
 
 const CATEGORIES = [
   { id: 'bekobod', label: 'Bekobod yangiliklari', icon: '🏙️', gradient: 'from-blue-500 to-indigo-600' },
-  { id: 'uzbekistan', label: "O'zbekiston yangiliklari", icon: '🇺🇿', gradient: 'from-emerald-500 to-teal-600' },
-  { id: 'jahon', label: 'Jahon yangiliklari', icon: '🌍', gradient: 'from-orange-500 to-red-600' },
+  { id: 'jahon', label: "O'zbekiston va Jahon yangiliklari", icon: '🌍', gradient: 'from-emerald-500 to-teal-600' },
 ];
 
 export const NewsView: React.FC<NewsViewProps> = ({ onClose }) => {

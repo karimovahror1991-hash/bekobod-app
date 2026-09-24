@@ -1,3 +1,4 @@
+import { MedListView } from './MedListView';
 import { ShifokorlarView } from './ShifokorlarView';
 import React, { useState } from 'react';
 import { ArrowLeft, Loader2, ChevronRight, Phone, MapPin, User, Clock } from 'lucide-react';
@@ -34,6 +35,15 @@ export const TibbiyotView: React.FC<TibbiyotViewProps> = ({ onClose }) => {
   // Экран «Shifokorlar»
   if (selectedCategory === 'shifokorlar') {
     return <ShifokorlarView onClose={() => setSelectedCategory(null)} />;
+  }
+    // Экран «Dorixonalar»
+  if (selectedCategory === 'dorixonalar') {
+    return <MedListView onClose={() => setSelectedCategory(null)} type="dorixona" />;
+  }
+
+  // Экран «Kasalxonalar»
+  if (selectedCategory === 'kasalxonalar') {
+    return <MedListView onClose={() => setSelectedCategory(null)} type="kasalxona" />;
   }
   // Экран «Tez yordam» (простой список номеров)
   if (selectedCategory === 'tez-yordam') {

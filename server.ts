@@ -869,6 +869,49 @@ app.post('/api/events/approve', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
+// ============ IBODAT (NAMOZ VAQTLARI) ============
+
+// Расписание намаза для Бекабада
+app.get('/api/prayer-times', async (req, res) => {
+  try {
+    const response = await fetch(
+      'https://api.aladhan.com/v1/timings?latitude=40.22&longitude=69.22&method=2'
+    );
+    const data = await response.json();
+
+    if (data.code !== 200) {
+      throw new Error('API error');
+    }
+
+    const timings = data.data.timings;
+    const hijri = data.data.date.hijri;
+    const gregorian = data.data.date.gregorian;
+
+    res.json({
+      timings: {
+        Fajr: timings.Fajr,
+        Sunrise: timings.Sunrise,
+        Dhuhr: timings.Dhuhr,
+        Asr: timings.Asr,
+        Maghrib: timings.Maghrib,
+        Isha: timings.Isha,
+      },
+      hijri: {
+        day: hijri.day,
+        month: hijri.month.en,
+        year: hijri.year,
+      },
+      gregorian: {
+        date: gregorian.date,
+        weekday: gregorian.weekday.en,
+      },
+    });
+  } catch (error: any) {
+    console.error('Prayer times error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
 // ============ STATIC (ЛОВУШКА В САМОМ КОНЦЕ!) ============
 const distPath = path.join(process.cwd(), 'dist');
 app.use(express.static(distPath));

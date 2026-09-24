@@ -134,7 +134,7 @@ export const duolar: DuaCategory[] = [
       },
     ],
   },
-  {
+    {
     id: 'umumiy',
     title: 'Umumiy duolar',
     icon: '🤲',
@@ -163,6 +163,54 @@ export const duolar: DuaCategory[] = [
         title: 'Qayg\'u paytida',
         transcription: 'La ilaha illallahul-azimul-halim, la ilaha illallahu Rabbul-arshil-azim',
         translation: "Buyuk va Halim Allohdan boshqa iloh yo'q. Ulug' arshning Rabbi Allohdan boshqa iloh yo'q",
+      },
+      {
+        id: 'umumiy-5',
+        title: 'Tavba va istig\'for',
+        transcription: 'Rabbanag\'fir li va li validayya va lil-mu\'minina yavma yaqumul-hisab',
+        translation: "Rabbim, meni, ota-onamni va mo'minlarni hisob kuni kechir",
+      },
+      {
+        id: 'umumiy-6',
+        title: 'Sog\'liq va shifo',
+        transcription: 'Allohumma inni as\'alukal-afiyata fid-dunya val-axira',
+        translation: "Allohim, men Sendan dunyo va oxiratda sog'liq so'rayman",
+      },
+      {
+        id: 'umumiy-7',
+        title: 'Rizq va baraka',
+        transcription: 'Allohumma inni as\'aluka ilman nafi\'an va rizqan tayyiban va amalan mutaqabbalan',
+        translation: "Allohim, men Sendan foydali ilm, halol rizq va qabul qilinadigan amal so'rayman",
+      },
+      {
+        id: 'umumiy-8',
+        title: 'QalbnING pokligi',
+        transcription: 'Allohumma tahhir qalbi minan-nifaqi val-kibri val-hasad',
+        translation: "Allohim, qalbimni munofiqlik, kibr va hasaddan pokla",
+      },
+      {
+        id: 'umumiy-9',
+        title: 'Jannat so\'rash',
+        transcription: 'Allohumma inni as\'alukal-jannata va a\'uzu bika minan-nar',
+        translation: "Allohim, men Sendan jannatni so'rayman va do'zaxdan panoh tilayman",
+      },
+      {
+        id: 'umumiy-10',
+        title: 'Yaxshi xulq',
+        transcription: 'Allohumma hassin xuluqi kama hassanta xalqi',
+        translation: "Allohim, xulqimni ham go'zallashtir, xuddi tashqi ko'rinishimni go'zallashtirganingdek",
+      },
+      {
+        id: 'umumiy-11',
+        title: 'Qarz va qiyinchilikdan panoh',
+        transcription: 'Allohumma inni a\'uzu bika minal-hammi val-hazan, val-ajzi val-kasal, val-buxli val-jubn, va dala\'id-dayni va qahrir-rijal',
+        translation: "Allohim, men Sendan g'am-g'ussa, ojizlik, dangasalik, baxillik, qo'rqoqlik, qarz og'irligi va odamlarning zo'ravonligidan panoh so'rayman",
+      },
+      {
+        id: 'umumiy-12',
+        title: 'Barcha yaxshiliklar uchun',
+        transcription: 'Allohumma inni as\'alukal-huda vat-tuqa val-afafa val-g\'ina',
+        translation: "Allohim, men Sendan hidoyat, taqvo, iffat va boylik so'rayman",
       },
     ],
   },

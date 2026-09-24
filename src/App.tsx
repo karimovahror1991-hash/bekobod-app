@@ -1,3 +1,4 @@
+import { IbodatView } from './components/IbodatView';
 import { EventsView } from './components/EventsView';
 import { NewsView } from './components/NewsView';
 import { RestaurantsView } from './components/RestaurantsView';
@@ -16,7 +17,8 @@ import {
   AlertTriangle, 
   UtensilsCrossed,
   Phone,
-  Mail
+  Mail,
+  Moon
 } from 'lucide-react';
 import { EmergencyView } from './components/EmergencyView';
 import { TransportView } from './components/TransportView';
@@ -33,7 +35,7 @@ interface Section {
 
 const sections: Section[] = [
   { id: 'news', titleUz: 'Yangiliklar', titleRu: 'Новости', icon: Newspaper, gradient: 'from-blue-500 to-blue-600' },
-  { id: 'ads', titleUz: "E'lonlar", titleRu: 'Объявления', icon: Megaphone, gradient: 'from-amber-500 to-orange-500' },
+   { id: 'ibodat', titleUz: 'Ibodat', titleRu: 'Поклонение', icon: Moon, gradient: 'from-emerald-500 to-teal-600' },
   { id: 'events', titleUz: 'Tadbirlar', titleRu: 'События', icon: PartyPopper, gradient: 'from-pink-500 to-rose-500' },
   { id: 'transport', titleUz: 'Transport', titleRu: 'Транспорт', icon: Bus, gradient: 'from-emerald-500 to-green-600' },
     { id: 'admin', titleUz: 'Administrator', titleRu: 'Администратор', icon: Mail, gradient: 'from-indigo-500 to-violet-600' },
@@ -116,6 +118,9 @@ function App() {
   }
     if (activeSection === 'events') {
     return <EventsView onClose={() => setActiveSection(null)} userId={userId} />;
+  }
+    if (activeSection === 'ibodat') {
+    return <IbodatView onClose={() => setActiveSection(null)} />;
   }
   if (activeSection === 'services') {
   return <ServicesView onClose={() => setActiveSection(null)} />;

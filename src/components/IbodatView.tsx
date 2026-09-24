@@ -1,3 +1,4 @@
+import { DuolarView } from './DuolarView';
 import { QiblaView } from './QiblaView';
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Loader2, ChevronRight, Clock } from 'lucide-react';
@@ -37,7 +38,10 @@ export const IbodatView: React.FC<IbodatViewProps> = ({ onClose }) => {
   if (selectedCategory === 'qibla') {
     return <QiblaView onClose={() => setSelectedCategory(null)} />;
   }
-
+  // Экран «Duolar»
+  if (selectedCategory === 'duolar') {
+    return <DuolarView onClose={() => setSelectedCategory(null)} />;
+  }
     // Экран «Namoz vaqtlari»
   if (selectedCategory === 'namoz') {
     const catInfo = CATEGORIES.find(c => c.id === 'namoz');

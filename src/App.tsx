@@ -58,6 +58,7 @@ function App() {
   const [currentAd, setCurrentAd] = useState(0);
   const [weather, setWeather] = useState<any>(null);
   const [weatherLoading, setWeatherLoading] = useState(true);
+    const [rates, setRates] = useState<any>(null);
   const [activeSection, setActiveSection] = useState<string | null>(null);
   const [userId, setUserId] = useState<number | null>(null);
     useEffect(() => {
@@ -88,7 +89,12 @@ function App() {
         setWeatherLoading(false);
       });
   }, []);
-
+  useEffect(() => {
+    fetch('https://bekobod-app-1.onrender.com/api/exchange-rates')
+      .then(res => res.json())
+      .then(data => setRates(data))
+      .catch(err => console.error('Rates error:', err));
+  }, []);
   const getWeatherIcon = (code: number) => {
     if (code === 0) return <Sun className="w-8 h-8 text-yellow-500" />;
     if (code >= 1 && code <= 3) return <Cloud className="w-8 h-8 text-gray-400" />;

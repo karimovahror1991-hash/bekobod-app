@@ -1093,6 +1093,64 @@ app.post('/api/translate', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+// ============ OLDI SOTDI (LISTINGS) ============
+
+// Список объявлений
+app.get('/api/listings/list', async (req, res) => {
+  try {
+    const { category } = req.query;
+    let query = "SELECT * FROM listings WHERE status = 'active'";
+    const params: any[] = [];
+    if (category && category !== 'all') {
+      query += ' AND category = $1';
+      params.push(category);
+    }
+    query += ' ORDER BY created_at DESC LIMIT 100';
+    const result = await pool.query(query, params);
+    res.json({ listings: result.rows });
+  } catch (error: any) {
+    console.error('Listings list error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Создать объявление
+app.post('/api/listings/create', async (req, res) => {
+  try {
+    const { category, title, description, price, phone, imageUrl, userId } = req.body;
+    if (!category || !title || !phone) {
+      return res.status(400).json({ error: 'Kategoriya, sarlavha va telefon kerak' });
+    }
+    const result = await pool.query(
+      `INSERT INTO listings (category, title, description, price, phone, image_url, user_id)
+       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+      [category, title, description || null, price || null, phone, imageUrl || null, userId || null]
+    );
+    res.json({ listing: result.rows[0] });
+  } catch (error: any) {
+    console.error('Listing create error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Удалить объявление (только своё)
+app.post('/api/listings/delete', async (req, res) => {
+  try {
+    const { listingId, userId } = req.body;
+    if (!listingId || !userId) return res.status(400).json({ error: 'ID kerak' });
+    const result = await pool.query(
+      'DELETE FROM listings WHERE id = $1 AND user_id = $2 RETURNING title',
+      [listingId, userId]
+    );
+    if (result.rows.length === 0) {
+      return res.status(403).json({ error: "Bu e'lon sizga tegishli emas" });
+    }
+    res.json({ ok: true, title: result.rows[0].title });
+  } catch (error: any) {
+    console.error('Listing delete error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
 // ============ STATIC ============
 const distPath = path.join(process.cwd(), 'dist');
 app.use(express.static(distPath));

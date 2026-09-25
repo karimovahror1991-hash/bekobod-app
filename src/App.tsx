@@ -1,3 +1,4 @@
+import { OldiSotdiView } from './components/OldiSotdiView';
 import { TarjimonView } from './components/TarjimonView';
 import { TibbiyotView } from './components/TibbiyotView';
 import { IbodatView } from './components/IbodatView';
@@ -18,7 +19,8 @@ import {
   Mail,
   Moon,
   Heart,
-  Languages
+  Languages,
+  ShoppingBag
 } from 'lucide-react';
 import { EmergencyView } from './components/EmergencyView';
 import { TransportView } from './components/TransportView';
@@ -45,6 +47,7 @@ const sections: Section[] = [
   { id: 'emergency', titleUz: 'Shahar telefonlari', titleRu: 'Справочная служба', icon: Phone, gradient: 'from-rose-500 to-red-600' },
   { id: 'restaurants', titleUz: 'Restoran va kafelar', titleRu: 'Рестораны и кафе', icon: UtensilsCrossed, gradient: 'from-red-500 to-pink-600' },
   { id: 'tarjimon', titleUz: 'Tarjimon', titleRu: 'Переводчик', icon: Languages, gradient: 'from-cyan-500 to-blue-600' },
+    { id: 'oldi_sotdi', titleUz: 'Oldi sotdi', titleRu: 'Купля-продажа', icon: ShoppingBag, gradient: 'from-amber-500 to-orange-600' },
   ];
 
 const ads = [
@@ -172,7 +175,9 @@ function App() {
   if (activeSection === 'tarjimon') {
     return <TarjimonView onClose={() => setActiveSection(null)} />;
   }
-  
+    if (activeSection === 'oldi_sotdi') {
+    return <OldiSotdiView onClose={() => setActiveSection(null)} userId={userId} />;
+  }
   return (
     <div className="min-h-screen bg-linear-to-b from-stone-50 to-stone-100 text-stone-900 flex flex-col">
       {/* Верхняя панель */}

@@ -13,6 +13,9 @@ const pool = new Pool({
   ssl: { rejectUnauthorized: false }
 });
 
+// ============ ADMINS ============
+const SUPER_ADMIN = 988368940;
+const ADMINS = [988368940, 259258146]; // главный + второй админ
 async function sendTelegramMessage(chatId: number, text: string) {
   const botToken = process.env.TELEGRAM_BOT_TOKEN;
   if (!botToken) return;
@@ -46,7 +49,7 @@ app.post('/api/telegram-webhook', async (req, res) => {
       return res.sendStatus(200);
     }
  // Команда /add_place (рестораны, кафе и т.д.)
-    if (message?.text?.startsWith('/add_place') && message.from.id === 988368940) {
+    if (message?.text?.startsWith('/add_place') && ADMINS.includes(message.from.id)) {
       const parts = message.text.split('|').map((s: string) => s.trim());
       
       if (parts.length < 3) {
@@ -76,7 +79,7 @@ app.post('/api/telegram-webhook', async (req, res) => {
     }
 
     // Команда /delete_place ID
-    if (message?.text?.startsWith('/delete_place') && message.from.id === 988368940) {
+    if (message?.text?.startsWith('/delete_place') && ADMINS.includes(message.from.id)) {
       const placeId = Number(message.text.split(' ')[1]);
 
       if (!placeId) {
@@ -98,7 +101,7 @@ app.post('/api/telegram-webhook', async (req, res) => {
       [message.from.id, message.from.username || null, message.from.first_name || null]
     );
 
-    if (message?.text === '/admin' && message.from.id === 988368940) {
+    if (message?.text === '/admin' && ADMINS.includes(message.from.id)) {
       const messagesResult = await pool.query(
         "SELECT * FROM admin_messages WHERE status = 'new' ORDER BY created_at DESC LIMIT 10"
       );
@@ -116,7 +119,7 @@ app.post('/api/telegram-webhook', async (req, res) => {
       }
     }
 
-    if ((message?.text?.startsWith('/add_event') || message?.caption?.startsWith('/add_event')) && message.from.id === 988368940) {
+    if ((message?.text?.startsWith('/add_event') || message?.caption?.startsWith('/add_event')) && ADMINS.includes(message.from.id)) {
       const text = message.text || message.caption || '';
       const parts = text.split('|').map((s: string) => s.trim());
       if (parts.length < 4) {
@@ -141,7 +144,7 @@ app.post('/api/telegram-webhook', async (req, res) => {
       }
     }
 
-    if (message?.text?.startsWith('/delete_event') && message.from.id === 988368940) {
+    if (message?.text?.startsWith('/delete_event') && ADMINS.includes(message.from.id)) {
       const eventId = Number(message.text.split(' ')[1]);
       if (!eventId) {
         await sendTelegramMessage(message.from.id, "❌ /delete_event ID");
@@ -155,7 +158,7 @@ app.post('/api/telegram-webhook', async (req, res) => {
       }
     }
 
-    if (message?.text?.startsWith('/reply') && message.from.id === 988368940) {
+    if (message?.text?.startsWith('/reply') && ADMINS.includes(message.from.id)) {
       const parts = message.text.split(' ');
       const messageId = Number(parts[1]);
       const replyText = parts.slice(2).join(' ');
@@ -172,7 +175,7 @@ app.post('/api/telegram-webhook', async (req, res) => {
     }
 
     // Команда /add_contact
-    if (message?.text?.startsWith('/add_contact') && message.from.id === 988368940) {
+    if (message?.text?.startsWith('/add_contact') && ADMINS.includes(message.from.id)) {
       const parts = message.text.split('|').map((s: string) => s.trim());
       
       if (parts.length < 3) {
@@ -201,7 +204,7 @@ app.post('/api/telegram-webhook', async (req, res) => {
     }
 
     // Команда /delete_contact ID
-    if (message?.text?.startsWith('/delete_contact') && message.from.id === 988368940) {
+    if (message?.text?.startsWith('/delete_contact') && ADMINS.includes(message.from.id)) {
       const contactId = Number(message.text.split(' ')[1]);
 
       if (!contactId) {
@@ -215,7 +218,7 @@ app.post('/api/telegram-webhook', async (req, res) => {
         }
       }
     }
-    if (message?.text?.startsWith('/add_med') && message.from.id === 988368940) {
+    if (message?.text?.startsWith('/add_med') && ADMINS.includes(message.from.id)) {
       const parts = message.text.split('|').map((s: string) => s.trim());
       if (parts.length < 3) {
         await sendTelegramMessage(message.from.id, `❌ /add_med tur | nomi | manzil | telefon | tavsif`);
@@ -233,7 +236,7 @@ app.post('/api/telegram-webhook', async (req, res) => {
       }
     }
 
-    if (message?.text?.startsWith('/delete_med') && message.from.id === 988368940) {
+    if (message?.text?.startsWith('/delete_med') && ADMINS.includes(message.from.id)) {
       const medId = Number(message.text.split(' ')[1]);
       if (!medId) {
         await sendTelegramMessage(message.from.id, "❌ /delete_med ID");
@@ -248,7 +251,7 @@ app.post('/api/telegram-webhook', async (req, res) => {
     }
     
     // Команда /add_news (ручное добавление новости)
-    if (message?.text?.startsWith('/add_news') && message.from.id === 988368940) {
+    if (message?.text?.startsWith('/add_news') && ADMINS.includes(message.from.id)) {
       const parts = message.text.split('|').map((s: string) => s.trim());
 
       if (parts.length < 3) {
@@ -276,7 +279,7 @@ app.post('/api/telegram-webhook', async (req, res) => {
       }
     }
     // Команда /add_news с фото или видео (через caption)
-if ((message?.caption?.startsWith('/add_news')) && message.from.id === 988368940) {
+if ((message?.caption?.startsWith('/add_news')) && ADMINS.includes(message.from.id)) {
   const parts = message.caption.split('|').map((s: string) => s.trim());
 
   if (parts.length < 3) {
@@ -316,7 +319,7 @@ if ((message?.caption?.startsWith('/add_news')) && message.from.id === 988368940
   }
 }
     // Команда /delete_news ID
-    if (message?.text?.startsWith('/delete_news') && message.from.id === 988368940) {
+    if (message?.text?.startsWith('/delete_news') && ADMINS.includes(message.from.id)) {
       const newsId = Number(message.text.split(' ')[1]);
 
       if (!newsId) {
@@ -331,7 +334,7 @@ if ((message?.caption?.startsWith('/add_news')) && message.from.id === 988368940
       }
     }
         // Команда /add_book
-    if (message?.text?.startsWith('/add_book') && message.from.id === 988368940) {
+    if (message?.text?.startsWith('/add_book') && ADMINS.includes(message.from.id)) {
       const parts = message.text.split('|').map((s: string) => s.trim());
 
       if (parts.length < 4) {
@@ -361,7 +364,7 @@ if ((message?.caption?.startsWith('/add_news')) && message.from.id === 988368940
       }
     }
     // Команда /add_city_taxi
-    if (message?.text?.startsWith('/add_city_taxi') && message.from.id === 988368940) {
+    if (message?.text?.startsWith('/add_city_taxi') && ADMINS.includes(message.from.id)) {
       const parts = message.text.split('|').map((s: string) => s.trim());
 
       if (parts.length < 3) {
@@ -388,7 +391,7 @@ if ((message?.caption?.startsWith('/add_news')) && message.from.id === 988368940
     }
 
     // Команда /delete_city_taxi ID
-    if (message?.text?.startsWith('/delete_city_taxi') && message.from.id === 988368940) {
+    if (message?.text?.startsWith('/delete_city_taxi') && ADMINS.includes(message.from.id)) {
       const taxiId = Number(message.text.split(' ')[1]);
       if (!taxiId) {
         await sendTelegramMessage(message.from.id, "❌ /delete_city_taxi ID");
@@ -402,7 +405,7 @@ if ((message?.caption?.startsWith('/add_news')) && message.from.id === 988368940
       }
     }
     // Команда /delete_book ID
-    if (message?.text?.startsWith('/delete_book') && message.from.id === 988368940) {
+    if (message?.text?.startsWith('/delete_book') && ADMINS.includes(message.from.id)) {
       const bookId = Number(message.text.split(' ')[1]);
 
       if (!bookId) {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Phone, MapPin, Loader2, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Phone, MapPin, Loader2, Star } from 'lucide-react';
 
 interface RestaurantsViewProps {
   onClose: () => void;
@@ -29,6 +29,10 @@ export const RestaurantsView: React.FC<RestaurantsViewProps> = ({ onClose }) => 
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [ratings, setRatings] = useState<{[key: number]: {avg: number, count: number}}>({});
+  const [showRatingModal, setShowRatingModal] = useState<Restaurant | null>(null);
+  const [selectedRating, setSelectedRating] = useState(0);
+  const [userId, setUserId] = useState<number | null>(null);
 
   const API_URL = 'https://bekobod-app-1.onrender.com';
 
@@ -37,7 +41,21 @@ export const RestaurantsView: React.FC<RestaurantsViewProps> = ({ onClose }) => 
       setLoading(true);
       const res = await fetch(`${API_URL}/api/restaurants/list`);
       const data = await res.json();
-      setRestaurants(data.restaurants || []);
+      const list = data.restaurants || [];
+      setRestaurants(list);
+
+      // Загружаем рейтинги
+      const ratingsData: {[key: number]: {avg: number, count: number}} = {};
+      for (const r of list) {
+        try {
+          const rr = await fetch(`${API_URL}/api/restaurants/rating/${r.id}`);
+          const rd = await rr.json();
+          ratingsData[r.id] = { avg: rd.avgRating || 0, count: rd.count || 0 };
+        } catch (e) {
+          ratingsData[r.id] = { avg: 0, count: 0 };
+        }
+      }
+      setRatings(ratingsData);
     } catch (err) {
       console.error(err);
     } finally {
@@ -47,13 +65,33 @@ export const RestaurantsView: React.FC<RestaurantsViewProps> = ({ onClose }) => 
 
   useEffect(() => {
     loadRestaurants();
+    const tg = (window as any).Telegram?.WebApp;
+    if (tg?.initDataUnsafe?.user?.id) {
+      setUserId(tg.initDataUnsafe.user.id);
+    }
   }, []);
+
+  const handleRate = async (rating: number) => {
+    if (!showRatingModal) return;
+    try {
+      await fetch(`${API_URL}/api/restaurants/rate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ restaurantId: showRatingModal.id, rating, userId }),
+      });
+      setShowRatingModal(null);
+      setSelectedRating(0);
+      loadRestaurants();
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   const filteredRestaurants = selectedCategory
     ? restaurants.filter(r => r.category === selectedCategory)
     : [];
 
-  // Если выбрана категория — показываем список ресторанов
+  // Экран списка ресторанов категории
   if (selectedCategory) {
     const catInfo = CATEGORIES.find(c => c.id === selectedCategory);
     return (
@@ -89,47 +127,114 @@ export const RestaurantsView: React.FC<RestaurantsViewProps> = ({ onClose }) => 
             </div>
           ) : (
             <div className="space-y-3">
-              {filteredRestaurants.map((restaurant) => (
-                <div
-                  key={restaurant.id}
-                  className="bg-white rounded-3xl p-5 shadow-sm border border-stone-100 space-y-3"
-                >
-                  <h3 className="font-bold text-lg text-stone-900 leading-tight">
-                    {restaurant.name}
-                  </h3>
-
-                  {restaurant.address && (
-                    <div className="flex items-start space-x-2 text-sm text-stone-600">
-                      <MapPin className="w-4 h-4 text-blue-500 mt-0.5 shrink-0" />
-                      <span>{restaurant.address}</span>
+              {filteredRestaurants.map((restaurant) => {
+                const rating = ratings[restaurant.id];
+                return (
+                  <div
+                    key={restaurant.id}
+                    className="bg-white rounded-3xl p-5 shadow-sm border border-stone-100 space-y-3"
+                  >
+                    <div className="flex items-start justify-between">
+                      <h3 className="font-bold text-lg text-stone-900 leading-tight flex-1">
+                        {restaurant.name}
+                      </h3>
+                      {rating && rating.count > 0 && (
+                        <div className="flex items-center space-x-1 text-xs bg-amber-50 px-2 py-1 rounded-lg shrink-0 ml-2">
+                          <Star className="w-3.5 h-3.5 fill-amber-500 text-amber-500" />
+                          <span className="font-bold text-stone-700">{rating.avg}</span>
+                          <span className="text-stone-400">({rating.count})</span>
+                        </div>
+                      )}
                     </div>
-                  )}
 
-                  {restaurant.description && (
-                    <p className="text-sm text-stone-600 leading-relaxed">
-                      {restaurant.description}
-                    </p>
-                  )}
+                    {restaurant.address && (
+                      <div className="flex items-start space-x-2 text-sm text-stone-600">
+                        <MapPin className="w-4 h-4 text-blue-500 mt-0.5 shrink-0" />
+                        <span>{restaurant.address}</span>
+                      </div>
+                    )}
 
-                  {restaurant.phone && (
-                    <a
-                      href={`tel:${restaurant.phone}`}
-                      className="w-full py-3 bg-linear-to-br from-emerald-500 to-green-600 text-white rounded-2xl font-bold flex items-center justify-center space-x-2 transition shadow-lg active:scale-95"
-                    >
-                      <Phone className="w-5 h-5" />
-                      <span>Qo'ng'iroq qilish</span>
-                    </a>
-                  )}
-                </div>
-              ))}
+                    {restaurant.description && (
+                      <p className="text-sm text-stone-600 leading-relaxed">
+                        {restaurant.description}
+                      </p>
+                    )}
+
+                    <div className="flex space-x-2">
+                      {restaurant.phone && (
+                        <a
+                          href={`tel:${restaurant.phone}`}
+                          className="flex-1 py-3 bg-linear-to-br from-emerald-500 to-green-600 text-white rounded-2xl font-bold flex items-center justify-center space-x-2 transition shadow-lg active:scale-95"
+                        >
+                          <Phone className="w-5 h-5" />
+                          <span>Qo'ng'iroq</span>
+                        </a>
+                      )}
+                      <button
+                        onClick={() => setShowRatingModal(restaurant)}
+                        className="px-4 py-3 bg-amber-100 hover:bg-amber-200 text-amber-800 rounded-2xl font-bold text-sm transition active:scale-95 shrink-0"
+                      >
+                        ⭐ Baholash
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
+
+        {/* Модальное окно оценки */}
+        {showRatingModal && (
+          <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl">
+              <h3 className="font-bold text-lg text-stone-900 text-center mb-2">
+                {showRatingModal.name}
+              </h3>
+              <p className="text-xs text-stone-500 text-center mb-4">
+                Bahoyingizni tanlang
+              </p>
+              
+              <div className="flex justify-center space-x-2 mb-6">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    onClick={() => setSelectedRating(star)}
+                    className="text-4xl transition-transform active:scale-110"
+                  >
+                    <span className={star <= selectedRating ? 'text-amber-500' : 'text-stone-300'}>
+                      ★
+                    </span>
+                  </button>
+                ))}
+              </div>
+
+              <div className="flex space-x-2">
+                <button
+                  onClick={() => handleRate(selectedRating)}
+                  disabled={selectedRating === 0}
+                  className="flex-1 py-3 bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-semibold disabled:opacity-50 transition"
+                >
+                  Yuborish
+                </button>
+                <button
+                  onClick={() => {
+                    setShowRatingModal(null);
+                    setSelectedRating(0);
+                  }}
+                  className="px-5 py-3 text-stone-500 hover:text-stone-700"
+                >
+                  Yopish
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
 
-  // Экран категорий (большие иконки)
+  // Экран категорий
   return (
     <div className="min-h-screen bg-linear-to-b from-stone-50 to-stone-100">
       <div className="bg-white/95 backdrop-blur-lg border-b border-stone-200 sticky top-0 z-20 shadow-sm">

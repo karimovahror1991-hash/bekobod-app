@@ -750,7 +750,40 @@ app.post('/api/restaurants/create', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+// Оценить ресторан
+app.post('/api/restaurants/rate', async (req, res) => {
+  try {
+    const { restaurantId, rating, userId } = req.body;
+    if (!restaurantId || !rating || rating < 1 || rating > 5) {
+      return res.status(400).json({ error: 'Неверная оценка' });
+    }
+    await pool.query(
+      'INSERT INTO restaurant_ratings (restaurant_id, rating, user_id) VALUES ($1, $2, $3)',
+      [restaurantId, rating, userId || null]
+    );
+    res.json({ ok: true });
+  } catch (error: any) {
+    console.error('Restaurant rate error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
 
+// Получить средний рейтинг ресторана
+app.get('/api/restaurants/rating/:restaurantId', async (req, res) => {
+  try {
+    const { restaurantId } = req.params;
+    const result = await pool.query(
+      'SELECT AVG(rating) as avg_rating, COUNT(*) as count FROM restaurant_ratings WHERE restaurant_id = $1',
+      [restaurantId]
+    );
+    const avg = result.rows[0].avg_rating ? Number(result.rows[0].avg_rating) : 0;
+    const count = Number(result.rows[0].count);
+    res.json({ avgRating: Math.round(avg * 10) / 10, count });
+  } catch (error: any) {
+    console.error('Restaurant rating error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
 // ============ NEWS ============
 app.get('/api/news/list', async (req, res) => {
   try {

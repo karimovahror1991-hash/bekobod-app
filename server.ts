@@ -1098,6 +1098,9 @@ app.post('/api/translate', async (req, res) => {
 // Список объявлений
 app.get('/api/listings/list', async (req, res) => {
   try {
+    // Удаляем объявления старше 15 дней
+    await pool.query(`DELETE FROM listings WHERE created_at < NOW() - INTERVAL '15 days'`);
+
     const { category } = req.query;
     let query = "SELECT * FROM listings WHERE status = 'active'";
     const params: any[] = [];

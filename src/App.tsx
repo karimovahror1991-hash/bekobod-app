@@ -89,7 +89,7 @@ function App() {
     const lat = 40.22;
     const lon = 69.22;
     
-    fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min,weather_code&timezone=auto&forecast_days=1`)
+   fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&hourly=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min,weather_code&timezone=auto&forecast_days=2`)
       .then(res => res.json())
       .then(data => {
         setWeather(data);
@@ -122,7 +122,33 @@ function App() {
     if (code >= 80 && code <= 82) return <CloudRain className="w-8 h-8 text-blue-600" />;
     return <Sun className="w-8 h-8 text-yellow-500" />;
   };
+// Прогноз по 3 часа на сегодня
+const getThreeHourForecast = (weather: any) => {
+  if (!weather?.hourly?.time || !weather?.hourly?.temperature_2m) return [];
 
+  const now = new Date();
+  const today = now.toISOString().split('T')[0]; // "2026-09-25"
+  const currentHour = now.getHours();
+
+  const slots: { time: string; temp: number; code: number }[] = [];
+
+  weather.hourly.time.forEach((t: string, i: number) => {
+    const date = new Date(t);
+    const dateStr = t.split('T')[0];
+    const hour = date.getHours();
+
+    // только сегодня, каждый 3-й час, начиная с ближайшего прошедшего/текущего
+    if (dateStr === today && hour % 3 === 0 && hour >= currentHour - 1) {
+      slots.push({
+        time: t,
+        temp: Math.round(weather.hourly.temperature_2m[i]),
+        code: weather.hourly.weather_code[i],
+      });
+    }
+  });
+
+  return slots;
+};
   // Экран контактов
     if (activeSection === 'emergency') {
     return <EmergencyView onClose={() => setActiveSection(null)} />;
@@ -211,11 +237,40 @@ function App() {
                   </div>
                 </div>
                 {weather.daily && (
-                  <div className="flex items-center space-x-3 text-xs text-white/80 mt-3 pt-3 border-t border-white/20">
-                    <span>↑ {Math.round(weather.daily.temperature_2m_max?.[0] || 0)}°</span>
-                    <span>↓ {Math.round(weather.daily.temperature_2m_min?.[0] || 0)}°</span>
-                  </div>
-                )}
+  <div className="flex items-center space-x-3 text-xs text-white/80 mt-3 pt-3 border-t border-white/20">
+    <span>↑ {Math.round(weather.daily.temperature_2m_max?.[0] || 0)}°</span>
+    <span>↓ {Math.round(weather.daily.temperature_2m_min?.[0] || 0)}°</span>
+  </div>
+)}
+
+{/* Прогноз по 3 часа */}
+{weather && (
+  <div className="mt-4 pt-4 border-t border-white/20">
+    <div className="text-[10px] uppercase tracking-wide text-white/70 mb-2 text-center">
+      Har 3 soatda / Каждые 3 часа
+    </div>
+    <div className="flex justify-between gap-1">
+      {getThreeHourForecast(weather).map((slot, i) => {
+        const time = new Date(slot.time).toLocaleTimeString('ru-RU', {
+          hour: '2-digit',
+          minute: '2-digit',
+        });
+        return (
+          <div
+            key={i}
+            className="flex flex-col items-center flex-1 bg-white/10 rounded-xl py-2 px-1"
+          >
+            <span className="text-[10px] text-white/80">{time}</span>
+            <div className="my-1 scale-75">
+              {getWeatherIcon(slot.code)}
+            </div>
+            <span className="text-xs font-bold">{slot.temp}°</span>
+          </div>
+        );
+      })}
+    </div>
+  </div>
+)}
               </div>
             ) : (
               <div className="text-center py-4 text-white/80">—</div>

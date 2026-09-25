@@ -875,8 +875,10 @@ app.get('/api/restaurants/rating/:restaurantId', async (req, res) => {
   }
 });
 // ============ NEWS ============
-app.get('/api/news/list', async (req, res) => {
+   app.get('/api/news/list', async (req, res) => {
   try {
+        // Удаляем новости старше 3 дней
+    await pool.query(`DELETE FROM news WHERE created_at < NOW() - INTERVAL '3 days'`);
     const { category } = req.query;
     let query = 'SELECT * FROM news';
     const params: any[] = [];
@@ -912,18 +914,31 @@ app.get('/api/fetch-world-news', async (req, res) => {
     const html = await response.text();
     const messages = html.split('tgme_widget_message_wrap').slice(1);
     let added = 0;
+
     for (const msg of messages.slice(0, 20)) {
       const textMatch = msg.match(/tgme_widget_message_text[^>]*>([\s\S]*?)<\/div>/);
       const linkMatch = msg.match(/data-post="([^"]*)"/);
       if (!textMatch || !linkMatch) continue;
+
       let text = textMatch[1].replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
       const lines = text.split('\n').filter((l: string) => l.trim());
       const title = lines[0] ? lines[0].substring(0, 200) : 'Jahon yangiligi';
       const content = lines.slice(1).join('\n').substring(0, 1000);
       const link = `https://t.me/${linkMatch[1]}`;
+
+      // Парсим фото из поста
+      let imageUrl: string | null = null;
+      const photoMatch = msg.match(/background-image:url\('([^']+)'\)/);
+      if (photoMatch) {
+        imageUrl = photoMatch[1];
+      }
+
       const existing = await pool.query('SELECT id FROM news WHERE source = $1', [link]);
       if (existing.rows.length === 0) {
-        await pool.query(`INSERT INTO news (category, title, content, source) VALUES ($1, $2, $3, $4)`, ['jahon', title, content, link]);
+        await pool.query(
+          `INSERT INTO news (category, title, content, source, image_url) VALUES ($1, $2, $3, $4, $5)`,
+          ['jahon', title, content, link, imageUrl]
+        );
         added++;
       }
     }

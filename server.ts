@@ -634,48 +634,6 @@ app.post('/api/news/create', async (req, res) => {
   }
 });
 
-app.get('/api/fetch-news', async (req, res) => {
-  try {
-    const response = await fetch('https://t.me/s/sputnikuzbek');
-    const html = await response.text();
-    const messages = html.split('tgme_widget_message_wrap').slice(1);
-    let added = 0;
-    for (const msg of messages.slice(0, 20)) {
-      const textMatch = msg.match(/tgme_widget_message_text[^>]*>([\s\S]*?)<\/div>/);
-      const linkMatch = msg.match(/data-post="([^"]*)"/);
-      if (!textMatch || !linkMatch) continue;
-      let text = textMatch[1].replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
-      const lines = text.split('\n').filter((l: string) => l.trim());
-      const title = lines[0] ? lines[0].substring(0, 200) : 'Yangilik';
-      const content = lines.slice(1).join('\n').substring(0, 1000);
-      const link = `https://t.me/${linkMatch[1]}`;
-      const existing = await pool.query('SELECT id FROM news WHERE source = $1', [link]);
-      if (existing.rows.length === 0) {
-        let category = 'uzbekistan';
-        const lowerTitle = title.toLowerCase();
-        if (lowerTitle.includes('бекабад') || lowerTitle.includes('bekobod')) {
-          category = 'bekobod';
-        } else if (
-          lowerTitle.includes('россия') || lowerTitle.includes('сша') || lowerTitle.includes('китай') ||
-          lowerTitle.includes('европ') || lowerTitle.includes('украин') || lowerTitle.includes('трамп') ||
-          lowerTitle.includes('путин') || lowerTitle.includes('латвия') || lowerTitle.includes('германия') ||
-          lowerTitle.includes('доминикан') || lowerTitle.includes('кабардин') || lowerTitle.includes('москв') ||
-          lowerTitle.includes('nato') || lowerTitle.includes('нато') || lowerTitle.includes('курск') ||
-          lowerTitle.includes('израил') || lowerTitle.includes('палестин')
-        ) {
-          continue;
-        }
-        await pool.query(`INSERT INTO news (category, title, content, source) VALUES ($1, $2, $3, $4)`, [category, title, content, link]);
-        added++;
-      }
-    }
-    res.json({ added });
-  } catch (error: any) {
-    console.error('Fetch news error:', error);
-    res.status(500).json({ error: error.message });
-  }
-});
-
 app.get('/api/fetch-world-news', async (req, res) => {
   try {
     const response = await fetch('https://t.me/s/bbcuzbek');

@@ -6,21 +6,17 @@ import { RestaurantsView } from './components/RestaurantsView';
 import { JobsView } from './components/JobsView';
 import React, { useEffect, useState } from 'react';
 import { Cloud, Sun, CloudRain, Snowflake, Wind, Droplets } from 'lucide-react';
-import { 
-  Newspaper, 
-  Megaphone, 
-  PartyPopper, 
-  Bus, 
-  Home, 
-  ShoppingCart, 
-  Wrench, 
-  Briefcase, 
-  AlertTriangle, 
+import {
+  Newspaper,
+  PartyPopper,
+  Bus,
+  Wrench,
+  Briefcase,
   UtensilsCrossed,
   Phone,
   Mail,
   Moon,
-  Heart
+  Heart,
 } from 'lucide-react';
 import { EmergencyView } from './components/EmergencyView';
 import { TransportView } from './components/TransportView';
@@ -37,14 +33,14 @@ interface Section {
 
 const sections: Section[] = [
   { id: 'news', titleUz: 'Yangiliklar', titleRu: 'Новости', icon: Newspaper, gradient: 'from-blue-500 to-blue-600' },
-   { id: 'ibodat', titleUz: 'Ibodat', titleRu: 'Поклонение', icon: Moon, gradient: 'from-emerald-500 to-teal-600' },
+  { id: 'ibodat', titleUz: 'Ibodat', titleRu: 'Поклонение', icon: Moon, gradient: 'from-emerald-500 to-teal-600' },
   { id: 'events', titleUz: 'Tadbirlar', titleRu: 'События', icon: PartyPopper, gradient: 'from-pink-500 to-rose-500' },
   { id: 'transport', titleUz: 'Transport', titleRu: 'Транспорт', icon: Bus, gradient: 'from-emerald-500 to-green-600' },
-    { id: 'admin', titleUz: 'Administrator', titleRu: 'Администратор', icon: Mail, gradient: 'from-indigo-500 to-violet-600' },
-    { id: 'tibbiyot', titleUz: 'Tibbiyot', titleRu: 'Медицина', icon: Heart, gradient: 'from-rose-500 to-red-600' },
+  { id: 'admin', titleUz: 'Administrator', titleRu: 'Администратор', icon: Mail, gradient: 'from-indigo-500 to-violet-600' },
+  { id: 'tibbiyot', titleUz: 'Tibbiyot', titleRu: 'Медицина', icon: Heart, gradient: 'from-rose-500 to-red-600' },
   { id: 'services', titleUz: 'Xizmatlar', titleRu: 'Услуги', icon: Wrench, gradient: 'from-cyan-500 to-teal-600' },
   { id: 'jobs', titleUz: 'Vakansiya', titleRu: 'Вакансии', icon: Briefcase, gradient: 'from-violet-500 to-purple-600' },
-    { id: 'emergency', titleUz: 'Shahar telefonlari', titleRu: 'Справочная служба', icon: Phone, gradient: 'from-rose-500 to-red-600' },
+  { id: 'emergency', titleUz: 'Shahar telefonlari', titleRu: 'Справочная служба', icon: Phone, gradient: 'from-rose-500 to-red-600' },
   { id: 'restaurants', titleUz: 'Restoran va kafelar', titleRu: 'Рестораны и кафе', icon: UtensilsCrossed, gradient: 'from-red-500 to-pink-600' },
 ];
 
@@ -58,61 +54,58 @@ function App() {
   const [currentAd, setCurrentAd] = useState(0);
   const [weather, setWeather] = useState<any>(null);
   const [weatherLoading, setWeatherLoading] = useState(true);
-    const [rates, setRates] = useState<any>(null);
+  const [rates, setRates] = useState<any>(null);
   const [activeSection, setActiveSection] = useState<string | null>(null);
   const [userId, setUserId] = useState<number | null>(null);
-    useEffect(() => {
+
+  useEffect(() => {
     const tg = (window as any).Telegram?.WebApp;
+
     if (tg?.initDataUnsafe?.user?.id) {
       setUserId(tg.initDataUnsafe.user.id);
     }
+
+    // Отключаем свайп вниз для закрытия приложения
+    if (tg?.disableVerticalSwipes) {
+      tg.disableVerticalSwipes();
+    }
+
+    // Расширяем на весь экран
+    if (tg?.expand) {
+      tg.expand();
+    }
   }, []);
-  useEffect(() => {
-  const tg = (window as any).Telegram?.WebApp;
-  
-  if (tg?.initDataUnsafe?.user?.id) {
-    setUserId(tg.initDataUnsafe.user.id);
-  }
-  
-  // Отключаем свайп вниз для закрытия приложения
-  if (tg?.disableVerticalSwipes) {
-    tg.disableVerticalSwipes();
-  }
-  
-  // Расширяем на весь экран
-  if (tg?.expand) {
-    tg.expand();
-  }
-}, []);
 
   useEffect(() => {
     const lat = 40.22;
     const lon = 69.22;
-    
-   fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&hourly=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min,weather_code&timezone=auto&forecast_days=2`)
-      .then(res => res.json())
-      .then(data => {
+
+    fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&hourly=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min,weather_code&timezone=auto&forecast_days=2`)
+      .then((res) => res.json())
+      .then((data) => {
         setWeather(data);
         setWeatherLoading(false);
       })
-      .catch(err => {
+      .catch((err) => {
         console.error('Ошибка погоды:', err);
         setWeatherLoading(false);
       });
   }, []);
-    useEffect(() => {
+
+  useEffect(() => {
     console.log('🔄 Загружаем курс валют...');
     fetch('https://bekobod-app-1.onrender.com/api/exchange-rates')
-      .then(res => {
+      .then((res) => {
         console.log('📡 Ответ сервера:', res.status);
         return res.json();
       })
-      .then(data => {
+      .then((data) => {
         console.log('✅ Курс получен:', data);
         setRates(data);
       })
-      .catch(err => console.error('❌ Rates error:', err));
+      .catch((err) => console.error('❌ Rates error:', err));
   }, []);
+
   const getWeatherIcon = (code: number) => {
     if (code === 0) return <Sun className="w-8 h-8 text-yellow-500" />;
     if (code >= 1 && code <= 3) return <Cloud className="w-8 h-8 text-gray-400" />;
@@ -122,64 +115,67 @@ function App() {
     if (code >= 80 && code <= 82) return <CloudRain className="w-8 h-8 text-blue-600" />;
     return <Sun className="w-8 h-8 text-yellow-500" />;
   };
-// Прогноз по 3 часа на сегодня
-const getThreeHourForecast = (weather: any) => {
-  if (!weather?.hourly?.time || !weather?.hourly?.temperature_2m) return [];
 
-  const now = new Date();
-  const today = now.toISOString().split('T')[0]; // "2026-09-25"
-  const currentHour = now.getHours();
+  // Прогноз по 3 часа на сегодня
+  const getThreeHourForecast = (weather: any) => {
+    if (!weather?.hourly?.time || !weather?.hourly?.temperature_2m) return [];
 
-  const slots: { time: string; temp: number; code: number }[] = [];
+    const now = new Date();
+    const today = now.toISOString().split('T')[0]; // "2026-09-25"
+    const currentHour = now.getHours();
 
-  weather.hourly.time.forEach((t: string, i: number) => {
-    const date = new Date(t);
-    const dateStr = t.split('T')[0];
-    const hour = date.getHours();
+    const slots: { time: string; temp: number; code: number }[] = [];
 
-    // только сегодня, каждый 3-й час, начиная с ближайшего прошедшего/текущего
-    if (dateStr === today && hour % 3 === 0 && hour >= currentHour - 1) {
-      slots.push({
-        time: t,
-        temp: Math.round(weather.hourly.temperature_2m[i]),
-        code: weather.hourly.weather_code[i],
-      });
-    }
-  });
+    weather.hourly.time.forEach((t: string, i: number) => {
+      const date = new Date(t);
+      const dateStr = t.split('T')[0];
+      const hour = date.getHours();
 
-  return slots;
-};
-  // Экран контактов
-    if (activeSection === 'emergency') {
+      // только сегодня, каждый 3-й час, начиная с ближайшего прошедшего/текущего
+      if (dateStr === today && hour % 3 === 0 && hour >= currentHour - 1) {
+        slots.push({
+          time: t,
+          temp: Math.round(weather.hourly.temperature_2m[i]),
+          code: weather.hourly.weather_code[i],
+        });
+      }
+    });
+
+    return slots;
+  };
+
+  // Экран разделов
+  if (activeSection === 'emergency') {
     return <EmergencyView onClose={() => setActiveSection(null)} />;
   }
   if (activeSection === 'transport') {
     return <TransportView onClose={() => setActiveSection(null)} />;
   }
-   if (activeSection === 'admin') {
+  if (activeSection === 'admin') {
     return <AdminView onClose={() => setActiveSection(null)} userId={userId} />;
   }
-    if (activeSection === 'jobs') {
+  if (activeSection === 'jobs') {
     return <JobsView onClose={() => setActiveSection(null)} />;
   }
-    if (activeSection === 'restaurants') {
+  if (activeSection === 'restaurants') {
     return <RestaurantsView onClose={() => setActiveSection(null)} />;
   }
-    if (activeSection === 'news') {
+  if (activeSection === 'news') {
     return <NewsView onClose={() => setActiveSection(null)} />;
   }
-    if (activeSection === 'events') {
+  if (activeSection === 'events') {
     return <EventsView onClose={() => setActiveSection(null)} userId={userId} />;
   }
-    if (activeSection === 'ibodat') {
+  if (activeSection === 'ibodat') {
     return <IbodatView onClose={() => setActiveSection(null)} />;
   }
-    if (activeSection === 'tibbiyot') {
+  if (activeSection === 'tibbiyot') {
     return <TibbiyotView onClose={() => setActiveSection(null)} />;
   }
   if (activeSection === 'services') {
-  return <ServicesView onClose={() => setActiveSection(null)} />;
-}
+    return <ServicesView onClose={() => setActiveSection(null)} />;
+  }
+
   return (
     <div className="min-h-screen bg-linear-to-b from-stone-50 to-stone-100 text-stone-900 flex flex-col">
       {/* Верхняя панель */}
@@ -200,18 +196,17 @@ const getThreeHourForecast = (weather: any) => {
         </div>
       </div>
 
-            {/* Погода и курс валют */}
+      {/* Погода и курс валют */}
       <div className="max-w-2xl w-full mx-auto px-4 pt-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {/* Погода — компактная */}
+          {/* Погода — компактная с датой по центру */}
           <div className="bg-linear-to-br from-sky-400 to-blue-600 rounded-3xl p-4 shadow-xl text-white">
             {weatherLoading ? (
               <div className="text-center py-4 text-white/80 text-sm">Yuklanmoqda...</div>
             ) : weather ? (
               <>
-                {/* Верхняя строка */}
                 <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-2 shrink-0">
                     <div className="scale-90">
                       {getWeatherIcon(weather.current?.weather_code || 0)}
                     </div>
@@ -219,14 +214,23 @@ const getThreeHourForecast = (weather: any) => {
                       <div className="text-3xl font-bold leading-none">
                         {Math.round(weather.current?.temperature_2m || 0)}°
                       </div>
-                      <div className="text-[10px] text-white/80 mt-0.5">
+                      <div className="text-[10px] text-white/80 mt-0.5 whitespace-nowrap">
                         ↑{Math.round(weather.daily?.temperature_2m_max?.[0] || 0)}° ↓
                         {Math.round(weather.daily?.temperature_2m_min?.[0] || 0)}°
                       </div>
                     </div>
                   </div>
 
-                  <div className="text-right text-[10px] text-white/90 space-y-0.5">
+                  <div className="text-center text-[10px] text-white/80 leading-tight px-2">
+                    <div className="font-semibold">
+                      {new Date().toLocaleDateString('uz-UZ', { day: 'numeric', month: 'short' })}
+                    </div>
+                    <div className="text-white/60">
+                      {new Date().toLocaleDateString('uz-UZ', { weekday: 'short' })}
+                    </div>
+                  </div>
+
+                  <div className="text-right text-[10px] text-white/90 space-y-0.5 shrink-0">
                     <div className="flex items-center justify-end space-x-1">
                       <Droplets className="w-3 h-3" />
                       <span>{weather.current?.relative_humidity_2m || 0}%</span>
@@ -238,7 +242,6 @@ const getThreeHourForecast = (weather: any) => {
                   </div>
                 </div>
 
-                {/* Ряд по 3 часа */}
                 <div className="flex justify-between gap-1 pt-3 border-t border-white/20">
                   {getThreeHourForecast(weather).map((slot, i) => {
                     const time = new Date(slot.time).toLocaleTimeString('ru-RU', {
@@ -301,7 +304,7 @@ const getThreeHourForecast = (weather: any) => {
                   </span>
                 </div>
               </div>
-                      ) : (
+            ) : (
               <div className="text-center py-4 text-white/80">Yuklanmoqda...</div>
             )}
           </div>
@@ -323,7 +326,7 @@ const getThreeHourForecast = (weather: any) => {
               <p className="text-xs text-white/80 mt-1">{ad.subtitle}</p>
             </div>
           ))}
-          
+
           <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex space-x-1.5">
             {ads.map((_, index) => (
               <button
@@ -344,7 +347,7 @@ const getThreeHourForecast = (weather: any) => {
           <span>Bo'limlar</span>
           <span className="text-xs font-normal text-stone-400">Bo'limlar / Разделы</span>
         </h2>
-        
+
         <div className="grid grid-cols-2 gap-3">
           {sections.map((section) => {
             const Icon = section.icon;

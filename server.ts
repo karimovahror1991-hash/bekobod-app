@@ -330,6 +330,52 @@ if ((message?.caption?.startsWith('/add_news')) && message.from.id === 988368940
         }
       }
     }
+        // Команда /add_book
+    if (message?.text?.startsWith('/add_book') && message.from.id === 988368940) {
+      const parts = message.text.split('|').map((s: string) => s.trim());
+
+      if (parts.length < 4) {
+        await sendTelegramMessage(
+          message.from.id,
+          `❌ <b>Format:</b>\n<code>/add_book kategoriya | muallif | nomi | fayl_link | tavsif</code>\n\n` +
+          `<b>Kategoriyalar:</b> badiiy, diniy, ilmiy, bolalar\n\n` +
+          `<b>Misol:</b>\n<code>/add_book badiiy | Cho'lpon | Kecha va kunduz | https://t.me/... | Roman</code>`
+        );
+      } else {
+        const category = parts[0].replace('/add_book', '').trim();
+        const author = parts[1];
+        const title = parts[2];
+        const fileUrl = parts[3];
+        const description = parts[4] || null;
+
+        const result = await pool.query(
+          `INSERT INTO books (category, title, author, description, file_url)
+           VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+          [category, title, author, description, fileUrl]
+        );
+
+        await sendTelegramMessage(
+          message.from.id,
+          `✅ <b>Kitob qo'shildi!</b>\n\n📂 ${category}\n📚 ${title}\n✍️ ${author}\nID: <code>${result.rows[0].id}</code>`
+        );
+      }
+    }
+
+    // Команда /delete_book ID
+    if (message?.text?.startsWith('/delete_book') && message.from.id === 988368940) {
+      const bookId = Number(message.text.split(' ')[1]);
+
+      if (!bookId) {
+        await sendTelegramMessage(message.from.id, "❌ /delete_book ID");
+      } else {
+        const result = await pool.query('DELETE FROM books WHERE id = $1 RETURNING title', [bookId]);
+        if (result.rows.length === 0) {
+          await sendTelegramMessage(message.from.id, `❌ Topilmadi (ID: ${bookId})`);
+        } else {
+          await sendTelegramMessage(message.from.id, `✅ O'chirildi: <b>${result.rows[0].title}</b>`);
+        }
+      }
+    }
     res.sendStatus(200);
   } catch (error: any) {
     console.error('Webhook error:', error);
@@ -985,6 +1031,45 @@ app.post('/api/contacts/create', async (req, res) => {
     res.json({ contact: result.rows[0] });
   } catch (error: any) {
     console.error('Contact create error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+// ============ KUTUBXONA (BOOKS) ============
+
+// Список книг
+app.get('/api/books/list', async (req, res) => {
+  try {
+    const { category } = req.query;
+    let query = 'SELECT * FROM books';
+    const params: any[] = [];
+    if (category && category !== 'all') {
+      query += ' WHERE category = $1';
+      params.push(category);
+    }
+    query += ' ORDER BY created_at DESC';
+    const result = await pool.query(query, params);
+    res.json({ books: result.rows });
+  } catch (error: any) {
+    console.error('Books list error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Добавить книгу (только для админа)
+app.post('/api/books/create', async (req, res) => {
+  try {
+    const { adminId, category, title, author, description, fileUrl, coverUrl } = req.body;
+    if (Number(adminId) !== 988368940) return res.status(403).json({ error: 'Доступ запрещён' });
+    if (!category || !title || !fileUrl) return res.status(400).json({ error: 'Укажите категорию, название и ссылку на файл' });
+
+    const result = await pool.query(
+      `INSERT INTO books (category, title, author, description, file_url, cover_url)
+       VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+      [category, title, author || null, description || null, fileUrl, coverUrl || null]
+    );
+    res.json({ book: result.rows[0] });
+  } catch (error: any) {
+    console.error('Book create error:', error);
     res.status(500).json({ error: error.message });
   }
 });

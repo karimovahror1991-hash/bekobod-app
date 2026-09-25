@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Loader2, MapPin, Phone, Calendar, Send } from 'lucide-react';
+import { ArrowLeft, Loader2, MapPin, Phone, Calendar } from 'lucide-react';
 
 interface EventsViewProps {
   onClose: () => void;
@@ -26,21 +26,12 @@ const CATEGORIES = [
   { id: 'talim', label: "Ta'lim", icon: '📚', gradient: 'from-blue-500 to-cyan-600' },
   { id: 'rasmiy', label: 'Rasmiy', icon: '🏛️', gradient: 'from-amber-500 to-orange-600' },
   { id: 'bozor', label: 'Yarmarkalar', icon: '🛒', gradient: 'from-teal-500 to-emerald-600' },
-  { id: 'tugilgan_kun', label: "Tug'ilgan kunlar", icon: '🎂', gradient: 'from-rose-500 to-pink-600' },
 ];
 
 export const EventsView: React.FC<EventsViewProps> = ({ onClose, userId }) => {
   const [events, setEvents] = useState<EventItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [showForm, setShowForm] = useState(false);
-
-  // Форма для дня рождения
-  const [name, setName] = useState('');
-  const [birthDate, setBirthDate] = useState('');
-  const [message, setMessage] = useState('');
-  const [phone, setPhone] = useState('');
-  const [sending, setSending] = useState(false);
 
   const API_URL = 'https://bekobod-app-1.onrender.com';
 
@@ -61,42 +52,6 @@ export const EventsView: React.FC<EventsViewProps> = ({ onClose, userId }) => {
     loadEvents();
   }, []);
 
-  const handleSubmitBirthday = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!name.trim() || !birthDate || !message.trim()) return;
-
-    setSending(true);
-    try {
-      const res = await fetch(`${API_URL}/api/events/birthday-request`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId,
-          name: name.trim(),
-          birthDate,
-          message: message.trim(),
-          phone: phone.trim() || null,
-        }),
-      });
-      const data = await res.json();
-      if (data.error) {
-        alert(data.error);
-        return;
-      }
-      alert('So\'rovingiz yuborildi! Administrator tez orada ko\'rib chiqadi.');
-      setName('');
-      setBirthDate('');
-      setMessage('');
-      setPhone('');
-      setShowForm(false);
-    } catch (err) {
-      console.error(err);
-      alert('Xatolik yuz berdi');
-    } finally {
-      setSending(false);
-    }
-  };
-
   const formatDate = (dateStr: string | null) => {
     if (!dateStr) return '';
     const date = new Date(dateStr);
@@ -108,101 +63,6 @@ export const EventsView: React.FC<EventsViewProps> = ({ onClose, userId }) => {
       minute: '2-digit',
     });
   };
-
-  // Если выбрана категория "Дни рождения" и открыта форма
-  if (showForm) {
-    return (
-      <div className="min-h-screen bg-linear-to-b from-stone-50 to-stone-100">
-        <div className="bg-linear-to-br from-rose-500 to-pink-600 text-white sticky top-0 z-20 shadow-md">
-          <div className="max-w-2xl mx-auto px-4 py-4 flex items-center space-x-3">
-            <button
-              onClick={() => setShowForm(false)}
-              className="w-11 h-11 rounded-2xl bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"
-            >
-              <ArrowLeft className="w-6 h-6 text-white" />
-            </button>
-            <h1 className="font-bold text-xl text-white">🎂 So'rov yuborish</h1>
-          </div>
-        </div>
-
-        <form onSubmit={handleSubmitBirthday} className="max-w-2xl mx-auto px-4 py-6 space-y-4">
-          <div className="bg-white rounded-3xl p-5 shadow-sm border border-stone-100 space-y-4">
-            <div>
-              <label className="block text-xs font-semibold text-stone-700 mb-1">
-                Kimni tabriklaymiz?
-              </label>
-              <input
-                type="text"
-                required
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Ism"
-                className="w-full px-4 py-3 rounded-xl border border-stone-300 text-sm focus:outline-hidden focus:border-amber-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-stone-700 mb-1">
-                Tug'ilgan kun sanasi
-              </label>
-              <input
-                type="date"
-                required
-                value={birthDate}
-                onChange={(e) => setBirthDate(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border border-stone-300 text-sm focus:outline-hidden focus:border-amber-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-stone-700 mb-1">
-                Tabrik matni
-              </label>
-              <textarea
-                required
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                placeholder="Tabrik so'zlaringizni yozing..."
-                rows={4}
-                className="w-full px-4 py-3 rounded-xl border border-stone-300 text-sm focus:outline-hidden focus:border-amber-500 resize-none"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-stone-700 mb-1">
-                Telefon (ixtiyoriy)
-              </label>
-              <input
-                type="tel"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                placeholder="+998 90 123 45 67"
-                className="w-full px-4 py-3 rounded-xl border border-stone-300 text-sm focus:outline-hidden focus:border-amber-500"
-              />
-            </div>
-          </div>
-
-          <button
-            type="submit"
-            disabled={sending || !name.trim() || !birthDate || !message.trim()}
-            className="w-full py-4 bg-linear-to-br from-rose-500 to-pink-600 text-white rounded-2xl font-bold flex items-center justify-center space-x-2 disabled:opacity-50 transition shadow-lg"
-          >
-            {sending ? (
-              <>
-                <Loader2 className="w-5 h-5 animate-spin" />
-                <span>Yuborilmoqda...</span>
-              </>
-            ) : (
-              <>
-                <Send className="w-5 h-5" />
-                <span>So'rov yuborish</span>
-              </>
-            )}
-          </button>
-        </form>
-      </div>
-    );
-  }
 
   // Экран списка событий категории
   if (selectedCategory) {
@@ -231,16 +91,6 @@ export const EventsView: React.FC<EventsViewProps> = ({ onClose, userId }) => {
         </div>
 
         <div className="max-w-2xl mx-auto px-4 py-6 space-y-3">
-          {selectedCategory === 'tugilgan_kun' && (
-            <button
-              onClick={() => setShowForm(true)}
-              className="w-full py-4 bg-linear-to-br from-rose-500 to-pink-600 text-white rounded-3xl font-bold flex items-center justify-center space-x-2 shadow-lg active:scale-95 transition"
-            >
-              <span className="text-xl">🎂</span>
-              <span>So'rov yuborish</span>
-            </button>
-          )}
-
           {loading ? (
             <div className="flex justify-center py-12">
               <Loader2 className="w-6 h-6 animate-spin text-amber-600" />
@@ -256,7 +106,7 @@ export const EventsView: React.FC<EventsViewProps> = ({ onClose, userId }) => {
                 key={event.id}
                 className="bg-white rounded-3xl overflow-hidden shadow-sm border border-stone-100"
               >
-                                {event.image_url && (
+                {event.image_url && (
                   <div className="w-full h-64 bg-stone-100 flex items-center justify-center overflow-hidden">
                     <img
                       src={event.image_url}
@@ -304,7 +154,7 @@ export const EventsView: React.FC<EventsViewProps> = ({ onClose, userId }) => {
     );
   }
 
-  // Экран категорий (большие иконки)
+  // Экран категорий
   return (
     <div className="min-h-screen bg-linear-to-b from-stone-50 to-stone-100">
       <div className="bg-white/95 backdrop-blur-lg border-b border-stone-200 sticky top-0 z-20 shadow-sm">

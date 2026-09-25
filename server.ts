@@ -1094,7 +1094,34 @@ app.post('/api/translate', async (req, res) => {
   }
 });
 // ============ OLDI SOTDI (LISTINGS) ============
+// Загрузка фото на ImgBB
+app.post('/api/upload-image', async (req, res) => {
+  try {
+    const { image } = req.body;
+    if (!image) return res.status(400).json({ error: 'image required' });
 
+    const apiKey = process.env.IMGBB_API_KEY;
+    if (!apiKey) return res.status(500).json({ error: 'IMGBB_API_KEY not set' });
+
+    const formData = new URLSearchParams();
+    formData.append('image', image);
+
+    const response = await fetch(`https://api.imgbb.com/1/upload?key=${apiKey}`, {
+      method: 'POST',
+      body: formData,
+    });
+
+    const data: any = await response.json();
+    if (!data.success) {
+      return res.status(500).json({ error: data.error?.message || 'Upload failed' });
+    }
+
+    res.json({ url: data.data.url, thumb: data.data.thumb?.url || data.data.url });
+  } catch (error: any) {
+    console.error('Upload image error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
 // Список объявлений
 app.get('/api/listings/list', async (req, res) => {
   try {
@@ -1120,14 +1147,14 @@ app.get('/api/listings/list', async (req, res) => {
 // Создать объявление
 app.post('/api/listings/create', async (req, res) => {
   try {
-    const { category, title, description, price, phone, imageUrl, userId } = req.body;
+    const { category, title, description, price, phone, imageUrls, userId } = req.body;
     if (!category || !title || !phone) {
       return res.status(400).json({ error: 'Kategoriya, sarlavha va telefon kerak' });
     }
     const result = await pool.query(
-      `INSERT INTO listings (category, title, description, price, phone, image_url, user_id)
+      `INSERT INTO listings (category, title, description, price, phone, image_urls, user_id)
        VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
-      [category, title, description || null, price || null, phone, imageUrl || null, userId || null]
+      [category, title, description || null, price || null, phone, imageUrls || [], userId || null]
     );
     res.json({ listing: result.rows[0] });
   } catch (error: any) {

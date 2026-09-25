@@ -246,6 +246,7 @@ app.post('/api/telegram-webhook', async (req, res) => {
         }
       }
     }
+    
     // Команда /add_news (ручное добавление новости)
     if (message?.text?.startsWith('/add_news') && message.from.id === 988368940) {
       const parts = message.text.split('|').map((s: string) => s.trim());
@@ -274,6 +275,46 @@ app.post('/api/telegram-webhook', async (req, res) => {
         );
       }
     }
+    // Команда /add_news с фото или видео (через caption)
+if ((message?.caption?.startsWith('/add_news')) && message.from.id === 988368940) {
+  const parts = message.caption.split('|').map((s: string) => s.trim());
+
+  if (parts.length < 3) {
+    await sendTelegramMessage(
+      message.from.id,
+      `❌ <b>Format (s фото/видео):</b>\n<code>/add_news kategoriya | sarlavha | matn | manba</code>\n\n` +
+      `<b>Отправь фото или видео с этой подписью.</b>`
+    );
+  } else {
+    const category = parts[0].replace('/add_news', '').trim();
+    const title = parts[1];
+    const content = parts[2] || null;
+    const source = parts[3] || null;
+
+    // Получаем file_id
+    let fileId = null;
+    let mediaType = null;
+
+    if (message.photo && message.photo.length > 0) {
+      // Берём самый большой размер
+      fileId = message.photo[message.photo.length - 1].file_id;
+      mediaType = 'photo';
+    } else if (message.video) {
+      fileId = message.video.file_id;
+      mediaType = 'video';
+    }
+
+    const result = await pool.query(
+      `INSERT INTO news (category, title, content, source, image_url) VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+      [category, title, content, source, fileId]
+    );
+
+    await sendTelegramMessage(
+      message.from.id,
+      `✅ <b>Yangilik qo'shildi!</b>\n\n📂 ${category}\n📰 ${title}\n🖼 ${mediaType || 'yo\'q'}\nID: <code>${result.rows[0].id}</code>`
+    );
+  }
+}
     res.sendStatus(200);
   } catch (error: any) {
     console.error('Webhook error:', error);

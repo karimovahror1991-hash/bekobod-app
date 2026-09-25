@@ -24,7 +24,7 @@ export const TransportView: React.FC<TransportViewProps> = ({ onClose }) => {
   }
 
   if (selectedCategory) {
-    if (selectedCategory.title.includes('Taksi')) {
+    if (selectedCategory.title.includes('taksi') || selectedCategory.title.includes('Taksi')) {
       setShowTaxi(true);
       return null;
     }

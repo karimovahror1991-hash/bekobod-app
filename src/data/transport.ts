@@ -54,7 +54,7 @@ export const transport: TransportCategory[] = [
     ],
   },
   {
-    title: 'Taksi Bekobod — Toshkent',
+    title: 'Shaharlararo taksi',
     icon: '🚕',
     items: [], // Заполним позже
   },

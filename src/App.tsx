@@ -166,11 +166,11 @@ function App() {
   if (activeSection === 'tibbiyot') {
     return <TibbiyotView onClose={() => setActiveSection(null)} />;
   }
-  if (activeSection === 'services') {
+    if (activeSection === 'services') {
     return <ServicesView onClose={() => setActiveSection(null)} />;
-      if (activeSection === 'tarjimon') {
-    return <TarjimonView onClose={() => setActiveSection(null)} />;
   }
+  if (activeSection === 'tarjimon') {
+    return <TarjimonView onClose={() => setActiveSection(null)} />;
   }
   
   return (

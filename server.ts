@@ -315,6 +315,21 @@ if ((message?.caption?.startsWith('/add_news')) && message.from.id === 988368940
     );
   }
 }
+    // Команда /delete_news ID
+    if (message?.text?.startsWith('/delete_news') && message.from.id === 988368940) {
+      const newsId = Number(message.text.split(' ')[1]);
+
+      if (!newsId) {
+        await sendTelegramMessage(message.from.id, "❌ /delete_news ID");
+      } else {
+        const result = await pool.query('DELETE FROM news WHERE id = $1 RETURNING title', [newsId]);
+        if (result.rows.length === 0) {
+          await sendTelegramMessage(message.from.id, `❌ Topilmadi (ID: ${newsId})`);
+        } else {
+          await sendTelegramMessage(message.from.id, `✅ O'chirildi: <b>${result.rows[0].title}</b>`);
+        }
+      }
+    }
     res.sendStatus(200);
   } catch (error: any) {
     console.error('Webhook error:', error);

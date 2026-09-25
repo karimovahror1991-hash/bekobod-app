@@ -636,7 +636,7 @@ app.post('/api/news/create', async (req, res) => {
 
 app.get('/api/fetch-news', async (req, res) => {
   try {
-    const response = await fetch('https://t.me/s/sputnik_lotin');
+    const response = await fetch('https://t.me/s/sputnikuzbek');
     const html = await response.text();
     const messages = html.split('tgme_widget_message_wrap').slice(1);
     let added = 0;

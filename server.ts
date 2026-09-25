@@ -360,7 +360,47 @@ if ((message?.caption?.startsWith('/add_news')) && message.from.id === 988368940
         );
       }
     }
+    // Команда /add_city_taxi
+    if (message?.text?.startsWith('/add_city_taxi') && message.from.id === 988368940) {
+      const parts = message.text.split('|').map((s: string) => s.trim());
 
+      if (parts.length < 3) {
+        await sendTelegramMessage(
+          message.from.id,
+          `❌ <b>Format:</b>\n<code>/add_city_taxi nomi | telefon | tavsif</code>\n\n` +
+          `<b>Misol:</b>\n<code>/add_city_taxi Bekobod Taxi | +998901234567 | Tezkor xizmat</code>`
+        );
+      } else {
+        const name = parts[0].replace('/add_city_taxi', '').trim();
+        const phone = parts[1];
+        const description = parts[2] || null;
+
+        const result = await pool.query(
+          'INSERT INTO city_taxi (name, phone, description) VALUES ($1, $2, $3) RETURNING *',
+          [name, phone, description]
+        );
+
+        await sendTelegramMessage(
+          message.from.id,
+          `✅ <b>Shahar taksi qo'shildi!</b>\n\n📌 ${name}\n📞 ${phone}\nID: <code>${result.rows[0].id}</code>`
+        );
+      }
+    }
+
+    // Команда /delete_city_taxi ID
+    if (message?.text?.startsWith('/delete_city_taxi') && message.from.id === 988368940) {
+      const taxiId = Number(message.text.split(' ')[1]);
+      if (!taxiId) {
+        await sendTelegramMessage(message.from.id, "❌ /delete_city_taxi ID");
+      } else {
+        const result = await pool.query('DELETE FROM city_taxi WHERE id = $1 RETURNING name', [taxiId]);
+        if (result.rows.length === 0) {
+          await sendTelegramMessage(message.from.id, `❌ Topilmadi (ID: ${taxiId})`);
+        } else {
+          await sendTelegramMessage(message.from.id, `✅ O'chirildi: <b>${result.rows[0].name}</b>`);
+        }
+      }
+    }
     // Команда /delete_book ID
     if (message?.text?.startsWith('/delete_book') && message.from.id === 988368940) {
       const bookId = Number(message.text.split(' ')[1]);
@@ -560,7 +600,57 @@ app.get('/api/taxi/driver-rating/:phone', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+// ============ CITY TAXI (городское такси) ============
 
+// Список городских такси
+app.get('/api/city-taxi/list', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM city_taxi ORDER BY name ASC');
+    res.json({ taxis: result.rows });
+  } catch (error: any) {
+    console.error('City taxi list error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Добавить городское такси (только админ)
+app.post('/api/city-taxi/create', async (req, res) => {
+  try {
+    const { adminId, name, phone, description } = req.body;
+    if (Number(adminId) !== 988368940) {
+      return res.status(403).json({ error: 'Доступ запрещён' });
+    }
+    if (!name || !phone) {
+      return res.status(400).json({ error: 'Укажите название и телефон' });
+    }
+    const result = await pool.query(
+      'INSERT INTO city_taxi (name, phone, description) VALUES ($1, $2, $3) RETURNING *',
+      [name, phone, description || null]
+    );
+    res.json({ taxi: result.rows[0] });
+  } catch (error: any) {
+    console.error('City taxi create error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Удалить городское такси (только админ)
+app.post('/api/city-taxi/delete', async (req, res) => {
+  try {
+    const { adminId, taxiId } = req.body;
+    if (Number(adminId) !== 988368940) {
+      return res.status(403).json({ error: 'Доступ запрещён' });
+    }
+    const result = await pool.query('DELETE FROM city_taxi WHERE id = $1 RETURNING name', [taxiId]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Topilmadi' });
+    }
+    res.json({ ok: true, name: result.rows[0].name });
+  } catch (error: any) {
+    console.error('City taxi delete error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
 // ============ SERVICES ============
 app.post('/api/services/register', async (req, res) => {
   try {

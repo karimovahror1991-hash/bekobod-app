@@ -1,3 +1,4 @@
+import { CityTaxiView } from './CityTaxiView';
 import { TaxiView } from './TaxiView';
 import React, { useState } from 'react';
 import { ArrowLeft, Clock, MapPin } from 'lucide-react';
@@ -16,6 +17,9 @@ const CATEGORY_GRADIENTS: { [key: string]: string } = {
 export const TransportView: React.FC<TransportViewProps> = ({ onClose }) => {
   const [selectedCategory, setSelectedCategory] = useState<TransportCategory | null>(null);
   const [showTaxi, setShowTaxi] = useState(false);
+    if (selectedCategory?.title === 'Shahar taksi') {
+    return <CityTaxiView onClose={() => setSelectedCategory(null)} />;
+  }
      if (showTaxi) {
     return <TaxiView onClose={() => {
       setShowTaxi(false);

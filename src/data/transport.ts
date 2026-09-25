@@ -18,7 +18,11 @@ export const transport: TransportCategory[] = [
     icon: '🚕',
     items: [], // Заполним позже
   },
-  
+    {
+    title: 'Shahar taksi',
+    icon: '🚕',
+    items: [],
+  },
    {
     title: 'Avtobus',
     icon: '🚌',

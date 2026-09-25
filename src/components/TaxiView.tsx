@@ -24,16 +24,16 @@ interface Driver {
 
 export const TaxiView: React.FC<TaxiViewProps> = ({ onClose }) => {
   const [tab, setTab] = useState<'list' | 'create'>('list');
-    const [userId, setUserId] = useState<number | null>(null);  
+  const [userId, setUserId] = useState<number | null>(null);
   const [rides, setRides] = useState<Ride[]>([]);
   const [drivers, setDrivers] = useState<Driver[]>([]);
   const [loading, setLoading] = useState(true);
-  const [direction, setDirection] = useState<'all' | 'bekobod_toshkent' | 'toshkent_bekobod'>('all');
+  const [direction, setDirection] = useState<'all' | string>('all');
 
   // Состояние формы
   const [driverName, setDriverName] = useState('');
   const [driverPhone, setDriverPhone] = useState('');
-  const [newDirection, setNewDirection] = useState('bekobod_toshkent');
+  const [newDirection, setNewDirection] = useState('');
   const [totalSeats, setTotalSeats] = useState(4);
   const [creating, setCreating] = useState(false);
   const [bookedRides, setBookedRides] = useState<number[]>([]);
@@ -55,7 +55,6 @@ export const TaxiView: React.FC<TaxiViewProps> = ({ onClose }) => {
       const ridesList = data.rides || [];
       setRides(ridesList);
 
-      // Загружаем рейтинги по телефону таксиста
       const ratingsData: {[key: string]: {avg: number, count: number}} = {};
       
       for (const ride of ridesList) {
@@ -88,12 +87,13 @@ export const TaxiView: React.FC<TaxiViewProps> = ({ onClose }) => {
     }
   };
 
-    useEffect(() => {
+  useEffect(() => {
     const tg = (window as any).Telegram?.WebApp;
     if (tg?.initDataUnsafe?.user?.id) {
       setUserId(tg.initDataUnsafe.user.id);
     }
   }, []);
+
   useEffect(() => {
     loadRides();
   }, [direction]);
@@ -108,7 +108,6 @@ export const TaxiView: React.FC<TaxiViewProps> = ({ onClose }) => {
 
     setCreating(true);
     try {
-          // Нормализуем телефон: добавляем +998, если его нет
       let normalizedPhone = driverPhone.trim().replace(/\s/g, '');
       if (!normalizedPhone.startsWith('+')) {
         if (normalizedPhone.startsWith('998')) {
@@ -118,11 +117,10 @@ export const TaxiView: React.FC<TaxiViewProps> = ({ onClose }) => {
         }
       }
 
-            // Сначала регистрируем таксиста (если его нет)
       const regRes = await fetch(`${API_URL}/api/taxi/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
+        body: JSON.stringify({
           driverName: driverName.trim(),
           driverPhone: normalizedPhone,
           direction: newDirection,
@@ -130,14 +128,15 @@ export const TaxiView: React.FC<TaxiViewProps> = ({ onClose }) => {
           userId,
         }),
       });
-          const regData = await regRes.json();
+      const regData = await regRes.json();
       
-            if (regData.error) {
+      if (regData.error) {
         alert(regData.error);
         return;
       }
       setDriverName('');
       setDriverPhone('');
+      setNewDirection('');
       setTab('list');
       loadRides();
       loadDrivers();
@@ -161,12 +160,13 @@ export const TaxiView: React.FC<TaxiViewProps> = ({ onClose }) => {
         alert(data.error);
         return;
       }
-          loadRides();
+      loadRides();
       setBookedRides((prev) => [...prev, rideId]);
     } catch (err) {
       console.error(err);
     }
   };
+
   const handleCancel = async (rideId: number) => {
     try {
       const res = await fetch(`${API_URL}/api/taxi/cancel-booking`, {
@@ -174,39 +174,18 @@ export const TaxiView: React.FC<TaxiViewProps> = ({ onClose }) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ rideId }),
       });
-        const handleDelete = async (rideId: number) => {
-    if (!userId) return;
-    if (!confirm('Reysni o\'chirishni tasdiqlaysizmi?')) return;
-
-    try {
-      const res = await fetch(`${API_URL}/api/taxi/delete`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ rideId, userId }),
-      });
-      const data = await res.json();
-      if (data.error) {
-        alert(data.error);
-        return;
-      }
-      loadRides();
-    } catch (err) {
-      console.error(err);
-    }
-  };
       const data = await res.json();
       if (data.error) {
         alert(data.error);
         return;
       }
       setBookedRides((prev) => prev.filter((id) => id !== rideId));
-          loadRides();
-     
+      loadRides();
     } catch (err) {
       console.error(err);
     }
   };
-  
+
   const handleDelete = async (rideId: number) => {
     if (!userId) return;
     if (!confirm("Reysni o'chirishni tasdiqlaysizmi?")) return;
@@ -227,20 +206,17 @@ export const TaxiView: React.FC<TaxiViewProps> = ({ onClose }) => {
       console.error(err);
     }
   };
+
   const handleRate = async (rating: number) => {
     if (!showRatingModal) return;
-    
-    // showRatingModal хранит rideId
     const rideId = Number(showRatingModal);
-    
     try {
       await fetch(`${API_URL}/api/taxi/rate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ rideId, rating }),
       });
-      
-           setShowRatingModal(null);
+      setShowRatingModal(null);
       setSelectedRating(0);
       loadRides();
     } catch (err) {
@@ -249,7 +225,7 @@ export const TaxiView: React.FC<TaxiViewProps> = ({ onClose }) => {
   };
 
   const getDirectionLabel = (dir: string) => {
-    return dir === 'bekobod_toshkent' ? 'Bekobod → Toshkent' : 'Toshkent → Bekobod';
+    return dir;
   };
 
   return (
@@ -294,36 +270,26 @@ export const TaxiView: React.FC<TaxiViewProps> = ({ onClose }) => {
       <div className="max-w-2xl mx-auto px-4 py-6">
         {tab === 'list' && (
           <>
-            <div className="grid grid-cols-3 gap-2 mb-5">
+            <div className="grid grid-cols-2 gap-2 mb-5">
               <button
                 onClick={() => setDirection('all')}
                 className={`py-3 rounded-2xl text-sm font-bold transition-all ${
-                  direction === 'all' 
-                    ? 'bg-stone-900 text-white shadow-md' 
+                  direction === 'all'
+                    ? 'bg-stone-900 text-white shadow-md'
                     : 'bg-white text-stone-600 border border-stone-200'
                 }`}
               >
                 Barchasi
               </button>
               <button
-                onClick={() => setDirection('bekobod_toshkent')}
-                className={`py-3 rounded-2xl text-xs font-bold transition-all leading-tight ${
-                  direction === 'bekobod_toshkent' 
-                    ? 'bg-stone-900 text-white shadow-md' 
+                onClick={() => setDirection('shaharlararo')}
+                className={`py-3 rounded-2xl text-sm font-bold transition-all ${
+                  direction === 'shaharlararo'
+                    ? 'bg-stone-900 text-white shadow-md'
                     : 'bg-white text-stone-600 border border-stone-200'
                 }`}
               >
-                Bekobod<br/>→ Toshkent
-              </button>
-              <button
-                onClick={() => setDirection('toshkent_bekobod')}
-                className={`py-3 rounded-2xl text-xs font-bold transition-all leading-tight ${
-                  direction === 'toshkent_bekobod' 
-                    ? 'bg-stone-900 text-white shadow-md' 
-                    : 'bg-white text-stone-600 border border-stone-200'
-                }`}
-              >
-                Toshkent<br/>→ Bekobod
+                🚗 Shaharlararo
               </button>
             </div>
 
@@ -357,7 +323,7 @@ export const TaxiView: React.FC<TaxiViewProps> = ({ onClose }) => {
                         </div>
                       </div>
 
-                                            <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-2 text-sm text-stone-600">
                           <User className="w-4 h-4" />
                           <span>{ride.driver_name}</span>
@@ -396,7 +362,7 @@ export const TaxiView: React.FC<TaxiViewProps> = ({ onClose }) => {
                           🗑 Reysni o'chirish
                         </button>
                       )}
-                                    <div className="flex space-x-2">
+                      <div className="flex space-x-2">
                         <a
                           href={`tel:${ride.driver_phone}`}
                           className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-semibold flex items-center justify-center space-x-1.5 transition"
@@ -471,14 +437,13 @@ export const TaxiView: React.FC<TaxiViewProps> = ({ onClose }) => {
               <label className="block text-xs font-semibold text-stone-700 mb-1">
                 Yo'nalish
               </label>
-              <select
+              <input
+                type="text"
                 value={newDirection}
                 onChange={(e) => setNewDirection(e.target.value)}
+                placeholder="Masalan: Bekobod → Toshkent"
                 className="w-full px-4 py-3 rounded-xl border border-stone-300 text-sm focus:outline-hidden focus:border-amber-500 bg-white"
-              >
-                <option value="bekobod_toshkent">Bekobod → Toshkent</option>
-                <option value="toshkent_bekobod">Toshkent → Bekobod</option>
-              </select>
+              />
             </div>
 
             <div>

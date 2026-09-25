@@ -1,4 +1,3 @@
-import { KutubxonaView } from './components/KutubxonaView';
 import { TibbiyotView } from './components/TibbiyotView';
 import { IbodatView } from './components/IbodatView';
 import { EventsView } from './components/EventsView';
@@ -44,8 +43,7 @@ const sections: Section[] = [
   { id: 'jobs', titleUz: 'Vakansiya', titleRu: 'Вакансии', icon: Briefcase, gradient: 'from-violet-500 to-purple-600' },
   { id: 'emergency', titleUz: 'Shahar telefonlari', titleRu: 'Справочная служба', icon: Phone, gradient: 'from-rose-500 to-red-600' },
   { id: 'restaurants', titleUz: 'Restoran va kafelar', titleRu: 'Рестораны и кафе', icon: UtensilsCrossed, gradient: 'from-red-500 to-pink-600' },
-    { id: 'kutubxona', titleUz: 'Kutubxona', titleRu: 'Библиотека', icon: BookOpen, gradient: 'from-amber-500 to-orange-600' },
-];
+  ];
 
 const ads = [
   { id: 1, title: 'Reklama 1', subtitle: "Bu yerda sizning reklamangiz bo'lishi mumkin", gradient: 'from-purple-600 to-indigo-700' },

@@ -203,77 +203,62 @@ const getThreeHourForecast = (weather: any) => {
             {/* Погода и курс валют */}
       <div className="max-w-2xl w-full mx-auto px-4 pt-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {/* Погода */}
-          <div className="bg-linear-to-br from-sky-400 to-blue-600 rounded-3xl p-6 shadow-xl text-white">
-            <div className="text-center mb-4">
-              <div className="text-sm font-bold mb-1">Bekobod</div>
-              <div className="text-xs text-white/80">
-                {new Date().toLocaleDateString('uz-UZ', { 
-                  day: 'numeric', 
-                  month: 'long', 
-                  year: 'numeric' 
-                })}
-              </div>
-            </div>
-            
+          {/* Погода — компактная */}
+          <div className="bg-linear-to-br from-sky-400 to-blue-600 rounded-3xl p-4 shadow-xl text-white">
             {weatherLoading ? (
-              <div className="text-center py-4 text-white/80">Yuklanmoqda...</div>
+              <div className="text-center py-4 text-white/80 text-sm">Yuklanmoqda...</div>
             ) : weather ? (
-              <div className="flex flex-col items-center">
-                <div className="mb-2">
-                  {getWeatherIcon(weather.current?.weather_code || 0)}
-                </div>
-                <div className="text-5xl font-bold mb-2">
-                  {Math.round(weather.current?.temperature_2m || 0)}°C
-                </div>
-                <div className="flex items-center space-x-4 text-xs text-white/90">
-                  <div className="flex items-center space-x-1">
-                    <Droplets className="w-3 h-3" />
-                    <span>{weather.current?.relative_humidity_2m || 0}%</span>
+              <>
+                {/* Верхняя строка */}
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center space-x-2">
+                    <div className="scale-90">
+                      {getWeatherIcon(weather.current?.weather_code || 0)}
+                    </div>
+                    <div>
+                      <div className="text-3xl font-bold leading-none">
+                        {Math.round(weather.current?.temperature_2m || 0)}°
+                      </div>
+                      <div className="text-[10px] text-white/80 mt-0.5">
+                        ↑{Math.round(weather.daily?.temperature_2m_max?.[0] || 0)}° ↓
+                        {Math.round(weather.daily?.temperature_2m_min?.[0] || 0)}°
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex items-center space-x-1">
-                    <Wind className="w-3 h-3" />
-                    <span>{weather.current?.wind_speed_10m || 0} km/h</span>
-                  </div>
-                </div>
-                {weather.daily && (
-  <div className="flex items-center space-x-3 text-xs text-white/80 mt-3 pt-3 border-t border-white/20">
-    <span>↑ {Math.round(weather.daily.temperature_2m_max?.[0] || 0)}°</span>
-    <span>↓ {Math.round(weather.daily.temperature_2m_min?.[0] || 0)}°</span>
-  </div>
-)}
 
-{/* Прогноз по 3 часа */}
-{weather && (
-  <div className="mt-4 pt-4 border-t border-white/20">
-    <div className="text-[10px] uppercase tracking-wide text-white/70 mb-2 text-center">
-      Har 3 soatda / Каждые 3 часа
-    </div>
-    <div className="flex justify-between gap-1">
-      {getThreeHourForecast(weather).map((slot, i) => {
-        const time = new Date(slot.time).toLocaleTimeString('ru-RU', {
-          hour: '2-digit',
-          minute: '2-digit',
-        });
-        return (
-          <div
-            key={i}
-            className="flex flex-col items-center flex-1 bg-white/10 rounded-xl py-2 px-1"
-          >
-            <span className="text-[10px] text-white/80">{time}</span>
-            <div className="my-1 scale-75">
-              {getWeatherIcon(slot.code)}
-            </div>
-            <span className="text-xs font-bold">{slot.temp}°</span>
-          </div>
-        );
-      })}
-    </div>
-  </div>
-)}
-              </div>
+                  <div className="text-right text-[10px] text-white/90 space-y-0.5">
+                    <div className="flex items-center justify-end space-x-1">
+                      <Droplets className="w-3 h-3" />
+                      <span>{weather.current?.relative_humidity_2m || 0}%</span>
+                    </div>
+                    <div className="flex items-center justify-end space-x-1">
+                      <Wind className="w-3 h-3" />
+                      <span>{weather.current?.wind_speed_10m || 0} km/h</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Ряд по 3 часа */}
+                <div className="flex justify-between gap-1 pt-3 border-t border-white/20">
+                  {getThreeHourForecast(weather).map((slot, i) => {
+                    const time = new Date(slot.time).toLocaleTimeString('ru-RU', {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    });
+                    return (
+                      <div key={i} className="flex flex-col items-center flex-1">
+                        <span className="text-[9px] text-white/70">{time}</span>
+                        <div className="scale-[0.55] my-0.5">
+                          {getWeatherIcon(slot.code)}
+                        </div>
+                        <span className="text-[10px] font-semibold">{slot.temp}°</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
             ) : (
-              <div className="text-center py-4 text-white/80">—</div>
+              <div className="text-center py-4 text-white/80 text-sm">—</div>
             )}
           </div>
 

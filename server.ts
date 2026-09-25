@@ -246,7 +246,34 @@ app.post('/api/telegram-webhook', async (req, res) => {
         }
       }
     }
+    // Команда /add_news (ручное добавление новости)
+    if (message?.text?.startsWith('/add_news') && message.from.id === 988368940) {
+      const parts = message.text.split('|').map((s: string) => s.trim());
 
+      if (parts.length < 3) {
+        await sendTelegramMessage(
+          message.from.id,
+          `❌ <b>Format:</b>\n<code>/add_news kategoriya | sarlavha | matn | manba</code>\n\n` +
+          `<b>Kategoriyalar:</b> bekobod, jahon\n\n` +
+          `<b>Misol:</b>\n<code>/add_news bekobod | Yangi park ochildi | Shahar markazida yangi park ochildi | https://t.me/...</code>`
+        );
+      } else {
+        const category = parts[0].replace('/add_news', '').trim();
+        const title = parts[1];
+        const content = parts[2] || null;
+        const source = parts[3] || null;
+
+        const result = await pool.query(
+          `INSERT INTO news (category, title, content, source) VALUES ($1, $2, $3, $4) RETURNING *`,
+          [category, title, content, source]
+        );
+
+        await sendTelegramMessage(
+          message.from.id,
+          `✅ <b>Yangilik qo'shildi!</b>\n\n📂 ${category}\n📰 ${title}\nID: <code>${result.rows[0].id}</code>`
+        );
+      }
+    }
     res.sendStatus(200);
   } catch (error: any) {
     console.error('Webhook error:', error);

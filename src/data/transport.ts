@@ -14,6 +14,12 @@ export interface TransportCategory {
 
 export const transport: TransportCategory[] = [
    {
+    title: 'Shaharlararo taksi',
+    icon: '🚕',
+    items: [], // Заполним позже
+  },
+  
+   {
     title: 'Avtobus',
     icon: '🚌',
     items: [
@@ -53,9 +59,5 @@ export const transport: TransportCategory[] = [
       },
     ],
   },
-  {
-    title: 'Shaharlararo taksi',
-    icon: '🚕',
-    items: [], // Заполним позже
-  },
+ 
 ];

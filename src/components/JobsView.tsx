@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Phone, Briefcase, Plus, Loader2, Building2, Wallet, Clock } from 'lucide-react';
+import { ArrowLeft, Phone, Briefcase, Plus, Loader2, Building2, Wallet } from 'lucide-react';
 
 interface JobsViewProps {
   onClose: () => void;
@@ -18,13 +18,13 @@ interface Job {
 }
 
 const CATEGORIES = [
-  { id: 'all', label: 'Barchasi', icon: '📋' },
-  { id: 'qurilish', label: 'Qurilish', icon: '🏗️' },
-  { id: 'savdo', label: 'Savdo', icon: '🛒' },
-  { id: 'talim', label: "Ta'lim", icon: '🎓' },
-  { id: 'tibbiyot', label: 'Tibbiyot', icon: '🏥' },
-  { id: 'transport', label: 'Transport', icon: '🚗' },
-  { id: 'boshqa', label: 'Boshqa', icon: '💼' },
+  { id: 'all', label: 'Barchasi', icon: '📋', gradient: 'from-stone-500 to-stone-700' },
+  { id: 'qurilish', label: 'Qurilish', icon: '🏗️', gradient: 'from-orange-500 to-red-600' },
+  { id: 'savdo', label: 'Savdo', icon: '🛒', gradient: 'from-emerald-500 to-teal-600' },
+  { id: 'talim', label: "Ta'lim", icon: '🎓', gradient: 'from-blue-500 to-indigo-600' },
+  { id: 'tibbiyot', label: 'Tibbiyot', icon: '🏥', gradient: 'from-rose-500 to-pink-600' },
+  { id: 'transport', label: 'Transport', icon: '🚗', gradient: 'from-cyan-500 to-blue-600' },
+  { id: 'boshqa', label: 'Boshqa', icon: '💼', gradient: 'from-violet-500 to-purple-600' },
 ];
 
 export const JobsView: React.FC<JobsViewProps> = ({ onClose }) => {
@@ -172,22 +172,36 @@ export const JobsView: React.FC<JobsViewProps> = ({ onClose }) => {
       <div className="max-w-2xl mx-auto px-4 py-6">
         {tab === 'list' && (
           <>
-            {/* Категории */}
-            <div className="grid grid-cols-3 gap-2 mb-5">
-              {CATEGORIES.map((cat) => (
-                <button
-                  key={cat.id}
-                  onClick={() => setSelectedCategory(cat.id)}
-                  className={`py-3 rounded-2xl text-xs font-bold transition-all ${
-                    selectedCategory === cat.id
-                      ? 'bg-stone-900 text-white shadow-md scale-105'
-                      : 'bg-white text-stone-600 border border-stone-200'
-                  }`}
-                >
-                  <div className="text-xl mb-0.5">{cat.icon}</div>
-                  <div className="text-[10px]">{cat.label}</div>
-                </button>
-              ))}
+            {/* Категории — крупные карточки */}
+            <div className="grid grid-cols-2 gap-3 mb-5">
+              {CATEGORIES.map((cat) => {
+                const count = cat.id === 'all'
+                  ? jobs.length
+                  : jobs.filter(j => j.category === cat.id).length;
+                const isActive = selectedCategory === cat.id;
+                return (
+                  <button
+                    key={cat.id}
+                    onClick={() => setSelectedCategory(cat.id)}
+                    className={`relative bg-linear-to-br ${cat.gradient} text-white rounded-3xl p-5 flex flex-col items-center justify-center shadow-lg hover:shadow-xl transition-all duration-300 active:scale-95 min-h-32 ${
+                      isActive ? 'ring-4 ring-amber-400 scale-105' : 'opacity-90'
+                    }`}
+                  >
+                    <div className="text-5xl mb-2">{cat.icon}</div>
+                    <div className="font-bold text-sm text-white text-center leading-tight">
+                      {cat.label}
+                    </div>
+                    <div className="text-[10px] text-white/80 mt-1">
+                      {count} ta
+                    </div>
+                    {isActive && (
+                      <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-white text-amber-600 flex items-center justify-center text-sm font-bold">
+                        ✓
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
             </div>
 
             {loading ? (

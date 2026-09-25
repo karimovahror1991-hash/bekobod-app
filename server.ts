@@ -879,6 +879,8 @@ app.get('/api/restaurants/rating/:restaurantId', async (req, res) => {
   try {
         // Удаляем новости старше 3 дней
     await pool.query(`DELETE FROM news WHERE created_at < NOW() - INTERVAL '3 days'`);
+        // Удаляем новости категории bekobod старше 30 дней
+    await pool.query(`DELETE FROM news WHERE category = 'bekobod' AND created_at < NOW() - INTERVAL '30 days'`);
     const { category } = req.query;
     let query = 'SELECT * FROM news';
     const params: any[] = [];

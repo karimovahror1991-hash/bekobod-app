@@ -1073,6 +1073,26 @@ app.post('/api/books/create', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+// ============ TRANSLATE ============
+app.post('/api/translate', async (req, res) => {
+  try {
+    const { text, from, to } = req.body;
+    if (!text || !from || !to) {
+      return res.status(400).json({ error: 'text, from, to required' });
+    }
+
+    const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${from}&tl=${to}&dt=t&q=${encodeURIComponent(text)}`;
+    const response = await fetch(url);
+    const data: any = await response.json();
+
+    const translated = data[0].map((item: any) => item[0]).join('');
+
+    res.json({ translated, from, to });
+  } catch (error: any) {
+    console.error('Translate error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
 // ============ STATIC ============
 const distPath = path.join(process.cwd(), 'dist');
 app.use(express.static(distPath));

@@ -1,3 +1,4 @@
+import { TarjimonView } from './components/TarjimonView';
 import { TibbiyotView } from './components/TibbiyotView';
 import { IbodatView } from './components/IbodatView';
 import { EventsView } from './components/EventsView';
@@ -17,7 +18,7 @@ import {
   Mail,
   Moon,
   Heart,
-  BookOpen
+  Languages
 } from 'lucide-react';
 import { EmergencyView } from './components/EmergencyView';
 import { TransportView } from './components/TransportView';
@@ -43,6 +44,7 @@ const sections: Section[] = [
   { id: 'jobs', titleUz: 'Vakansiya', titleRu: 'Вакансии', icon: Briefcase, gradient: 'from-violet-500 to-purple-600' },
   { id: 'emergency', titleUz: 'Shahar telefonlari', titleRu: 'Справочная служба', icon: Phone, gradient: 'from-rose-500 to-red-600' },
   { id: 'restaurants', titleUz: 'Restoran va kafelar', titleRu: 'Рестораны и кафе', icon: UtensilsCrossed, gradient: 'from-red-500 to-pink-600' },
+  { id: 'tarjimon', titleUz: 'Tarjimon', titleRu: 'Переводчик', icon: Languages, gradient: 'from-cyan-500 to-blue-600' },
   ];
 
 const ads = [
@@ -166,11 +168,11 @@ function App() {
   }
   if (activeSection === 'services') {
     return <ServicesView onClose={() => setActiveSection(null)} />;
+      if (activeSection === 'tarjimon') {
+    return <TarjimonView onClose={() => setActiveSection(null)} />;
   }
-    if (activeSection === 'kutubxona') {
-    return <KutubxonaView onClose={() => setActiveSection(null)} />;
   }
-
+  
   return (
     <div className="min-h-screen bg-linear-to-b from-stone-50 to-stone-100 text-stone-900 flex flex-col">
       {/* Верхняя панель */}

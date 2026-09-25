@@ -154,7 +154,7 @@ export const TaxiView: React.FC<TaxiViewProps> = ({ onClose }) => {
       const res = await fetch(`${API_URL}/api/taxi/book`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ rideId }),
+       body: JSON.stringify({ rideId, userId }),
       });
       const data = await res.json();
       if (data.error) {

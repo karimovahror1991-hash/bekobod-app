@@ -420,13 +420,16 @@ app.get('/api/taxi/list', async (req, res) => {
 
 app.post('/api/taxi/book', async (req, res) => {
   try {
-    const { rideId, passengerName, passengerPhone } = req.body;
+    const { rideId, passengerName, passengerPhone, userId } = req.body;
     if (!rideId) return res.status(400).json({ error: 'Не указан рейс' });
     const rideResult = await pool.query('SELECT * FROM taxi_rides WHERE id = $1', [rideId]);
     if (rideResult.rows.length === 0) return res.status(404).json({ error: 'Рейс не найден' });
     const ride = rideResult.rows[0];
     if (ride.booked_seats >= ride.total_seats) return res.status(400).json({ error: 'Мест больше нет' });
-    await pool.query('INSERT INTO taxi_bookings (ride_id, passenger_name, passenger_phone) VALUES ($1, $2, $3)', [rideId, passengerName || null, passengerPhone || null]);
+    await pool.query(
+      'INSERT INTO taxi_bookings (ride_id, passenger_name, passenger_phone, user_id) VALUES ($1, $2, $3, $4)',
+      [rideId, passengerName || null, passengerPhone || null, userId || null]
+    );
     const newBooked = ride.booked_seats + 1;
     const newStatus = newBooked >= ride.total_seats ? 'full' : 'active';
     await pool.query('UPDATE taxi_rides SET booked_seats = $1, status = $2 WHERE id = $3', [newBooked, newStatus, rideId]);
@@ -463,11 +466,28 @@ app.post('/api/taxi/delete', async (req, res) => {
   try {
     const { rideId, userId } = req.body;
     if (!rideId || !userId) return res.status(400).json({ error: 'Не указан рейс или пользователь' });
-    const rideResult = await pool.query('SELECT user_id FROM taxi_rides WHERE id = $1', [rideId]);
+    const rideResult = await pool.query('SELECT user_id, direction FROM taxi_rides WHERE id = $1', [rideId]);
     if (rideResult.rows.length === 0) return res.status(404).json({ error: 'Рейс не найден' });
     if (Number(rideResult.rows[0].user_id) !== Number(userId)) return res.status(403).json({ error: 'Bu reys sizga tegishli emas' });
+
+    const direction = rideResult.rows[0].direction;
+
+    // Находим всех пассажиров этого рейса
+    const passengers = await pool.query('SELECT user_id FROM taxi_bookings WHERE ride_id = $1 AND user_id IS NOT NULL', [rideId]);
+
+    // Удаляем рейс и бронирования
+    await pool.query('DELETE FROM taxi_bookings WHERE ride_id = $1', [rideId]);
     await pool.query('DELETE FROM taxi_rides WHERE id = $1', [rideId]);
-    res.json({ ok: true });
+
+    // Отправляем уведомления пассажирам
+    for (const p of passengers.rows) {
+      await sendTelegramMessage(
+        p.user_id,
+        `⚠️ <b>Reys bekor qilindi!</b>\n\n🚗 Yo'nalish: <b>${direction}</b>\n\nHaydovchi reysni bekor qildi. Iltimos, boshqa reysni tanlang.`
+      );
+    }
+
+    res.json({ ok: true, notified: passengers.rows.length });
   } catch (error: any) {
     console.error('Taxi delete error:', error);
     res.status(500).json({ error: error.message });

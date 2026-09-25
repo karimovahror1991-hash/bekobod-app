@@ -90,7 +90,13 @@ function App() {
         setWeatherLoading(false);
       });
   }, []);
-
+  // Авто-переключение рекламы каждые 5 секунд
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentAd((prev) => (prev + 1) % ads.length);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, []);
    const getWeatherIcon = (code: number) => {
     if (code === 0) return <Sun className="w-8 h-8 text-yellow-500" />;
     if (code >= 1 && code <= 3) return <Cloud className="w-8 h-8 text-gray-400" />;

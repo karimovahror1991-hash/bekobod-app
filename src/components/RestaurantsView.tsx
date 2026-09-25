@@ -20,7 +20,7 @@ const CATEGORIES = [
   { id: 'milliy', label: 'Milliy taomlar', icon: '🍚', gradient: 'from-emerald-500 to-teal-600' },
   { id: 'kafe', label: 'Kafe', icon: '☕', gradient: 'from-amber-500 to-orange-600' },
   { id: 'restoran', label: 'Restoran', icon: '🍷', gradient: 'from-rose-500 to-pink-600' },
-  { id: 'chayxana', label: 'Chayxana', icon: '🫖', gradient: 'from-cyan-500 to-blue-600' },
+  { id: 'choyxona', label: 'Choyxona', icon: '🫖', gradient: 'from-cyan-500 to-blue-600' },
   { id: 'shirinlik', label: 'Shirinliklar', icon: '🍰', gradient: 'from-violet-500 to-purple-600' },
   { id: 'yarim_tayyor', label: 'Yarim tayyor mahsulotlar', icon: '🥟', gradient: 'from-indigo-500 to-blue-700' },
 ];

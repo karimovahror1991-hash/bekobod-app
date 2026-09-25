@@ -14,6 +14,7 @@ interface Ride {
   booked_seats: number;
   status: string;
   created_at: string;
+    user_id: number | null;
 }
 
 interface Driver {
@@ -354,7 +355,7 @@ export const TaxiView: React.FC<TaxiViewProps> = ({ onClose }) => {
                       <div className="text-xs text-stone-400 text-center">
                         {ride.booked_seats} / {ride.total_seats} joy band
                       </div>
-                      {userId && ride.driver_phone === drivers.find(d => d.name === ride.driver_name)?.phone && (
+                      {userId && ride.user_id === userId && (
                         <button
                           onClick={() => handleDelete(ride.id)}
                           className="w-full py-2 bg-rose-100 hover:bg-rose-200 text-rose-700 rounded-xl text-xs font-semibold transition"

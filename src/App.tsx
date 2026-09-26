@@ -344,39 +344,60 @@ function App() {
               <p className="text-xs text-white/80 mt-1">Bu yerda sizning reklamangiz bo'lishi mumkin</p>
             </div>
           ) : (
-                       ads.map((ad, index) => (
-              <div
-                key={ad.id}
-                className={`absolute inset-0 bg-linear-to-br ${ad.gradient} transition-opacity duration-700 flex flex-col items-center justify-center text-white p-6 ${
-                  index === currentAd ? 'opacity-100' : 'opacity-0'
-                }`}
-              >
-                {ad.image_url ? (
-                  <img
-                    src={ad.image_url}
-                    alt={ad.title}
-                    className="absolute inset-0 w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="text-4xl mb-2">📢</div>
-                )}
-                <div className="relative z-10 text-center">
-                  <h3 className="font-bold text-lg drop-shadow-lg">{ad.title}</h3>
-                  {ad.subtitle && (
-                    <p className="text-xs text-white/90 mt-1 drop-shadow-lg">{ad.subtitle}</p>
+                           ads.map((ad, index) => {
+              const textColor = ad.text_color || 'white';
+              return (
+                <div
+                  key={ad.id}
+                  className={`absolute inset-0 bg-linear-to-br ${ad.gradient} transition-opacity duration-700 ${
+                    index === currentAd ? 'opacity-100' : 'opacity-0'
+                  }`}
+                >
+                  {ad.image_url && (
+                    <img
+                      src={ad.image_url}
+                      alt={ad.title}
+                      className="absolute inset-0 w-full h-full object-cover"
+                    />
                   )}
-                  {ad.phone && (
-                    <a
-                      href={`tel:${ad.phone}`}
-                      onClick={(e) => e.stopPropagation()}
-                      className="mt-3 inline-block px-5 py-2 bg-white/30 hover:bg-white/40 backdrop-blur rounded-xl text-xs font-bold transition active:scale-95"
+
+                  {ad.image_url && (
+                    <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/30 to-transparent" />
+                  )}
+
+                  <div className="absolute bottom-0 left-0 right-0 p-5 space-y-1">
+                    <h3
+                      className="font-extrabold text-2xl leading-tight"
+                      style={{ color: textColor, textShadow: '0 2px 8px rgba(0,0,0,0.8)' }}
                     >
-                      📞 {ad.phone}
-                    </a>
+                      {ad.title}
+                    </h3>
+                    {ad.subtitle && (
+                      <p
+                        className="text-sm font-bold"
+                        style={{ color: textColor, textShadow: '0 2px 6px rgba(0,0,0,0.8)' }}
+                      >
+                        {ad.subtitle}
+                      </p>
+                    )}
+                    {ad.phone && (
+                      <a
+                        href={`tel:${ad.phone}`}
+                        onClick={(e) => e.stopPropagation()}
+                        className="inline-block mt-2 px-4 py-2 bg-white/30 hover:bg-white/40 backdrop-blur rounded-xl text-xs font-bold transition active:scale-95"
+                        style={{ color: textColor }}
+                      >
+                        📞 {ad.phone}
+                      </a>
+                    )}
+                  </div>
+
+                  {!ad.image_url && (
+                    <div className="absolute top-6 left-1/2 -translate-x-1/2 text-4xl">📢</div>
                   )}
                 </div>
-              </div>
-            ))
+              );
+            })
           )}
 
           <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex space-x-1.5">

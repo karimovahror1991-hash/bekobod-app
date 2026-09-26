@@ -586,8 +586,8 @@ if ((message?.caption?.startsWith('/add_news')) && ADMINS.includes(message.from.
         }
       }
     }
-           // Команда /add_ad (создать рекламу, только главный админ)
-    // Текстом: /add_ad sarlavha | matn | telefon | gradient
+              // Команда /add_ad (создать рекламу, только главный админ)
+    // Текстом: /add_ad sarlavha | matn | telefon | gradient | text_color
     // С фото: прикрепи фото → в подписи ту же команду
     if ((message?.text?.startsWith('/add_ad') || message?.caption?.startsWith('/add_ad')) && message.from.id === SUPER_ADMIN) {
       const rawText = message.text || message.caption || '';
@@ -596,21 +596,21 @@ if ((message?.caption?.startsWith('/add_news')) && ADMINS.includes(message.from.
       if (parts.length < 3) {
         await sendTelegramMessage(
           message.from.id,
-          `❌ <b>Format:</b>\n<code>/add_ad sarlavha | matn | telefon | gradient</code>\n\n` +
+          `❌ <b>Format:</b>\n<code>/add_ad sarlavha | matn | telefon | gradient | text_color</code>\n\n` +
           `<b>Gradientlar:</b>\n` +
           `from-purple-600 to-indigo-700\n` +
           `from-amber-600 to-orange-700\n` +
-          `from-emerald-600 to-teal-700\n` +
-          `from-rose-500 to-pink-600\n` +
-          `from-blue-500 to-indigo-600\n\n` +
-          `<b>Misol (matn):</b>\n<code>/add_ad Kafe X | Mazali taomlar | +998901234567 | from-amber-600 to-orange-700</code>\n\n` +
-          `<b>Misol (rasm bilan):</b>\nRasm yuborib, izohga shu formatni yozing.`
+          `from-emerald-600 to-teal-700\n\n` +
+          `<b>Ranglar (text_color):</b>\n` +
+          `white, black, yellow, red, blue, green, orange, pink, cyan, purple\n\n` +
+          `<b>Misol:</b>\n<code>/add_ad Kafe X | Mazali taomlar | +998901234567 | from-amber-600 to-orange-700 | yellow</code>`
         );
       } else {
         const title = parts[0].replace('/add_ad', '').trim();
         const subtitle = parts[1] || null;
         const phone = parts[2] || null;
         const gradient = parts[3] || 'from-purple-600 to-indigo-700';
+        const textColor = parts[4] || 'white';
 
         // Картинка (если есть)
         let imageUrl: string | null = null;
@@ -631,13 +631,13 @@ if ((message?.caption?.startsWith('/add_news')) && ADMINS.includes(message.from.
         }
 
         const result = await pool.query(
-          `INSERT INTO ads (title, subtitle, phone, gradient, image_url) VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-          [title, subtitle, phone, gradient, imageUrl]
+          `INSERT INTO ads (title, subtitle, phone, gradient, image_url, text_color) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+          [title, subtitle, phone, gradient, imageUrl, textColor]
         );
 
         await sendTelegramMessage(
           message.from.id,
-          `✅ <b>Reklama qo'shildi!</b>\n\n📢 ${title}\n📝 ${subtitle || "yo'q"}\n📞 ${phone || "yo'q"}\n🎨 ${gradient}\n🖼 ${imageUrl ? 'Ha' : "yo'q"}\nID: <code>${result.rows[0].id}</code>`
+          `✅ <b>Reklama qo'shildi!</b>\n\n📢 ${title}\n📝 ${subtitle || "yo'q"}\n📞 ${phone || "yo'q"}\n🎨 ${gradient}\n🖼 ${imageUrl ? 'Ha' : "yo'q"}\n🔤 ${textColor}\nID: <code>${result.rows[0].id}</code>`
         );
       }
     }

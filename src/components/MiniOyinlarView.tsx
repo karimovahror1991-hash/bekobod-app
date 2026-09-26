@@ -136,6 +136,9 @@ export const MiniOyinlarView: React.FC<MiniOyinlarViewProps> = ({ onClose }) => 
         if (selectedGame === 'rps') {
       return <RPSGame onClose={() => setSelectedGame(null)} game={game} />;
     }
+        if (selectedGame === 'guess') {
+      return <GuessGame onClose={() => setSelectedGame(null)} game={game} />;
+    }
     return (
       <div className="min-h-screen bg-linear-to-b from-stone-50 to-stone-100">
         <div className={`bg-linear-to-br ${game?.gradient} text-white sticky top-0 z-20 shadow-md`}>
@@ -455,3 +458,137 @@ const RPSGame: React.FC<{ onClose: () => void; game?: Game }> = ({ onClose, game
   );
 };
 // ============ /RPS ============
+// ============ SONNI TOP (Угадай число) ============
+const GuessGame: React.FC<{ onClose: () => void; game?: Game }> = ({ onClose, game }) => {
+  const [target, setTarget] = useState(() => Math.floor(Math.random() * 100) + 1);
+  const [guess, setGuess] = useState('');
+  const [attempts, setAttempts] = useState<{ value: number; hint: 'low' | 'high' }[]>([]);
+  const [message, setMessage] = useState('');
+  const [won, setWon] = useState(false);
+
+  const checkGuess = () => {
+    const num = Number(guess);
+    if (!num || num < 1 || num > 100) {
+      setMessage('1 dan 100 gacha son kiriting');
+      return;
+    }
+
+    if (num === target) {
+      setAttempts(prev => [...prev, { value: num, hint: 'low' }]);
+      setWon(true);
+      setMessage(`🎉 To'g'ri! Siz ${attempts.length + 1} ta urinishda topdingiz!`);
+      setGuess('');
+      return;
+    }
+
+    const hint: 'low' | 'high' = num < target ? 'low' : 'high';
+    setAttempts(prev => [...prev, { value: num, hint }]);
+    setMessage(hint === 'low' ? '⬆️ Kattaroq son kiriting' : '⬇️ Kichikroq son kiriting');
+    setGuess('');
+  };
+
+  const restart = () => {
+    setTarget(Math.floor(Math.random() * 100) + 1);
+    setGuess('');
+    setAttempts([]);
+    setMessage('');
+    setWon(false);
+  };
+
+  return (
+    <div className="min-h-screen bg-linear-to-b from-stone-50 to-stone-100">
+      <div className={`bg-linear-to-br ${game?.gradient} text-white sticky top-0 z-20 shadow-md`}>
+        <div className="max-w-2xl mx-auto px-4 py-4 flex items-center space-x-3">
+          <button
+            onClick={onClose}
+            className="w-11 h-11 rounded-2xl bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"
+          >
+            <ArrowLeft className="w-6 h-6 text-white" />
+          </button>
+          <h1 className="font-bold text-xl text-white">🔢 Sonni top</h1>
+        </div>
+      </div>
+
+      <div className="max-w-2xl mx-auto px-4 py-6 space-y-5">
+        {/* Инфо */}
+        <div className="bg-white rounded-3xl p-6 shadow-lg border border-stone-100 text-center">
+          <div className="text-xs font-bold text-stone-400 uppercase tracking-wide mb-2">
+            Kompyuter 1 dan 100 gacha son o'yladi
+          </div>
+          <div className="text-6xl font-bold text-emerald-600 mb-2">
+            {attempts.length}
+          </div>
+          <div className="text-xs text-stone-500">ta urinish</div>
+        </div>
+
+        {/* Ввод */}
+        {!won ? (
+          <div className="bg-white rounded-3xl p-6 shadow-lg border border-stone-100 space-y-4">
+            <input
+              type="number"
+              value={guess}
+              onChange={(e) => setGuess(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && checkGuess()}
+              placeholder="Son kiriting..."
+              min="1"
+              max="100"
+              className="w-full px-4 py-5 rounded-2xl border-2 border-stone-200 text-center text-3xl font-bold focus:outline-none focus:border-emerald-500"
+            />
+
+            {message && (
+              <div className="text-center text-base font-bold text-stone-700">
+                {message}
+              </div>
+            )}
+
+            <button
+              onClick={checkGuess}
+              disabled={!guess}
+              className="w-full py-5 bg-linear-to-br from-emerald-500 to-teal-600 text-white rounded-2xl font-bold text-lg shadow-lg active:scale-95 transition disabled:opacity-50"
+            >
+              Tekshirish
+            </button>
+          </div>
+        ) : (
+          <div className="bg-linear-to-br from-emerald-500 to-teal-600 rounded-3xl p-8 shadow-lg text-white text-center space-y-4">
+            <div className="text-6xl">🎉</div>
+            <div className="text-2xl font-bold">Tabriklaymiz!</div>
+            <div className="text-sm text-white/90">
+              Siz {target} sonini {attempts.length} ta urinishda topdingiz
+            </div>
+            <button
+              onClick={restart}
+              className="w-full py-4 bg-white text-emerald-700 rounded-2xl font-bold shadow-lg active:scale-95 transition"
+            >
+              🔄 Yana o'ynash
+            </button>
+          </div>
+        )}
+
+        {/* История попыток */}
+        {attempts.length > 0 && (
+          <div className="bg-white rounded-3xl p-6 shadow-lg border border-stone-100">
+            <div className="text-xs font-bold text-stone-700 uppercase tracking-wide mb-3">
+              Urinishlar
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {attempts.map((a, i) => (
+                <div
+                  key={i}
+                  className={`px-3 py-2 rounded-xl font-bold text-sm ${
+                    a.hint === 'low'
+                      ? 'bg-amber-100 text-amber-700'
+                      : 'bg-blue-100 text-blue-700'
+                  }`}
+                >
+                  {a.hint === 'low' ? '⬆️' : '⬇️'} {a.value}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+// ============ /SONNI TOP ============

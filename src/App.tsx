@@ -73,66 +73,7 @@ function App() {
     if (tg?.initDataUnsafe?.user?.id) {
       setUserId(tg.initDataUnsafe.user.id);
     }
-      // Загрузка бейджей
-  useEffect(() => {
-    if (!userId) return;
-
-    const loadBadges = async () => {
-      try {
-        const sections = ['news', 'events', 'oldi_sotdi'];
-        const results: any = {};
-        for (const s of sections) {
-          const res = await fetch(`https://bekobod-app-1.onrender.com/api/badge/${s}?userId=${userId}`);
-          const data = await res.json();
-          results[s] = data.count || 0;
-        }
-        setBadges(results);
-      } catch (err) {
-        console.error(err);
-      }
-    };
-
-    loadBadges();
-    const interval = setInterval(loadBadges, 60000); // каждую минуту
-    return () => clearInterval(interval);
-  }, [userId]);
-
-  // Отметить раздел как просмотренный
-  useEffect(() => {
-    if (!userId || !activeSection) return;
-
-    const sectionsMap: { [key: string]: string } = {
-      news: 'news',
-      events: 'events',
-      oldi_sotdi: 'oldi_sotdi',
-    };
-
-    const section = sectionsMap[activeSection];
-    if (!section) return;
-
-    fetch(`https://bekobod-app-1.onrender.com/api/badge/${section}/seen`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId }),
-    })
-      .then(() => {
-        setBadges(prev => ({ ...prev, [section]: 0 }));
-      })
-      .catch(() => {});
-  }, [activeSection, userId]);
-    // Трекинг открытия приложения
-    const user = tg?.initDataUnsafe?.user;
-    if (user?.id) {
-      fetch('https://bekobod-app-1.onrender.com/api/track', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId: user.id,
-          username: user.username || null,
-          firstName: user.first_name || null,
-        }),
-      }).catch(() => {});
-    }
+      
     // Отключаем свайп вниз для закрытия приложения
     if (tg?.disableVerticalSwipes) {
       tg.disableVerticalSwipes();
@@ -159,6 +100,29 @@ function App() {
         setWeatherLoading(false);
       });
   }, []);
+  // Загрузка бейджей
+useEffect(() => {
+  if (!userId) return;
+
+  const loadBadges = async () => {
+    try {
+      const sections = ['news', 'events', 'oldi_sotdi'];
+      const results: any = {};
+      for (const s of sections) {
+        const res = await fetch(`https://bekobod-app-1.onrender.com/api/badge/${s}?userId=${userId}`);
+        const data = await res.json();
+        results[s] = data.count || 0;
+      }
+      setBadges(results);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  loadBadges();
+  const interval = setInterval(loadBadges, 60000);
+  return () => clearInterval(interval);
+}, [userId]);
   // Авто-переключение рекламы каждые 5 секунд
   useEffect(() => {
     const interval = setInterval(() => {

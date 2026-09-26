@@ -22,11 +22,115 @@ const GAMES: Game[] = [
   { id: 'sudoku', title: 'Sudoku 4×4', icon: '📝', gradient: 'from-violet-500 to-purple-600', description: 'Mantiqiy jumboq' },
 ];
 
+// ============ RANDOMIZER ============
+const RandomizerGame: React.FC<{ onClose: () => void; game?: Game }> = ({ onClose, game }) => {
+  const [min, setMin] = useState(1);
+  const [max, setMax] = useState(100);
+  const [result, setResult] = useState<number | null>(null);
+  const [rolling, setRolling] = useState(false);
+
+  const roll = () => {
+    if (min > max) {
+      alert("Minimal son maksimaldan katta bo'lmasligi kerak");
+      return;
+    }
+    setRolling(true);
+    setResult(null);
+
+    let count = 0;
+    const interval = setInterval(() => {
+      setResult(Math.floor(Math.random() * (max - min + 1)) + min);
+      count++;
+      if (count >= 15) {
+        clearInterval(interval);
+        const final = Math.floor(Math.random() * (max - min + 1)) + min;
+        setResult(final);
+        setRolling(false);
+      }
+    }, 60);
+  };
+
+  return (
+    <div className="min-h-screen bg-linear-to-b from-stone-50 to-stone-100">
+      <div className={`bg-linear-to-br ${game?.gradient} text-white sticky top-0 z-20 shadow-md`}>
+        <div className="max-w-2xl mx-auto px-4 py-4 flex items-center space-x-3">
+          <button
+            onClick={onClose}
+            className="w-11 h-11 rounded-2xl bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"
+          >
+            <ArrowLeft className="w-6 h-6 text-white" />
+          </button>
+          <h1 className="font-bold text-xl text-white">🎲 Randomizer</h1>
+        </div>
+      </div>
+
+      <div className="max-w-2xl mx-auto px-4 py-6 space-y-5">
+        {/* Показ числа */}
+        <div className="bg-white rounded-3xl p-8 shadow-lg border border-stone-100 text-center">
+          <div className="text-xs font-bold text-stone-400 uppercase tracking-wide mb-4">
+            Natija
+          </div>
+          <div className={`text-7xl font-bold transition-all ${
+            rolling ? 'text-stone-300' : 'text-purple-600'
+          }`}>
+            {result !== null ? result : '?'}
+          </div>
+          <div className="text-xs text-stone-400 mt-3">
+            {min} dan {max} gacha
+          </div>
+        </div>
+
+        {/* Настройки диапазона */}
+        <div className="bg-white rounded-3xl p-6 shadow-lg border border-stone-100 space-y-4">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-bold text-stone-700 mb-2 uppercase tracking-wide">
+                Dan (min)
+              </label>
+              <input
+                type="number"
+                value={min}
+                onChange={(e) => setMin(Number(e.target.value))}
+                className="w-full px-4 py-3 rounded-2xl border-2 border-stone-200 text-center text-lg font-bold focus:outline-none focus:border-purple-500"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-stone-700 mb-2 uppercase tracking-wide">
+                Gacha (max)
+              </label>
+              <input
+                type="number"
+                value={max}
+                onChange={(e) => setMax(Number(e.target.value))}
+                className="w-full px-4 py-3 rounded-2xl border-2 border-stone-200 text-center text-lg font-bold focus:outline-none focus:border-purple-500"
+              />
+            </div>
+          </div>
+
+          <button
+            onClick={roll}
+            disabled={rolling}
+            className="w-full py-5 bg-linear-to-br from-purple-500 to-indigo-600 text-white rounded-2xl font-bold text-lg shadow-lg active:scale-95 transition disabled:opacity-50"
+          >
+            {rolling ? '🎲 Aylanmoqda...' : '🎲 Tasodifiy son'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+// ============ /RANDOMIZER ============
+
 export const MiniOyinlarView: React.FC<MiniOyinlarViewProps> = ({ onClose }) => {
   const [selectedGame, setSelectedGame] = useState<string | null>(null);
 
   if (selectedGame) {
     const game = GAMES.find(g => g.id === selectedGame);
+
+    if (selectedGame === 'randomizer') {
+      return <RandomizerGame onClose={() => setSelectedGame(null)} game={game} />;
+    }
+
     return (
       <div className="min-h-screen bg-linear-to-b from-stone-50 to-stone-100">
         <div className={`bg-linear-to-br ${game?.gradient} text-white sticky top-0 z-20 shadow-md`}>

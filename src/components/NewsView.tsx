@@ -169,10 +169,7 @@ export const NewsView: React.FC<NewsViewProps> = ({ onClose }) => {
               <h1 className="font-bold text-xl text-white">
                 {catInfo?.label}
               </h1>
-              <p className="text-xs text-white/80">
-                {filteredNews.length} ta yangilik
-              </p>
-            </div>
+             </div>
           </div>
         </div>
 

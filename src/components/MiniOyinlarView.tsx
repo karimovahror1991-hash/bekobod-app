@@ -130,7 +130,9 @@ export const MiniOyinlarView: React.FC<MiniOyinlarViewProps> = ({ onClose }) => 
     if (selectedGame === 'randomizer') {
       return <RandomizerGame onClose={() => setSelectedGame(null)} game={game} />;
     }
-
+    if (selectedGame === 'coin') {
+      return <MonetkaGame onClose={() => setSelectedGame(null)} game={game} />;
+    }
     return (
       <div className="min-h-screen bg-linear-to-b from-stone-50 to-stone-100">
         <div className={`bg-linear-to-br ${game?.gradient} text-white sticky top-0 z-20 shadow-md`}>
@@ -192,3 +194,115 @@ export const MiniOyinlarView: React.FC<MiniOyinlarViewProps> = ({ onClose }) => 
     </div>
   );
 };
+// ============ MONETKA ============
+const MonetkaGame: React.FC<{ onClose: () => void; game?: Game }> = ({ onClose, game }) => {
+  const [result, setResult] = useState<'orol' | 'reshka' | null>(null);
+  const [flipping, setFlipping] = useState(false);
+  const [stats, setStats] = useState({ orol: 0, reshka: 0 });
+
+  const flip = () => {
+    if (flipping) return;
+    setFlipping(true);
+    setResult(null);
+
+    setTimeout(() => {
+      const isOrol = Math.random() < 0.5;
+      const res = isOrol ? 'orol' : 'reshka';
+      setResult(res);
+      setStats(prev => ({
+        ...prev,
+        [res]: prev[res] + 1,
+      }));
+      setFlipping(false);
+    }, 800);
+  };
+
+  const resetStats = () => {
+    setStats({ orol: 0, reshka: 0 });
+    setResult(null);
+  };
+
+  return (
+    <div className="min-h-screen bg-linear-to-b from-stone-50 to-stone-100">
+      <div className={`bg-linear-to-br ${game?.gradient} text-white sticky top-0 z-20 shadow-md`}>
+        <div className="max-w-2xl mx-auto px-4 py-4 flex items-center space-x-3">
+          <button
+            onClick={onClose}
+            className="w-11 h-11 rounded-2xl bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"
+          >
+            <ArrowLeft className="w-6 h-6 text-white" />
+          </button>
+          <h1 className="font-bold text-xl text-white">🪙 Monetka</h1>
+        </div>
+      </div>
+
+      <div className="max-w-2xl mx-auto px-4 py-6 space-y-5">
+        {/* Монетка */}
+        <div className="bg-white rounded-3xl p-8 shadow-lg border border-stone-100 text-center">
+          <div className="text-xs font-bold text-stone-400 uppercase tracking-wide mb-4">
+            Natija
+          </div>
+
+          <div className="flex items-center justify-center mb-6" style={{ perspective: '1000px' }}>
+            <div
+              className={`w-40 h-40 rounded-full flex items-center justify-center text-7xl shadow-2xl transition-all duration-700 ${
+                flipping ? 'animate-spin' : ''
+              } ${
+                result === 'orol'
+                  ? 'bg-linear-to-br from-amber-400 to-yellow-600'
+                  : result === 'reshka'
+                  ? 'bg-linear-to-br from-stone-400 to-stone-600'
+                  : 'bg-linear-to-br from-amber-200 to-amber-400'
+              }`}
+            >
+              {result === 'orol' ? '👑' : result === 'reshka' ? '🦅' : '🪙'}
+            </div>
+          </div>
+
+          <div className="text-2xl font-bold">
+            {result === 'orol' && <span className="text-amber-600">👑 Boshi (Orol)</span>}
+            {result === 'reshka' && <span className="text-stone-600">🦅 Dumi (Reshka)</span>}
+            {!result && <span className="text-stone-300">—</span>}
+          </div>
+        </div>
+
+        {/* Кнопка */}
+        <button
+          onClick={flip}
+          disabled={flipping}
+          className="w-full py-5 bg-linear-to-br from-amber-500 to-orange-600 text-white rounded-2xl font-bold text-lg shadow-lg active:scale-95 transition disabled:opacity-50"
+        >
+          {flipping ? '🪙 Aylanmoqda...' : '🪙 Tashlash'}
+        </button>
+
+        {/* Статистика */}
+        <div className="bg-white rounded-3xl p-6 shadow-lg border border-stone-100">
+          <div className="flex items-center justify-between mb-4">
+            <div className="text-xs font-bold text-stone-700 uppercase tracking-wide">
+              Statistika
+            </div>
+            <button
+              onClick={resetStats}
+              className="text-xs text-stone-400 hover:text-rose-500 transition font-semibold"
+            >
+              Tozalash
+            </button>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="bg-amber-50 rounded-2xl p-4 text-center">
+              <div className="text-3xl mb-1">👑</div>
+              <div className="text-2xl font-bold text-amber-600">{stats.orol}</div>
+              <div className="text-[10px] text-stone-500 font-semibold">Boshi</div>
+            </div>
+            <div className="bg-stone-100 rounded-2xl p-4 text-center">
+              <div className="text-3xl mb-1">🦅</div>
+              <div className="text-2xl font-bold text-stone-600">{stats.reshka}</div>
+              <div className="text-[10px] text-stone-500 font-semibold">Dumi</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+// ============ /MONETKA ============

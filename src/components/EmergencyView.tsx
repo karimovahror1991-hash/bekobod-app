@@ -26,8 +26,7 @@ const CATEGORY_INFO: CategoryInfo[] = [
   { id: 'aloqa', title: 'Aloqa va Internet', icon: '📡', gradient: 'from-cyan-500 to-blue-600' },
   { id: 'banklar', title: 'Banklar', icon: '🏦', gradient: 'from-emerald-500 to-green-600' },
   { id: 'soliq', title: 'Soliq va boshqa xizmatlar', icon: '🏢', gradient: 'from-amber-500 to-orange-600' },
-  { id: 'boshqa', title: 'Boshqa xizmatlar', icon: '📋', gradient: 'from-stone-500 to-stone-700' },
-];
+  ];
 
 export const EmergencyView: React.FC<EmergencyViewProps> = ({ onClose }) => {
   const [selectedCategory, setSelectedCategory] = useState<CategoryInfo | null>(null);

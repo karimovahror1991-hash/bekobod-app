@@ -605,7 +605,18 @@ if ((message?.caption?.startsWith('/add_news')) && ADMINS.includes(message.from.
           `<b>Misol:</b>\n` +
           `<code>/add_ad Choyxona Navruz | Milliy taomlar | +998901234567 | from-amber-600 to-orange-700 | white | Navoiy 15 | 10:00-23:00 | Chegirma 15%</code>`
         );
-      } else {
+           } else {
+        // Проверка лимита: максимум 4 рекламы
+        const countResult = await pool.query("SELECT COUNT(*) FROM ads WHERE status = 'active'");
+        const currentCount = Number(countResult.rows[0].count);
+        if (currentCount >= 4) {
+          await sendTelegramMessage(
+            message.from.id,
+            `❌ <b>Limit to'ldi!</b>\n\nMaksimal <b>4 ta reklama</b> qo'shish mumkin.\n\nAvval eskisini o'chiring: <code>/delete_ad ID</code>`
+          );
+          return;
+        }
+
         const title = parts[0].replace('/add_ad', '').trim();
         const subtitle = parts[1] || null;
         const phone = parts[2] || null;

@@ -270,10 +270,7 @@ export const NewsView: React.FC<NewsViewProps> = ({ onClose }) => {
                 <div className="font-bold text-xl text-white text-center leading-tight">
                   {cat.label}
                 </div>
-                <div className="text-sm text-white/80 mt-2">
-                  {count} ta yangilik
-                </div>
-              </button>
+               </button>
             );
           })}
         </div>

@@ -344,7 +344,7 @@ function App() {
               <p className="text-xs text-white/80 mt-1">Bu yerda sizning reklamangiz bo'lishi mumkin</p>
             </div>
           ) : (
-                           ads.map((ad, index) => {
+                            ads.map((ad, index) => {
               const textColor = ad.text_color || 'white';
               return (
                 <div
@@ -361,45 +361,61 @@ function App() {
                     />
                   )}
 
-                  {ad.image_url && (
-                    <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/30 to-transparent" />
+                  {/* Затемнение снизу для читаемости */}
+                  <div className="absolute bottom-0 left-0 right-0 h-3/4 bg-linear-to-t from-black/90 via-black/50 to-transparent" />
+
+                  {/* CTA сверху — если есть */}
+                  {ad.cta && (
+                    <div className="absolute top-4 left-1/2 -translate-x-1/2 px-4 py-2 bg-rose-500 text-white rounded-full text-xs font-bold shadow-lg whitespace-nowrap">
+                      🔥 {ad.cta}
+                    </div>
                   )}
 
-                  <div className="absolute bottom-0 left-0 right-0 p-5 space-y-1">
+                  {/* Иконка если без фото */}
+                  {!ad.image_url && !ad.cta && (
+                    <div className="absolute top-6 left-1/2 -translate-x-1/2 text-4xl">📢</div>
+                  )}
+
+                  {/* Текст снизу */}
+                  <div className="absolute bottom-0 left-0 right-0 p-4 space-y-1">
                     <h3
-                      className="font-extrabold text-2xl leading-tight"
-                      style={{ color: textColor, textShadow: '0 2px 8px rgba(0,0,0,0.8)' }}
+                      className="font-extrabold text-xl leading-tight"
+                      style={{ color: textColor }}
                     >
                       {ad.title}
                     </h3>
                     {ad.subtitle && (
                       <p
-                        className="text-sm font-bold"
-                        style={{ color: textColor, textShadow: '0 2px 6px rgba(0,0,0,0.8)' }}
+                        className="text-xs font-semibold"
+                        style={{ color: textColor, opacity: 0.9 }}
                       >
                         {ad.subtitle}
                       </p>
+                    )}
+                    {(ad.address || ad.hours) && (
+                      <div
+                        className="text-[10px] space-y-0.5 pt-1"
+                        style={{ color: textColor, opacity: 0.8 }}
+                      >
+                        {ad.address && <div>📍 {ad.address}</div>}
+                        {ad.hours && <div>🕐 {ad.hours}</div>}
+                      </div>
                     )}
                     {ad.phone && (
                       <a
                         href={`tel:${ad.phone}`}
                         onClick={(e) => e.stopPropagation()}
-                        className="inline-block mt-2 px-4 py-2 bg-white/30 hover:bg-white/40 backdrop-blur rounded-xl text-xs font-bold transition active:scale-95"
+                        className="inline-block mt-2 px-4 py-2 bg-white/25 hover:bg-white/35 backdrop-blur rounded-xl text-xs font-bold transition active:scale-95"
                         style={{ color: textColor }}
                       >
                         📞 {ad.phone}
                       </a>
                     )}
                   </div>
-
-                  {!ad.image_url && (
-                    <div className="absolute top-6 left-1/2 -translate-x-1/2 text-4xl">📢</div>
-                  )}
                 </div>
               );
             })
           )}
-
           <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex space-x-1.5">
             {ads.map((_, index) => (
               <button

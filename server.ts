@@ -586,9 +586,8 @@ if ((message?.caption?.startsWith('/add_news')) && ADMINS.includes(message.from.
         }
       }
     }
-              // Команда /add_ad (создать рекламу, только главный админ)
-    // Текстом: /add_ad sarlavha | matn | telefon | gradient | text_color
-    // С фото: прикрепи фото → в подписи ту же команду
+           // Команда /add_ad (создать рекламу, только главный админ)
+    // Формат: /add_ad sarlavha | matn | telefon | gradient | text_color | manzil | ish_vaqti | CTA
     if ((message?.text?.startsWith('/add_ad') || message?.caption?.startsWith('/add_ad')) && message.from.id === SUPER_ADMIN) {
       const rawText = message.text || message.caption || '';
       const parts = rawText.split('|').map((s: string) => s.trim());
@@ -596,23 +595,27 @@ if ((message?.caption?.startsWith('/add_news')) && ADMINS.includes(message.from.
       if (parts.length < 3) {
         await sendTelegramMessage(
           message.from.id,
-          `❌ <b>Format:</b>\n<code>/add_ad sarlavha | matn | telefon | gradient | text_color</code>\n\n` +
+          `❌ <b>Format:</b>\n<code>/add_ad sarlavha | matn | telefon | gradient | text_color | manzil | ish_vaqti | CTA</code>\n\n` +
           `<b>Gradientlar:</b>\n` +
-          `from-purple-600 to-indigo-700\n` +
           `from-amber-600 to-orange-700\n` +
+          `from-rose-500 to-pink-600\n` +
+          `from-red-600 to-orange-600\n` +
           `from-emerald-600 to-teal-700\n\n` +
-          `<b>Ranglar (text_color):</b>\n` +
-          `white, black, yellow, red, blue, green, orange, pink, cyan, purple\n\n` +
-          `<b>Misol:</b>\n<code>/add_ad Kafe X | Mazali taomlar | +998901234567 | from-amber-600 to-orange-700 | yellow</code>`
+          `<b>Цвет текста:</b> white, black, yellow, red, cyan, orange\n\n` +
+          `<b>Misol:</b>\n` +
+          `<code>/add_ad Choyxona Navruz | Milliy taomlar | +998901234567 | from-amber-600 to-orange-700 | white | Navoiy 15 | 10:00-23:00 | Chegirma 15%</code>`
         );
       } else {
         const title = parts[0].replace('/add_ad', '').trim();
         const subtitle = parts[1] || null;
         const phone = parts[2] || null;
-        const gradient = parts[3] || 'from-purple-600 to-indigo-700';
+        const gradient = parts[3] || 'from-amber-600 to-orange-700';
         const textColor = parts[4] || 'white';
+        const address = parts[5] || null;
+        const hours = parts[6] || null;
+        const cta = parts[7] || null;
 
-        // Картинка (если есть)
+        // Картинка
         let imageUrl: string | null = null;
         if (message.photo && message.photo.length > 0) {
           const fileId = message.photo[message.photo.length - 1].file_id;
@@ -631,13 +634,24 @@ if ((message?.caption?.startsWith('/add_news')) && ADMINS.includes(message.from.
         }
 
         const result = await pool.query(
-          `INSERT INTO ads (title, subtitle, phone, gradient, image_url, text_color) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
-          [title, subtitle, phone, gradient, imageUrl, textColor]
+          `INSERT INTO ads (title, subtitle, phone, gradient, image_url, text_color, address, hours, cta)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
+          [title, subtitle, phone, gradient, imageUrl, textColor, address, hours, cta]
         );
 
         await sendTelegramMessage(
           message.from.id,
-          `✅ <b>Reklama qo'shildi!</b>\n\n📢 ${title}\n📝 ${subtitle || "yo'q"}\n📞 ${phone || "yo'q"}\n🎨 ${gradient}\n🖼 ${imageUrl ? 'Ha' : "yo'q"}\n🔤 ${textColor}\nID: <code>${result.rows[0].id}</code>`
+          `✅ <b>Reklama qo'shildi!</b>\n\n` +
+          `📢 ${title}\n` +
+          `📝 ${subtitle || "yo'q"}\n` +
+          `📞 ${phone || "yo'q"}\n` +
+          `🎨 ${gradient}\n` +
+          `🔤 ${textColor}\n` +
+          `📍 ${address || "yo'q"}\n` +
+          `🕐 ${hours || "yo'q"}\n` +
+          `🎯 ${cta || "yo'q"}\n` +
+          `🖼 ${imageUrl ? 'Ha' : "yo'q"}\n` +
+          `ID: <code>${result.rows[0].id}</code>`
         );
       }
     }

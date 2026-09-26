@@ -51,7 +51,7 @@ const sections: Section[] = [
   { id: 'tarjimon', titleUz: 'Tarjimon', titleRu: 'Переводчик', icon: Languages, gradient: 'from-cyan-500 to-blue-600' },
   { id: 'oldi_sotdi', titleUz: 'Oldi sotdi', titleRu: 'Купля-продажа', icon: ShoppingBag, gradient: 'from-amber-500 to-orange-600' },
   { id: 'mini_oyinlar', titleUz: "Mini o'yinlar", titleRu: 'Мини-игры', icon: Gamepad2, gradient: 'from-purple-500 to-indigo-600' },
-  ];
+];
 
 const ads = [
   { id: 1, title: 'Reklama 1', subtitle: "Bu yerda sizning reklamangiz bo'lishi mumkin", gradient: 'from-purple-600 to-indigo-700' },
@@ -65,26 +65,33 @@ function App() {
   const [weatherLoading, setWeatherLoading] = useState(true);
   const [activeSection, setActiveSection] = useState<string | null>(null);
   const [userId, setUserId] = useState<number | null>(null);
-    const [badges, setBadges] = useState<{ news: number; events: number; oldi_sotdi: number }>({ news: 0, events: 0, oldi_sotdi: 0 });
+  const [badges, setBadges] = useState<{ news: number; events: number; oldi_sotdi: number }>({ news: 0, events: 0, oldi_sotdi: 0 });
 
+  // Telegram init + трекинг
   useEffect(() => {
     const tg = (window as any).Telegram?.WebApp;
+    const user = tg?.initDataUnsafe?.user;
 
-    if (tg?.initDataUnsafe?.user?.id) {
-      setUserId(tg.initDataUnsafe.user.id);
-    }
-      
-    // Отключаем свайп вниз для закрытия приложения
-    if (tg?.disableVerticalSwipes) {
-      tg.disableVerticalSwipes();
+    if (user?.id) {
+      setUserId(user.id);
+
+      // Трекинг открытия приложения
+      fetch('https://bekobod-app-1.onrender.com/api/track', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user.id,
+          username: user.username || null,
+          firstName: user.first_name || null,
+        }),
+      }).catch(() => {});
     }
 
-    // Расширяем на весь экран
-    if (tg?.expand) {
-      tg.expand();
-    }
+    if (tg?.disableVerticalSwipes) tg.disableVerticalSwipes();
+    if (tg?.expand) tg.expand();
   }, []);
 
+  // Погода
   useEffect(() => {
     const lat = 40.22;
     const lon = 69.22;
@@ -100,24 +107,31 @@ function App() {
         setWeatherLoading(false);
       });
   }, []);
-  // Загрузка бейджей
-useEffect(() => {
-  if (!userId) return;
 
-  const loadBadges = async () => {
-    try {
-      const sections = ['news', 'events', 'oldi_sotdi'];
-      const results: any = {};
-      for (const s of sections) {
-        const res = await fetch(`https://bekobod-app-1.onrender.com/api/badge/${s}?userId=${userId}`);
-        const data = await res.json();
-        results[s] = data.count || 0;
+  // Загрузка бейджей
+  useEffect(() => {
+    if (!userId) return;
+
+    const loadBadges = async () => {
+      try {
+        const sections = ['news', 'events', 'oldi_sotdi'];
+        const results: any = {};
+        for (const s of sections) {
+          const res = await fetch(`https://bekobod-app-1.onrender.com/api/badge/${s}?userId=${userId}`);
+          const data = await res.json();
+          results[s] = data.count || 0;
+        }
+        setBadges(results);
+      } catch (err) {
+        console.error(err);
       }
-      setBadges(results);
-    } catch (err) {
-      console.error(err);
-    }
-  };
+    };
+
+    loadBadges();
+    const interval = setInterval(loadBadges, 60000);
+    return () => clearInterval(interval);
+  }, [userId]);
+
   // Отметить раздел как просмотренный
   useEffect(() => {
     if (!userId || !activeSection) return;
@@ -141,18 +155,16 @@ useEffect(() => {
       })
       .catch(() => {});
   }, [activeSection, userId]);
-  loadBadges();
-  const interval = setInterval(loadBadges, 60000);
-  return () => clearInterval(interval);
-}, [userId]);
-  // Авто-переключение рекламы каждые 5 секунд
+
+  // Авто-переключение рекламы
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentAd((prev) => (prev + 1) % ads.length);
     }, 5000);
     return () => clearInterval(interval);
   }, []);
-   const getWeatherIcon = (code: number) => {
+
+  const getWeatherIcon = (code: number) => {
     if (code === 0) return <Sun className="w-8 h-8 text-yellow-500" />;
     if (code >= 1 && code <= 3) return <Cloud className="w-8 h-8 text-gray-400" />;
     if (code >= 45 && code <= 48) return <Cloud className="w-8 h-8 text-gray-500" />;
@@ -162,12 +174,11 @@ useEffect(() => {
     return <Sun className="w-8 h-8 text-yellow-500" />;
   };
 
-  // Прогноз по 3 часа на сегодня
   const getThreeHourForecast = (weather: any) => {
     if (!weather?.hourly?.time || !weather?.hourly?.temperature_2m) return [];
 
     const now = new Date();
-    const today = now.toISOString().split('T')[0]; // "2026-09-25"
+    const today = now.toISOString().split('T')[0];
     const currentHour = now.getHours();
 
     const slots: { time: string; temp: number; code: number }[] = [];
@@ -177,7 +188,6 @@ useEffect(() => {
       const dateStr = t.split('T')[0];
       const hour = date.getHours();
 
-      // только сегодня, каждый 3-й час, начиная с ближайшего прошедшего/текущего
       if (dateStr === today && hour % 3 === 0 && hour >= currentHour - 1) {
         slots.push({
           time: t,
@@ -191,7 +201,6 @@ useEffect(() => {
   };
 
   // Экран разделов
-  
   if (activeSection === 'emergency') {
     return <EmergencyView onClose={() => setActiveSection(null)} />;
   }
@@ -219,20 +228,20 @@ useEffect(() => {
   if (activeSection === 'tibbiyot') {
     return <TibbiyotView onClose={() => setActiveSection(null)} />;
   }
-    if (activeSection === 'services') {
+  if (activeSection === 'services') {
     return <ServicesView onClose={() => setActiveSection(null)} />;
   }
   if (activeSection === 'tarjimon') {
     return <TarjimonView onClose={() => setActiveSection(null)} />;
   }
-    if (activeSection === 'oldi_sotdi') {
+  if (activeSection === 'oldi_sotdi') {
     return <OldiSotdiView onClose={() => setActiveSection(null)} userId={userId} />;
   }
-    if (activeSection === 'mini_oyinlar') {
+  if (activeSection === 'mini_oyinlar') {
     return <MiniOyinlarView onClose={() => setActiveSection(null)} />;
   }
+
   return (
-    
     <div className="min-h-screen bg-linear-to-b from-stone-50 to-stone-100 text-stone-900 flex flex-col">
       {/* Верхняя панель */}
       <div className="bg-white/80 backdrop-blur-lg border-b border-stone-200 sticky top-0 z-20">
@@ -252,7 +261,7 @@ useEffect(() => {
         </div>
       </div>
 
-            {/* Погода */}
+      {/* Погода */}
       <div className="max-w-2xl w-full mx-auto px-4 pt-4">
         <div className="bg-linear-to-br from-sky-400 to-blue-600 rounded-3xl p-4 shadow-xl text-white">
           {weatherLoading ? (
@@ -357,7 +366,7 @@ useEffect(() => {
           <span className="text-xs font-normal text-stone-400">Bo'limlar / Разделы</span>
         </h2>
 
-               <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-3">
           {sections.map((section) => {
             const Icon = section.icon;
             const badgeCount = badges[section.id as keyof typeof badges] || 0;

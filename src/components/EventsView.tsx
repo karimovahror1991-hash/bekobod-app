@@ -32,6 +32,7 @@ export const EventsView: React.FC<EventsViewProps> = ({ onClose, userId }) => {
   const [events, setEvents] = useState<EventItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [subBadges, setSubBadges] = useState<{ [key: string]: number }>({});
 
   const API_URL = 'https://bekobod-app-1.onrender.com';
 
@@ -51,6 +52,28 @@ export const EventsView: React.FC<EventsViewProps> = ({ onClose, userId }) => {
   useEffect(() => {
     loadEvents();
   }, []);
+
+  // Загрузка бейджей подкатегорий
+  useEffect(() => {
+    if (!userId) return;
+
+    const loadSubBadges = async () => {
+      const cats = CATEGORIES.map(c => c.id);
+      const results: { [key: string]: number } = {};
+      for (const c of cats) {
+        try {
+          const res = await fetch(`${API_URL}/api/badge-sub/events/${c}?userId=${userId}`);
+          const data = await res.json();
+          results[c] = data.count || 0;
+        } catch {
+          results[c] = 0;
+        }
+      }
+      setSubBadges(results);
+    };
+
+    loadSubBadges();
+  }, [userId, API_URL]);
 
   const formatDate = (dateStr: string | null) => {
     if (!dateStr) return '';
@@ -173,12 +196,28 @@ export const EventsView: React.FC<EventsViewProps> = ({ onClose, userId }) => {
         <div className="space-y-4">
           {CATEGORIES.map((cat) => {
             const count = events.filter(e => e.category === cat.id).length;
+            const badge = subBadges[cat.id] || 0;
             return (
               <button
                 key={cat.id}
-                onClick={() => setSelectedCategory(cat.id)}
-                className={`w-full bg-linear-to-br ${cat.gradient} text-white rounded-3xl p-8 flex flex-col items-center justify-center shadow-xl hover:shadow-2xl transition-all duration-300 active:scale-95 min-h-50`}
+                onClick={() => {
+                  setSelectedCategory(cat.id);
+                  if (userId) {
+                    fetch(`${API_URL}/api/badge-sub/events/${cat.id}/seen`, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ userId }),
+                    }).catch(() => {});
+                    setSubBadges(prev => ({ ...prev, [cat.id]: 0 }));
+                  }
+                }}
+                className={`relative w-full bg-linear-to-br ${cat.gradient} text-white rounded-3xl p-8 flex flex-col items-center justify-center shadow-xl hover:shadow-2xl transition-all duration-300 active:scale-95 min-h-50`}
               >
+                {badge > 0 && (
+                  <div className="absolute top-4 right-4 min-w-7 h-7 px-2 bg-rose-500 text-white text-sm font-bold rounded-full flex items-center justify-center shadow-lg border-2 border-white">
+                    {badge > 99 ? '99+' : badge}
+                  </div>
+                )}
                 <div className="text-7xl mb-4">{cat.icon}</div>
                 <div className="font-bold text-xl text-white text-center leading-tight">
                   {cat.label}

@@ -344,27 +344,37 @@ function App() {
               <p className="text-xs text-white/80 mt-1">Bu yerda sizning reklamangiz bo'lishi mumkin</p>
             </div>
           ) : (
-            ads.map((ad, index) => (
+                       ads.map((ad, index) => (
               <div
                 key={ad.id}
                 className={`absolute inset-0 bg-linear-to-br ${ad.gradient} transition-opacity duration-700 flex flex-col items-center justify-center text-white p-6 ${
                   index === currentAd ? 'opacity-100' : 'opacity-0'
                 }`}
               >
-                <div className="text-4xl mb-2">📢</div>
-                <h3 className="font-bold text-lg">{ad.title}</h3>
-                {ad.subtitle && (
-                  <p className="text-xs text-white/80 mt-1 text-center">{ad.subtitle}</p>
+                {ad.image_url ? (
+                  <img
+                    src={ad.image_url}
+                    alt={ad.title}
+                    className="absolute inset-0 w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="text-4xl mb-2">📢</div>
                 )}
-                {ad.phone && (
-                  <a
-                    href={`tel:${ad.phone}`}
-                    onClick={(e) => e.stopPropagation()}
-                    className="mt-3 px-5 py-2 bg-white/20 hover:bg-white/30 rounded-xl text-xs font-bold transition active:scale-95"
-                  >
-                    📞 {ad.phone}
-                  </a>
-                )}
+                <div className="relative z-10 text-center">
+                  <h3 className="font-bold text-lg drop-shadow-lg">{ad.title}</h3>
+                  {ad.subtitle && (
+                    <p className="text-xs text-white/90 mt-1 drop-shadow-lg">{ad.subtitle}</p>
+                  )}
+                  {ad.phone && (
+                    <a
+                      href={`tel:${ad.phone}`}
+                      onClick={(e) => e.stopPropagation()}
+                      className="mt-3 inline-block px-5 py-2 bg-white/30 hover:bg-white/40 backdrop-blur rounded-xl text-xs font-bold transition active:scale-95"
+                    >
+                      📞 {ad.phone}
+                    </a>
+                  )}
+                </div>
               </div>
             ))
           )}

@@ -586,9 +586,12 @@ if ((message?.caption?.startsWith('/add_news')) && ADMINS.includes(message.from.
         }
       }
     }
-        // Команда /add_ad (создать рекламу, только главный админ)
-    if (message?.text?.startsWith('/add_ad') && message.from.id === SUPER_ADMIN) {
-      const parts = message.text.split('|').map((s: string) => s.trim());
+           // Команда /add_ad (создать рекламу, только главный админ)
+    // Текстом: /add_ad sarlavha | matn | telefon | gradient
+    // С фото: прикрепи фото → в подписи ту же команду
+    if ((message?.text?.startsWith('/add_ad') || message?.caption?.startsWith('/add_ad')) && message.from.id === SUPER_ADMIN) {
+      const rawText = message.text || message.caption || '';
+      const parts = rawText.split('|').map((s: string) => s.trim());
 
       if (parts.length < 3) {
         await sendTelegramMessage(
@@ -600,7 +603,8 @@ if ((message?.caption?.startsWith('/add_news')) && ADMINS.includes(message.from.
           `from-emerald-600 to-teal-700\n` +
           `from-rose-500 to-pink-600\n` +
           `from-blue-500 to-indigo-600\n\n` +
-          `<b>Misol:</b>\n<code>/add_ad Kafe X | Mazali taomlar | +998901234567 | from-amber-600 to-orange-700</code>`
+          `<b>Misol (matn):</b>\n<code>/add_ad Kafe X | Mazali taomlar | +998901234567 | from-amber-600 to-orange-700</code>\n\n` +
+          `<b>Misol (rasm bilan):</b>\nRasm yuborib, izohga shu formatni yozing.`
         );
       } else {
         const title = parts[0].replace('/add_ad', '').trim();
@@ -608,18 +612,35 @@ if ((message?.caption?.startsWith('/add_news')) && ADMINS.includes(message.from.
         const phone = parts[2] || null;
         const gradient = parts[3] || 'from-purple-600 to-indigo-700';
 
+        // Картинка (если есть)
+        let imageUrl: string | null = null;
+        if (message.photo && message.photo.length > 0) {
+          const fileId = message.photo[message.photo.length - 1].file_id;
+          const botToken = process.env.TELEGRAM_BOT_TOKEN;
+          if (botToken) {
+            try {
+              const fileRes = await fetch(`https://api.telegram.org/bot${botToken}/getFile?file_id=${fileId}`);
+              const fileData: any = await fileRes.json();
+              if (fileData.ok) {
+                imageUrl = `https://api.telegram.org/file/bot${botToken}/${fileData.result.file_path}`;
+              }
+            } catch (e) {
+              console.error('Photo upload error:', e);
+            }
+          }
+        }
+
         const result = await pool.query(
-          `INSERT INTO ads (title, subtitle, phone, gradient) VALUES ($1, $2, $3, $4) RETURNING *`,
-          [title, subtitle, phone, gradient]
+          `INSERT INTO ads (title, subtitle, phone, gradient, image_url) VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+          [title, subtitle, phone, gradient, imageUrl]
         );
 
         await sendTelegramMessage(
           message.from.id,
-          `✅ <b>Reklama qo'shildi!</b>\n\n📢 ${title}\n📝 ${subtitle || "yo'q"}\n📞 ${phone || "yo'q"}\n🎨 ${gradient}\nID: <code>${result.rows[0].id}</code>`
+          `✅ <b>Reklama qo'shildi!</b>\n\n📢 ${title}\n📝 ${subtitle || "yo'q"}\n📞 ${phone || "yo'q"}\n🎨 ${gradient}\n🖼 ${imageUrl ? 'Ha' : "yo'q"}\nID: <code>${result.rows[0].id}</code>`
         );
       }
     }
-
     // Команда /delete_ad ID (только главный админ)
     if (message?.text?.startsWith('/delete_ad') && message.from.id === SUPER_ADMIN) {
       const adId = Number(message.text.split(' ')[1]);

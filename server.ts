@@ -65,7 +65,33 @@ app.post('/api/track', strictLimiter, async (req, res) => {
   try {
     const { userId, username, firstName } = req.body;
     if (!userId) return res.status(400).json({ error: 'userId required' });
+// Регистрация вебхука Telegram (с секретом)
+app.get('/api/setup-webhook', async (req, res) => {
+  try {
+    const botToken = process.env.TELEGRAM_BOT_TOKEN;
+    const secret = process.env.TELEGRAM_WEBHOOK_SECRET;
+    const webhookUrl = 'https://bekobod-app-1.onrender.com/api/telegram-webhook';
 
+    if (!botToken || !secret) {
+      return res.status(500).json({ error: 'TELEGRAM_BOT_TOKEN или TELEGRAM_WEBHOOK_SECRET не заданы' });
+    }
+
+    const response = await fetch(`https://api.telegram.org/bot${botToken}/setWebhook`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        url: webhookUrl,
+        secret_token: secret,
+        allowed_updates: ['message', 'callback_query', 'my_chat_member'],
+      }),
+    });
+
+    const data = await response.json();
+    res.json(data);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
     await pool.query(
       `INSERT INTO app_users (user_id, username, first_name, last_seen)
        VALUES ($1, $2, $3, NOW())
@@ -246,6 +272,12 @@ app.post('/api/badge-sub/:section/:sub/seen', async (req, res) => {
 // ============ TELEGRAM WEBHOOK ============
 app.post('/api/telegram-webhook', async (req, res) => {
   try {
+        // Проверка секрета от Telegram
+    const secret = req.headers['x-telegram-bot-api-secret-token'];
+    if (secret !== process.env.TELEGRAM_WEBHOOK_SECRET) {
+      console.warn('❌ Webhook: неверный секрет');
+      return res.sendStatus(403);
+    }
     const { message } = req.body;
 
     if (!message?.from) {

@@ -25,7 +25,8 @@ export const NewsView: React.FC<NewsViewProps> = ({ onClose }) => {
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedNews, setSelectedNews] = useState<NewsItem | null>(null);
-
+  const [subBadges, setSubBadges] = useState<{ [key: string]: number }>({});
+  const [userId, setUserId] = useState<number | null>(null);
   const API_URL = 'https://bekobod-app-1.onrender.com';
 
   const loadNews = async () => {
@@ -41,9 +42,35 @@ export const NewsView: React.FC<NewsViewProps> = ({ onClose }) => {
     }
   };
 
-  useEffect(() => {
+    useEffect(() => {
     loadNews();
+
+    const tg = (window as any).Telegram?.WebApp;
+    const uid = tg?.initDataUnsafe?.user?.id;
+    if (uid) setUserId(uid);
   }, []);
+
+  // Загрузка бейджей подкатегорий
+  useEffect(() => {
+    if (!userId) return;
+
+    const loadSubBadges = async () => {
+      const cats = ['bekobod', 'jahon'];
+      const results: { [key: string]: number } = {};
+      for (const c of cats) {
+        try {
+          const res = await fetch(`${API_URL}/api/badge-sub/news/${c}?userId=${userId}`);
+          const data = await res.json();
+          results[c] = data.count || 0;
+        } catch {
+          results[c] = 0;
+        }
+      }
+      setSubBadges(results);
+    };
+
+    loadSubBadges();
+  }, [userId, API_URL]);
 
     const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
@@ -74,7 +101,7 @@ export const NewsView: React.FC<NewsViewProps> = ({ onClose }) => {
         <div className="bg-white/95 backdrop-blur-lg border-b border-stone-200 sticky top-0 z-20 shadow-sm">
           <div className="max-w-2xl mx-auto px-4 py-4 flex items-center space-x-3">
             <button
-              onClick={() => setSelectedNews(null)}
+             onClick={() =>  setSelectedNews(null)}
               className="w-11 h-11 rounded-2xl bg-stone-100 hover:bg-amber-100 flex items-center justify-center transition-colors"
             >
               <ArrowLeft className="w-6 h-6 text-stone-700" />
@@ -222,11 +249,26 @@ export const NewsView: React.FC<NewsViewProps> = ({ onClose }) => {
           {CATEGORIES.map((cat) => {
             const count = news.filter(n => n.category === cat.id).length;
             return (
-              <button
+                            <button
                 key={cat.id}
-                onClick={() => setSelectedCategory(cat.id)}
-                className={`w-full bg-linear-to-br ${cat.gradient} text-white rounded-3xl p-8 flex flex-col items-center justify-center shadow-xl hover:shadow-2xl transition-all duration-300 active:scale-95 min-h-50`}
+                onClick={() => {
+                  setSelectedCategory(cat.id);
+                  if (userId) {
+                    fetch(`${API_URL}/api/badge-sub/news/${cat.id}/seen`, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ userId }),
+                    }).catch(() => {});
+                    setSubBadges(prev => ({ ...prev, [cat.id]: 0 }));
+                  }
+                }}
+                className={`relative w-full bg-linear-to-br ${cat.gradient} text-white rounded-3xl p-8 flex flex-col items-center justify-center shadow-xl hover:shadow-2xl transition-all duration-300 active:scale-95 min-h-50`}
               >
+                {subBadges[cat.id] > 0 && (
+                  <div className="absolute top-4 right-4 min-w-7 h-7 px-2 bg-rose-500 text-white text-sm font-bold rounded-full flex items-center justify-center shadow-lg border-2 border-white">
+                    {subBadges[cat.id] > 99 ? '99+' : subBadges[cat.id]}
+                  </div>
+                )}
                 <div className="text-7xl mb-4">{cat.icon}</div>
                 <div className="font-bold text-xl text-white text-center leading-tight">
                   {cat.label}

@@ -143,6 +143,85 @@ app.post('/api/badge/:section/seen', async (req, res) => {
     res.json({ ok: false });
   }
 });
+// Бейджи по подкатегориям
+app.get('/api/badge-sub/:section/:sub', async (req, res) => {
+  try {
+    const { section, sub } = req.params;
+    const { userId } = req.query;
+    if (!userId) return res.json({ count: 0 });
+
+    let totalQuery = '';
+    let params: any[] = [];
+
+    if (section === 'news') {
+      totalQuery = 'SELECT COUNT(*) FROM news WHERE category = $1';
+      params = [sub];
+    } else if (section === 'events') {
+      totalQuery = "SELECT COUNT(*) FROM events WHERE status = 'active' AND category = $1";
+      params = [sub];
+    } else if (section === 'oldi_sotdi') {
+      totalQuery = "SELECT COUNT(*) FROM listings WHERE status = 'active' AND category = $1";
+      params = [sub];
+    } else {
+      return res.json({ count: 0 });
+    }
+
+    const totalResult = await pool.query(totalQuery, params);
+    const total = Number(totalResult.rows[0].count);
+
+    const viewResult = await pool.query(
+      'SELECT last_count FROM user_views_sub WHERE user_id = $1 AND section = $2 AND subcategory = $3',
+      [userId, section, sub]
+    );
+    const lastSeen = viewResult.rows.length > 0 ? Number(viewResult.rows[0].last_count) : 0;
+
+    res.json({ count: Math.max(0, total - lastSeen) });
+  } catch (error: any) {
+    console.error('Badge-sub error:', error);
+    res.json({ count: 0 });
+  }
+});
+
+// Отметить подкатегорию как просмотренную
+app.post('/api/badge-sub/:section/:sub/seen', async (req, res) => {
+  try {
+    const { section, sub } = req.params;
+    const { userId } = req.body;
+    if (!userId) return res.json({ ok: false });
+
+    let totalQuery = '';
+    let params: any[] = [];
+
+    if (section === 'news') {
+      totalQuery = 'SELECT COUNT(*) FROM news WHERE category = $1';
+      params = [sub];
+    } else if (section === 'events') {
+      totalQuery = "SELECT COUNT(*) FROM events WHERE status = 'active' AND category = $1";
+      params = [sub];
+    } else if (section === 'oldi_sotdi') {
+      totalQuery = "SELECT COUNT(*) FROM listings WHERE status = 'active' AND category = $1";
+      params = [sub];
+    } else {
+      return res.json({ ok: false });
+    }
+
+    const totalResult = await pool.query(totalQuery, params);
+    const total = Number(totalResult.rows[0].count);
+
+    await pool.query(
+      `INSERT INTO user_views_sub (user_id, section, subcategory, last_count, updated_at)
+       VALUES ($1, $2, $3, $4, NOW())
+       ON CONFLICT (user_id, section, subcategory)
+       DO UPDATE SET last_count = $4, updated_at = NOW()`,
+      [userId, section, sub, total]
+    );
+
+    res.json({ ok: true });
+  } catch (error: any) {
+    console.error('Badge-sub seen error:', error);
+    res.json({ ok: false });
+  }
+});
 // ============ TELEGRAM WEBHOOK ============
 app.post('/api/telegram-webhook', async (req, res) => {
   try {

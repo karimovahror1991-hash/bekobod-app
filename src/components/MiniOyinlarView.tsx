@@ -790,45 +790,89 @@ const TicTacToeGame: React.FC<{ onClose: () => void; game?: Game }> = ({ onClose
   );
 };
 // ============ /KRESTIK-NOLIK ============
-// ============ SUDOKU 4×4 ============
+// ============ SUDOKU ============
 const SudokuGame: React.FC<{ onClose: () => void; game?: Game }> = ({ onClose, game }) => {
-  // Готовые решённые сетки 4×4
-  const PUZZLES = [
+  const PUZZLES_4 = [
+    {
+      solution: [[1,2,3,4],[3,4,1,2],[2,1,4,3],[4,3,2,1]],
+      puzzle: [[1,0,0,4],[0,4,0,0],[0,1,0,0],[4,0,2,1]],
+    },
+    {
+      solution: [[2,1,4,3],[4,3,2,1],[1,2,3,4],[3,4,1,2]],
+      puzzle: [[2,0,4,0],[0,3,0,1],[1,0,0,4],[0,4,1,0]],
+    },
+  ];
+
+  const PUZZLES_9 = [
     {
       solution: [
-        [1, 2, 3, 4],
-        [3, 4, 1, 2],
-        [2, 1, 4, 3],
-        [4, 3, 2, 1],
+        [5,3,4,6,7,8,9,1,2],
+        [6,7,2,1,9,5,3,4,8],
+        [1,9,8,3,4,2,5,6,7],
+        [8,5,9,7,6,1,4,2,3],
+        [4,2,6,8,5,3,7,9,1],
+        [7,1,3,9,2,4,8,5,6],
+        [9,6,1,5,3,7,2,8,4],
+        [2,8,7,4,1,9,6,3,5],
+        [3,4,5,2,8,6,1,7,9],
       ],
       puzzle: [
-        [1, 0, 0, 4],
-        [0, 4, 0, 0],
-        [0, 1, 0, 0],
-        [4, 0, 2, 1],
+        [5,3,0,0,7,0,0,0,0],
+        [6,0,0,1,9,5,0,0,0],
+        [0,9,8,0,0,0,0,6,0],
+        [8,0,0,0,6,0,0,0,3],
+        [4,0,0,8,0,3,0,0,1],
+        [7,0,0,0,2,0,0,0,6],
+        [0,6,0,0,0,0,2,8,0],
+        [0,0,0,4,1,9,0,0,5],
+        [0,0,0,0,8,0,0,7,9],
       ],
     },
     {
       solution: [
-        [2, 1, 4, 3],
-        [4, 3, 2, 1],
-        [1, 2, 3, 4],
-        [3, 4, 1, 2],
+        [1,2,3,4,5,6,7,8,9],
+        [4,5,6,7,8,9,1,2,3],
+        [7,8,9,1,2,3,4,5,6],
+        [2,3,4,5,6,7,8,9,1],
+        [5,6,7,8,9,1,2,3,4],
+        [8,9,1,2,3,4,5,6,7],
+        [3,4,5,6,7,8,9,1,2],
+        [6,7,8,9,1,2,3,4,5],
+        [9,1,2,3,4,5,6,7,8],
       ],
       puzzle: [
-        [2, 0, 4, 0],
-        [0, 3, 0, 1],
-        [1, 0, 0, 4],
-        [0, 4, 1, 0],
+        [1,0,0,4,0,0,7,0,0],
+        [0,5,0,0,8,0,0,2,0],
+        [0,0,9,0,0,3,0,0,6],
+        [2,0,0,0,6,0,0,0,1],
+        [0,6,0,0,9,0,0,3,0],
+        [0,0,1,0,0,4,0,0,7],
+        [3,0,0,0,7,0,0,0,2],
+        [0,7,0,0,1,0,0,4,0],
+        [0,0,2,0,0,5,0,0,8],
       ],
     },
   ];
 
+  const [mode, setMode] = useState<4 | 9>(4);
+  const PUZZLES = mode === 4 ? PUZZLES_4 : PUZZLES_9;
+  const size = mode;
+
   const [puzzleIndex, setPuzzleIndex] = useState(0);
-  const [board, setBoard] = useState<number[][]>(PUZZLES[0].puzzle.map(r => [...r]));
+  const [board, setBoard] = useState<number[][]>(PUZZLES_4[0].puzzle.map(r => [...r]));
   const [selected, setSelected] = useState<[number, number] | null>(null);
   const [won, setWon] = useState(false);
   const [errors, setErrors] = useState<[number, number][]>([]);
+
+  const switchMode = (newMode: 4 | 9) => {
+    setMode(newMode);
+    const newPuzzles = newMode === 4 ? PUZZLES_4 : PUZZLES_9;
+    setPuzzleIndex(0);
+    setBoard(newPuzzles[0].puzzle.map(r => [...r]));
+    setSelected(null);
+    setWon(false);
+    setErrors([]);
+  };
 
   const loadPuzzle = (idx: number) => {
     setPuzzleIndex(idx);
@@ -840,7 +884,7 @@ const SudokuGame: React.FC<{ onClose: () => void; game?: Game }> = ({ onClose, g
 
   const handleCellClick = (r: number, c: number) => {
     if (won) return;
-    if (PUZZLES[puzzleIndex].puzzle[r][c] !== 0) return; // изначальные нельзя менять
+    if (PUZZLES[puzzleIndex].puzzle[r][c] !== 0) return;
     setSelected([r, c]);
   };
 
@@ -851,10 +895,9 @@ const SudokuGame: React.FC<{ onClose: () => void; game?: Game }> = ({ onClose, g
     newBoard[r][c] = num;
     setBoard(newBoard);
 
-    // Проверка ошибок
     const newErrors: [number, number][] = [];
-    for (let i = 0; i < 4; i++) {
-      for (let j = 0; j < 4; j++) {
+    for (let i = 0; i < size; i++) {
+      for (let j = 0; j < size; j++) {
         if (newBoard[i][j] !== 0 && newBoard[i][j] !== PUZZLES[puzzleIndex].solution[i][j]) {
           newErrors.push([i, j]);
         }
@@ -862,7 +905,6 @@ const SudokuGame: React.FC<{ onClose: () => void; game?: Game }> = ({ onClose, g
     }
     setErrors(newErrors);
 
-    // Проверка победы
     const solved = newBoard.every((row, i) =>
       row.every((v, j) => v === PUZZLES[puzzleIndex].solution[i][j])
     );
@@ -881,6 +923,18 @@ const SudokuGame: React.FC<{ onClose: () => void; game?: Game }> = ({ onClose, g
 
   const restart = () => loadPuzzle(puzzleIndex);
 
+  const getBorderClasses = (r: number, c: number) => {
+    if (size === 4) {
+      const borderR = (c + 1) % 2 === 0 && c !== 3 ? 'border-r-4 border-stone-700' : '';
+      const borderB = (r + 1) % 2 === 0 && r !== 3 ? 'border-b-4 border-stone-700' : '';
+      return `${borderR} ${borderB}`;
+    } else {
+      const borderR = (c + 1) % 3 === 0 && c !== 8 ? 'border-r-4 border-stone-700' : '';
+      const borderB = (r + 1) % 3 === 0 && r !== 8 ? 'border-b-4 border-stone-700' : '';
+      return `${borderR} ${borderB}`;
+    }
+  };
+
   return (
     <div className="min-h-screen bg-linear-to-b from-stone-50 to-stone-100">
       <div className={`bg-linear-to-br ${game?.gradient} text-white sticky top-0 z-20 shadow-md`}>
@@ -891,11 +945,35 @@ const SudokuGame: React.FC<{ onClose: () => void; game?: Game }> = ({ onClose, g
           >
             <ArrowLeft className="w-6 h-6 text-white" />
           </button>
-          <h1 className="font-bold text-xl text-white">📝 Sudoku 4×4</h1>
+          <h1 className="font-bold text-xl text-white">📝 Sudoku</h1>
         </div>
       </div>
 
       <div className="max-w-2xl mx-auto px-4 py-6 space-y-5">
+        {/* Переключатель режима */}
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            onClick={() => switchMode(4)}
+            className={`py-3 rounded-2xl font-bold text-sm transition-all ${
+              mode === 4
+                ? 'bg-linear-to-br from-violet-500 to-purple-600 text-white shadow-lg'
+                : 'bg-white text-stone-600 border border-stone-200'
+            }`}
+          >
+            4×4 (Oson)
+          </button>
+          <button
+            onClick={() => switchMode(9)}
+            className={`py-3 rounded-2xl font-bold text-sm transition-all ${
+              mode === 9
+                ? 'bg-linear-to-br from-violet-500 to-purple-600 text-white shadow-lg'
+                : 'bg-white text-stone-600 border border-stone-200'
+            }`}
+          >
+            9×9 (Qiyin)
+          </button>
+        </div>
+
         {/* Статус */}
         <div className="bg-white rounded-3xl p-4 shadow-lg border border-stone-100 text-center">
           {won ? (
@@ -903,39 +981,43 @@ const SudokuGame: React.FC<{ onClose: () => void; game?: Game }> = ({ onClose, g
               🎉 Tabriklaymiz! Siz yechdingiz!
             </div>
           ) : (
-            <div className="text-sm font-bold text-stone-600">
-              Har bir qatorda, ustunda va 2×2 blokda 1-4 raqamlari takrorlanmasin
+            <div className="text-xs font-bold text-stone-600">
+              Har bir qatorda, ustunda va {size === 4 ? '2×2' : '3×3'} blokda 1-{size} raqamlari takrorlanmasin
             </div>
           )}
         </div>
 
-                {/* Игровое поле */}
-        <div className="bg-white rounded-3xl p-4 shadow-lg border border-stone-100">
-          <div className="grid grid-cols-4 gap-1.5 max-w-md mx-auto">
+        {/* Игровое поле */}
+        <div className="bg-white rounded-3xl p-3 shadow-lg border border-stone-100">
+          <div
+            className="grid gap-0.5 w-full mx-auto"
+            style={{ gridTemplateColumns: `repeat(${size}, minmax(0, 1fr))` }}
+          >
             {board.map((row, r) =>
               row.map((cell, c) => {
                 const isGiven = PUZZLES[puzzleIndex].puzzle[r][c] !== 0;
                 const isSelected = selected?.[0] === r && selected?.[1] === c;
                 const isError = errors.some(([i, j]) => i === r && j === c);
-                const borderR = (c + 1) % 2 === 0 && c !== 3 ? 'border-r-4 border-stone-700' : '';
-                const borderB = (r + 1) % 2 === 0 && r !== 3 ? 'border-b-4 border-stone-700' : '';
+                const borders = getBorderClasses(r, c);
 
                 return (
                   <button
                     key={`${r}-${c}`}
                     onClick={() => handleCellClick(r, c)}
-                    className={`aspect-square rounded-xl flex items-center justify-center text-5xl font-bold transition-all ${borderR} ${borderB} ${
+                    className={`aspect-square rounded-md flex items-center justify-center font-bold transition-all ${borders} ${
+                      size === 4 ? 'text-3xl' : 'text-base'
+                    } ${
                       isGiven
                         ? 'bg-stone-200 text-stone-800 cursor-not-allowed'
                         : isError
-                        ? 'bg-rose-100 text-rose-700 border-2 border-rose-400'
+                        ? 'bg-rose-100 text-rose-700'
                         : isSelected
-                        ? 'bg-violet-200 text-violet-800 ring-4 ring-violet-400'
+                        ? 'bg-violet-200 text-violet-800 ring-2 ring-violet-400'
                         : 'bg-stone-50 text-violet-700 hover:bg-violet-50'
                     }`}
                   >
                     {cell !== 0 ? cell : ''}
-                </button>
+                  </button>
                 );
               })
             )}
@@ -943,13 +1025,15 @@ const SudokuGame: React.FC<{ onClose: () => void; game?: Game }> = ({ onClose, g
         </div>
 
         {/* Цифры */}
-        <div className="grid grid-cols-5 gap-2">
-          {[1, 2, 3, 4].map((num) => (
+        <div className={`grid gap-1.5 ${size === 4 ? 'grid-cols-5' : 'grid-cols-5'}`}>
+          {Array.from({ length: size }, (_, i) => i + 1).map((num) => (
             <button
               key={num}
               onClick={() => handleNumber(num)}
               disabled={!selected || won}
-              className="aspect-square bg-linear-to-br from-violet-500 to-purple-600 text-white rounded-2xl font-bold text-3xl shadow-lg active:scale-95 transition disabled:opacity-30"
+              className={`aspect-square bg-linear-to-br from-violet-500 to-purple-600 text-white rounded-xl font-bold shadow-lg active:scale-95 transition disabled:opacity-30 ${
+                size === 4 ? 'text-2xl' : 'text-lg'
+              }`}
             >
               {num}
             </button>
@@ -957,7 +1041,7 @@ const SudokuGame: React.FC<{ onClose: () => void; game?: Game }> = ({ onClose, g
           <button
             onClick={handleClear}
             disabled={!selected || won}
-            className="aspect-square bg-stone-200 text-stone-700 rounded-2xl font-bold text-2xl shadow-lg active:scale-95 transition disabled:opacity-30"
+            className="aspect-square bg-stone-200 text-stone-700 rounded-xl font-bold text-lg shadow-lg active:scale-95 transition disabled:opacity-30"
           >
             ⌫
           </button>

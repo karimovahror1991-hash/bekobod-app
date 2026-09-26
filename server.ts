@@ -65,6 +65,21 @@ app.post('/api/track', strictLimiter, async (req, res) => {
   try {
     const { userId, username, firstName } = req.body;
     if (!userId) return res.status(400).json({ error: 'userId required' });
+
+    await pool.query(
+      `INSERT INTO app_users (user_id, username, first_name, last_seen)
+       VALUES ($1, $2, $3, NOW())
+       ON CONFLICT (user_id)
+       DO UPDATE SET username = EXCLUDED.username, first_name = EXCLUDED.first_name, last_seen = NOW()`,
+      [userId, username || null, firstName || null]
+    );
+    res.json({ ok: true });
+  } catch (error: any) {
+    console.error('Track error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Регистрация вебхука Telegram (с секретом)
 app.get('/api/setup-webhook', async (req, res) => {
   try {
@@ -89,19 +104,6 @@ app.get('/api/setup-webhook', async (req, res) => {
     const data = await response.json();
     res.json(data);
   } catch (error: any) {
-    res.status(500).json({ error: error.message });
-  }
-});
-    await pool.query(
-      `INSERT INTO app_users (user_id, username, first_name, last_seen)
-       VALUES ($1, $2, $3, NOW())
-       ON CONFLICT (user_id)
-       DO UPDATE SET username = EXCLUDED.username, first_name = EXCLUDED.first_name, last_seen = NOW()`,
-      [userId, username || null, firstName || null]
-    );
-    res.json({ ok: true });
-  } catch (error: any) {
-    console.error('Track error:', error);
     res.status(500).json({ error: error.message });
   }
 });

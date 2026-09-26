@@ -586,6 +586,54 @@ if ((message?.caption?.startsWith('/add_news')) && ADMINS.includes(message.from.
         }
       }
     }
+        // Команда /add_ad (создать рекламу, только главный админ)
+    if (message?.text?.startsWith('/add_ad') && message.from.id === SUPER_ADMIN) {
+      const parts = message.text.split('|').map((s: string) => s.trim());
+
+      if (parts.length < 3) {
+        await sendTelegramMessage(
+          message.from.id,
+          `❌ <b>Format:</b>\n<code>/add_ad sarlavha | matn | telefon | gradient</code>\n\n` +
+          `<b>Gradientlar:</b>\n` +
+          `from-purple-600 to-indigo-700\n` +
+          `from-amber-600 to-orange-700\n` +
+          `from-emerald-600 to-teal-700\n` +
+          `from-rose-500 to-pink-600\n` +
+          `from-blue-500 to-indigo-600\n\n` +
+          `<b>Misol:</b>\n<code>/add_ad Kafe X | Mazali taomlar | +998901234567 | from-amber-600 to-orange-700</code>`
+        );
+      } else {
+        const title = parts[0].replace('/add_ad', '').trim();
+        const subtitle = parts[1] || null;
+        const phone = parts[2] || null;
+        const gradient = parts[3] || 'from-purple-600 to-indigo-700';
+
+        const result = await pool.query(
+          `INSERT INTO ads (title, subtitle, phone, gradient) VALUES ($1, $2, $3, $4) RETURNING *`,
+          [title, subtitle, phone, gradient]
+        );
+
+        await sendTelegramMessage(
+          message.from.id,
+          `✅ <b>Reklama qo'shildi!</b>\n\n📢 ${title}\n📝 ${subtitle || "yo'q"}\n📞 ${phone || "yo'q"}\n🎨 ${gradient}\nID: <code>${result.rows[0].id}</code>`
+        );
+      }
+    }
+
+    // Команда /delete_ad ID (только главный админ)
+    if (message?.text?.startsWith('/delete_ad') && message.from.id === SUPER_ADMIN) {
+      const adId = Number(message.text.split(' ')[1]);
+      if (!adId) {
+        await sendTelegramMessage(message.from.id, "❌ /delete_ad ID");
+      } else {
+        const result = await pool.query('DELETE FROM ads WHERE id = $1 RETURNING title', [adId]);
+        if (result.rows.length === 0) {
+          await sendTelegramMessage(message.from.id, `❌ Topilmadi (ID: ${adId})`);
+        } else {
+          await sendTelegramMessage(message.from.id, `✅ O'chirildi: <b>${result.rows[0].title}</b>`);
+        }
+      }
+    }
         // Одобрить объявление (только главный админ)
     if (message?.text?.startsWith('/approve_listing') && message.from.id === SUPER_ADMIN) {
       const id = Number(message.text.split(' ')[1]);
@@ -1591,6 +1639,58 @@ app.post('/api/listings/create', async (req, res) => {
     res.json({ listing: result.rows[0], pending: true });
   } catch (error: any) {
     console.error('Listing create error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ============ ADS (реклама) ============
+
+// Список активной рекламы
+app.get('/api/ads/list', async (req, res) => {
+  try {
+    const result = await pool.query("SELECT * FROM ads WHERE status = 'active' ORDER BY created_at DESC");
+    res.json({ ads: result.rows });
+  } catch (error: any) {
+    console.error('Ads list error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Создать рекламу (только главный админ)
+app.post('/api/ads/create', async (req, res) => {
+  try {
+    const { adminId, title, subtitle, phone, gradient } = req.body;
+    if (Number(adminId) !== SUPER_ADMIN) {
+      return res.status(403).json({ error: 'Доступ запрещён' });
+    }
+    if (!title) {
+      return res.status(400).json({ error: 'Укажите заголовок' });
+    }
+    const result = await pool.query(
+      `INSERT INTO ads (title, subtitle, phone, gradient) VALUES ($1, $2, $3, $4) RETURNING *`,
+      [title, subtitle || null, phone || null, gradient || 'from-purple-600 to-indigo-700']
+    );
+    res.json({ ad: result.rows[0] });
+  } catch (error: any) {
+    console.error('Ad create error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Удалить рекламу (только главный админ)
+app.post('/api/ads/delete', async (req, res) => {
+  try {
+    const { adminId, adId } = req.body;
+    if (Number(adminId) !== SUPER_ADMIN) {
+      return res.status(403).json({ error: 'Доступ запрещён' });
+    }
+    const result = await pool.query('DELETE FROM ads WHERE id = $1 RETURNING title', [adId]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Topilmadi' });
+    }
+    res.json({ ok: true, title: result.rows[0].title });
+  } catch (error: any) {
+    console.error('Ad delete error:', error);
     res.status(500).json({ error: error.message });
   }
 });

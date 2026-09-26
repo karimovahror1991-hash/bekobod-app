@@ -53,14 +53,10 @@ const sections: Section[] = [
   { id: 'mini_oyinlar', titleUz: "Mini o'yinlar", titleRu: 'Мини-игры', icon: Gamepad2, gradient: 'from-purple-500 to-indigo-600' },
 ];
 
-const ads = [
-  { id: 1, title: 'Reklama 1', subtitle: "Bu yerda sizning reklamangiz bo'lishi mumkin", gradient: 'from-purple-600 to-indigo-700' },
-  { id: 2, title: 'Reklama 2', subtitle: "Bu yerda sizning reklamangiz bo'lishi mumkin", gradient: 'from-amber-600 to-orange-700' },
-  { id: 3, title: 'Reklama 3', subtitle: "Bu yerda sizning reklamangiz bo'lishi mumkin", gradient: 'from-emerald-600 to-teal-700' },
-];
 
 function App() {
   const [currentAd, setCurrentAd] = useState(0);
+  const [ads, setAds] = useState<any[]>([]);
   const [weather, setWeather] = useState<any>(null);
   const [weatherLoading, setWeatherLoading] = useState(true);
   const [activeSection, setActiveSection] = useState<string | null>(null);
@@ -156,13 +152,22 @@ function App() {
       .catch(() => {});
   }, [activeSection, userId]);
 
+    // Загрузка рекламы из БД
+  useEffect(() => {
+    fetch('https://bekobod-app-1.onrender.com/api/ads/list')
+      .then((res) => res.json())
+      .then((data) => setAds(data.ads || []))
+      .catch((err) => console.error('Ads error:', err));
+  }, []);
+
   // Авто-переключение рекламы
   useEffect(() => {
+    if (ads.length === 0) return;
     const interval = setInterval(() => {
       setCurrentAd((prev) => (prev + 1) % ads.length);
     }, 5000);
     return () => clearInterval(interval);
-  }, []);
+  }, [ads.length]);
 
   const getWeatherIcon = (code: number) => {
     if (code === 0) return <Sun className="w-8 h-8 text-yellow-500" />;
@@ -329,21 +334,40 @@ function App() {
         </div>
       </div>
 
-      {/* Карусель рекламы */}
+           {/* Карусель рекламы */}
       <div className="max-w-2xl w-full mx-auto px-4 pt-4">
         <div className="relative rounded-3xl overflow-hidden shadow-xl h-48">
-          {ads.map((ad, index) => (
-            <div
-              key={ad.id}
-              className={`absolute inset-0 bg-linear-to-br ${ad.gradient} transition-opacity duration-700 flex flex-col items-center justify-center text-white p-6 ${
-                index === currentAd ? 'opacity-100' : 'opacity-0'
-              }`}
-            >
+          {ads.length === 0 ? (
+            <div className="absolute inset-0 bg-linear-to-br from-purple-600 to-indigo-700 flex flex-col items-center justify-center text-white p-6">
               <div className="text-4xl mb-2">📢</div>
-              <h3 className="font-bold text-lg">{ad.title}</h3>
-              <p className="text-xs text-white/80 mt-1">{ad.subtitle}</p>
+              <h3 className="font-bold text-lg">Reklama joyi</h3>
+              <p className="text-xs text-white/80 mt-1">Bu yerda sizning reklamangiz bo'lishi mumkin</p>
             </div>
-          ))}
+          ) : (
+            ads.map((ad, index) => (
+              <div
+                key={ad.id}
+                className={`absolute inset-0 bg-linear-to-br ${ad.gradient} transition-opacity duration-700 flex flex-col items-center justify-center text-white p-6 ${
+                  index === currentAd ? 'opacity-100' : 'opacity-0'
+                }`}
+              >
+                <div className="text-4xl mb-2">📢</div>
+                <h3 className="font-bold text-lg">{ad.title}</h3>
+                {ad.subtitle && (
+                  <p className="text-xs text-white/80 mt-1 text-center">{ad.subtitle}</p>
+                )}
+                {ad.phone && (
+                  <a
+                    href={`tel:${ad.phone}`}
+                    onClick={(e) => e.stopPropagation()}
+                    className="mt-3 px-5 py-2 bg-white/20 hover:bg-white/30 rounded-xl text-xs font-bold transition active:scale-95"
+                  >
+                    📞 {ad.phone}
+                  </a>
+                )}
+              </div>
+            ))
+          )}
 
           <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex space-x-1.5">
             {ads.map((_, index) => (

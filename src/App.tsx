@@ -72,13 +72,11 @@ function App() {
       setUserId(user.id);
 
       // Трекинг открытия приложения
-      fetch('https://bekobod-app-1.onrender.com/api/track', {
+            fetch('https://bekobod-app-1.onrender.com/api/track', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          userId: user.id,
-          username: user.username || null,
-          firstName: user.first_name || null,
+          initData: tg?.initData || '',
         }),
       }).catch(() => {});
     }

@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import express from 'express';
 import rateLimit from 'express-rate-limit';
 import path from 'path';
@@ -18,6 +19,61 @@ const pool = new Pool({
 // ============ ADMINS ============
 const SUPER_ADMIN = 988368940;
 const ADMINS = [988368940, 259258146]; // главный + второй админ
+// Валидация initData от Telegram
+function validateInitData(initData: string, botToken: string): { valid: boolean; user?: any; error?: string } {
+  try {
+    if (!initData || !botToken) {
+      return { valid: false, error: 'Missing initData or bot token' };
+    }
+
+    const params = new URLSearchParams(initData);
+    const hash = params.get('hash');
+
+    if (!hash) {
+      return { valid: false, error: 'Missing hash in initData' };
+    }
+
+    // Проверка формата хеша
+    if (!/^[0-9a-f]{64}$/i.test(hash)) {
+      return { valid: false, error: 'Invalid hash format' };
+    }
+
+    // Убираем hash и сортируем по ключам
+    params.delete('hash');
+    const dataCheckString = Array.from(params.entries())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([key, value]) => `${key}=${value}`)
+      .join('\n');
+
+    // secret_key = HMAC-SHA256("WebAppData", bot_token)
+    const secretKey = crypto.createHmac('sha256', 'WebAppData').update(botToken).digest();
+
+    // computed_hash = HMAC-SHA256(secret_key, data_check_string)
+    const computedHash = crypto.createHmac('sha256', secretKey).update(dataCheckString).digest('hex');
+
+    // Timing-safe сравнение
+    const valid = crypto.timingSafeEqual(Buffer.from(computedHash, 'hex'), Buffer.from(hash, 'hex'));
+
+    if (!valid) {
+      return { valid: false, error: 'Invalid hash' };
+    }
+
+    // Проверка срока давности (24 часа)
+    const authDate = Number(params.get('auth_date') || 0);
+    const now = Math.floor(Date.now() / 1000);
+    if (now - authDate > 86400) {
+      return { valid: false, error: 'initData expired' };
+    }
+
+    // Парсим user
+    const userStr = params.get('user');
+    const user = userStr ? JSON.parse(userStr) : null;
+
+    return { valid: true, user };
+  } catch (error: any) {
+    return { valid: false, error: error.message };
+  }
+}
 async function sendTelegramMessage(chatId: number, text: string) {
   const botToken = process.env.TELEGRAM_BOT_TOKEN;
   if (!botToken) return;
@@ -63,7 +119,21 @@ app.get('/api/health', (req, res) => {
 // Трекинг открытия приложения
 app.post('/api/track', strictLimiter, async (req, res) => {
   try {
-    const { userId, username, firstName } = req.body;
+       const { initData } = req.body;
+
+    // Валидация initData от Telegram
+    const botToken = process.env.TELEGRAM_BOT_TOKEN || '';
+    const validation = validateInitData(initData, botToken);
+
+    if (!validation.valid) {
+      console.warn('❌ Track: невалидный initData:', validation.error);
+      return res.status(403).json({ error: 'Invalid initData' });
+    }
+
+    const userId = validation.user?.id;
+    const username = validation.user?.username || null;
+    const firstName = validation.user?.first_name || null;
+
     if (!userId) return res.status(400).json({ error: 'userId required' });
 
     await pool.query(

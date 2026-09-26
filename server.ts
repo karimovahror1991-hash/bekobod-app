@@ -1113,7 +1113,7 @@ app.post('/api/news/create', async (req, res) => {
 
 app.get('/api/fetch-world-news', async (req, res) => {
   try {
-    const response = await fetch('https://t.me/s/kun_uz_tezkor_xabarlari');
+    const response = await fetch('https://t.me/s/kunuz');
     const html = await response.text();
     const messages = html.split('tgme_widget_message_wrap').slice(1);
     let added = 0;

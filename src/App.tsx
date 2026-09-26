@@ -65,6 +65,7 @@ function App() {
   const [weatherLoading, setWeatherLoading] = useState(true);
   const [activeSection, setActiveSection] = useState<string | null>(null);
   const [userId, setUserId] = useState<number | null>(null);
+    const [badges, setBadges] = useState<{ news: number; events: number; oldi_sotdi: number }>({ news: 0, events: 0, oldi_sotdi: 0 });
 
   useEffect(() => {
     const tg = (window as any).Telegram?.WebApp;
@@ -72,6 +73,53 @@ function App() {
     if (tg?.initDataUnsafe?.user?.id) {
       setUserId(tg.initDataUnsafe.user.id);
     }
+      // Загрузка бейджей
+  useEffect(() => {
+    if (!userId) return;
+
+    const loadBadges = async () => {
+      try {
+        const sections = ['news', 'events', 'oldi_sotdi'];
+        const results: any = {};
+        for (const s of sections) {
+          const res = await fetch(`https://bekobod-app-1.onrender.com/api/badge/${s}?userId=${userId}`);
+          const data = await res.json();
+          results[s] = data.count || 0;
+        }
+        setBadges(results);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    loadBadges();
+    const interval = setInterval(loadBadges, 60000); // каждую минуту
+    return () => clearInterval(interval);
+  }, [userId]);
+
+  // Отметить раздел как просмотренный
+  useEffect(() => {
+    if (!userId || !activeSection) return;
+
+    const sectionsMap: { [key: string]: string } = {
+      news: 'news',
+      events: 'events',
+      oldi_sotdi: 'oldi_sotdi',
+    };
+
+    const section = sectionsMap[activeSection];
+    if (!section) return;
+
+    fetch(`https://bekobod-app-1.onrender.com/api/badge/${section}/seen`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId }),
+    })
+      .then(() => {
+        setBadges(prev => ({ ...prev, [section]: 0 }));
+      })
+      .catch(() => {});
+  }, [activeSection, userId]);
     // Трекинг открытия приложения
     const user = tg?.initDataUnsafe?.user;
     if (user?.id) {
@@ -323,17 +371,25 @@ function App() {
           <span className="text-xs font-normal text-stone-400">Bo'limlar / Разделы</span>
         </h2>
 
-        <div className="grid grid-cols-2 gap-3">
+               <div className="grid grid-cols-2 gap-3">
           {sections.map((section) => {
             const Icon = section.icon;
+            const badgeCount = badges[section.id as keyof typeof badges] || 0;
             return (
               <button
                 key={section.id}
                 onClick={() => setActiveSection(section.id)}
                 className="group relative bg-white rounded-3xl p-5 flex flex-col items-center justify-center space-y-3 shadow-sm hover:shadow-xl transition-all duration-300 active:scale-95 border border-stone-100"
               >
-                <div className={`w-16 h-16 rounded-2xl bg-linear-to-br ${section.gradient} flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform duration-300`}>
-                  <Icon className="w-8 h-8" />
+                <div className="relative">
+                  <div className={`w-16 h-16 rounded-2xl bg-linear-to-br ${section.gradient} flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+                    <Icon className="w-8 h-8" />
+                  </div>
+                  {badgeCount > 0 && (
+                    <div className="absolute -top-1 -right-1 min-w-6 h-6 px-1.5 bg-rose-500 text-white text-xs font-bold rounded-full flex items-center justify-center shadow-lg border-2 border-white">
+                      {badgeCount > 99 ? '99+' : badgeCount}
+                    </div>
+                  )}
                 </div>
                 <div className="text-center">
                   <div className="text-sm font-bold text-stone-900 leading-tight">

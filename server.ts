@@ -83,6 +83,66 @@ app.get('/api/stats', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+// Бейджи — сколько нового у пользователя
+app.get('/api/badge/:section', async (req, res) => {
+  try {
+    const { section } = req.params;
+    const { userId } = req.query;
+    if (!userId) return res.json({ count: 0 });
+
+    let totalQuery = '';
+    if (section === 'news') totalQuery = 'SELECT COUNT(*) FROM news';
+    else if (section === 'events') totalQuery = "SELECT COUNT(*) FROM events WHERE status = 'active'";
+    else if (section === 'oldi_sotdi') totalQuery = "SELECT COUNT(*) FROM listings WHERE status = 'active'";
+    else return res.json({ count: 0 });
+
+    const totalResult = await pool.query(totalQuery);
+    const total = Number(totalResult.rows[0].count);
+
+    const viewResult = await pool.query(
+      'SELECT last_count FROM user_views WHERE user_id = $1 AND section = $2',
+      [userId, section]
+    );
+    const lastSeen = viewResult.rows.length > 0 ? Number(viewResult.rows[0].last_count) : 0;
+
+    const diff = Math.max(0, total - lastSeen);
+    res.json({ count: diff });
+  } catch (error: any) {
+    console.error('Badge error:', error);
+    res.json({ count: 0 });
+  }
+});
+
+// Отметить раздел как просмотренный
+app.post('/api/badge/:section/seen', async (req, res) => {
+  try {
+    const { section } = req.params;
+    const { userId } = req.body;
+    if (!userId) return res.json({ ok: false });
+
+    let totalQuery = '';
+    if (section === 'news') totalQuery = 'SELECT COUNT(*) FROM news';
+    else if (section === 'events') totalQuery = "SELECT COUNT(*) FROM events WHERE status = 'active'";
+    else if (section === 'oldi_sotdi') totalQuery = "SELECT COUNT(*) FROM listings WHERE status = 'active'";
+    else return res.json({ ok: false });
+
+    const totalResult = await pool.query(totalQuery);
+    const total = Number(totalResult.rows[0].count);
+
+    await pool.query(
+      `INSERT INTO user_views (user_id, section, last_count, updated_at)
+       VALUES ($1, $2, $3, NOW())
+       ON CONFLICT (user_id, section)
+       DO UPDATE SET last_count = $3, updated_at = NOW()`,
+      [userId, section, total]
+    );
+
+    res.json({ ok: true });
+  } catch (error: any) {
+    console.error('Badge seen error:', error);
+    res.json({ ok: false });
+  }
+});
 // ============ TELEGRAM WEBHOOK ============
 app.post('/api/telegram-webhook', async (req, res) => {
   try {

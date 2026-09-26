@@ -118,7 +118,29 @@ useEffect(() => {
       console.error(err);
     }
   };
+  // Отметить раздел как просмотренный
+  useEffect(() => {
+    if (!userId || !activeSection) return;
 
+    const sectionsMap: { [key: string]: string } = {
+      news: 'news',
+      events: 'events',
+      oldi_sotdi: 'oldi_sotdi',
+    };
+
+    const section = sectionsMap[activeSection];
+    if (!section) return;
+
+    fetch(`https://bekobod-app-1.onrender.com/api/badge/${section}/seen`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId }),
+    })
+      .then(() => {
+        setBadges(prev => ({ ...prev, [section]: 0 }));
+      })
+      .catch(() => {});
+  }, [activeSection, userId]);
   loadBadges();
   const interval = setInterval(loadBadges, 60000);
   return () => clearInterval(interval);

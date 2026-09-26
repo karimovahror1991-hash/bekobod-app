@@ -142,6 +142,9 @@ export const MiniOyinlarView: React.FC<MiniOyinlarViewProps> = ({ onClose }) => 
         if (selectedGame === 'tictactoe') {
       return <TicTacToeGame onClose={() => setSelectedGame(null)} game={game} />;
     }
+        if (selectedGame === 'sudoku') {
+      return <SudokuGame onClose={() => setSelectedGame(null)} game={game} />;
+    }
     return (
       <div className="min-h-screen bg-linear-to-b from-stone-50 to-stone-100">
         <div className={`bg-linear-to-br ${game?.gradient} text-white sticky top-0 z-20 shadow-md`}>
@@ -787,3 +790,196 @@ const TicTacToeGame: React.FC<{ onClose: () => void; game?: Game }> = ({ onClose
   );
 };
 // ============ /KRESTIK-NOLIK ============
+// ============ SUDOKU 4×4 ============
+const SudokuGame: React.FC<{ onClose: () => void; game?: Game }> = ({ onClose, game }) => {
+  // Готовые решённые сетки 4×4
+  const PUZZLES = [
+    {
+      solution: [
+        [1, 2, 3, 4],
+        [3, 4, 1, 2],
+        [2, 1, 4, 3],
+        [4, 3, 2, 1],
+      ],
+      puzzle: [
+        [1, 0, 0, 4],
+        [0, 4, 0, 0],
+        [0, 1, 0, 0],
+        [4, 0, 2, 1],
+      ],
+    },
+    {
+      solution: [
+        [2, 1, 4, 3],
+        [4, 3, 2, 1],
+        [1, 2, 3, 4],
+        [3, 4, 1, 2],
+      ],
+      puzzle: [
+        [2, 0, 4, 0],
+        [0, 3, 0, 1],
+        [1, 0, 0, 4],
+        [0, 4, 1, 0],
+      ],
+    },
+  ];
+
+  const [puzzleIndex, setPuzzleIndex] = useState(0);
+  const [board, setBoard] = useState<number[][]>(PUZZLES[0].puzzle.map(r => [...r]));
+  const [selected, setSelected] = useState<[number, number] | null>(null);
+  const [won, setWon] = useState(false);
+  const [errors, setErrors] = useState<[number, number][]>([]);
+
+  const loadPuzzle = (idx: number) => {
+    setPuzzleIndex(idx);
+    setBoard(PUZZLES[idx].puzzle.map(r => [...r]));
+    setSelected(null);
+    setWon(false);
+    setErrors([]);
+  };
+
+  const handleCellClick = (r: number, c: number) => {
+    if (won) return;
+    if (PUZZLES[puzzleIndex].puzzle[r][c] !== 0) return; // изначальные нельзя менять
+    setSelected([r, c]);
+  };
+
+  const handleNumber = (num: number) => {
+    if (!selected || won) return;
+    const [r, c] = selected;
+    const newBoard = board.map(row => [...row]);
+    newBoard[r][c] = num;
+    setBoard(newBoard);
+
+    // Проверка ошибок
+    const newErrors: [number, number][] = [];
+    for (let i = 0; i < 4; i++) {
+      for (let j = 0; j < 4; j++) {
+        if (newBoard[i][j] !== 0 && newBoard[i][j] !== PUZZLES[puzzleIndex].solution[i][j]) {
+          newErrors.push([i, j]);
+        }
+      }
+    }
+    setErrors(newErrors);
+
+    // Проверка победы
+    const solved = newBoard.every((row, i) =>
+      row.every((v, j) => v === PUZZLES[puzzleIndex].solution[i][j])
+    );
+    if (solved) setWon(true);
+  };
+
+  const handleClear = () => {
+    if (!selected || won) return;
+    const [r, c] = selected;
+    if (PUZZLES[puzzleIndex].puzzle[r][c] !== 0) return;
+    const newBoard = board.map(row => [...row]);
+    newBoard[r][c] = 0;
+    setBoard(newBoard);
+    setErrors(errors.filter(([i, j]) => !(i === r && j === c)));
+  };
+
+  const restart = () => loadPuzzle(puzzleIndex);
+
+  return (
+    <div className="min-h-screen bg-linear-to-b from-stone-50 to-stone-100">
+      <div className={`bg-linear-to-br ${game?.gradient} text-white sticky top-0 z-20 shadow-md`}>
+        <div className="max-w-2xl mx-auto px-4 py-4 flex items-center space-x-3">
+          <button
+            onClick={onClose}
+            className="w-11 h-11 rounded-2xl bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"
+          >
+            <ArrowLeft className="w-6 h-6 text-white" />
+          </button>
+          <h1 className="font-bold text-xl text-white">📝 Sudoku 4×4</h1>
+        </div>
+      </div>
+
+      <div className="max-w-2xl mx-auto px-4 py-6 space-y-5">
+        {/* Статус */}
+        <div className="bg-white rounded-3xl p-4 shadow-lg border border-stone-100 text-center">
+          {won ? (
+            <div className="text-xl font-bold text-emerald-600">
+              🎉 Tabriklaymiz! Siz yechdingiz!
+            </div>
+          ) : (
+            <div className="text-sm font-bold text-stone-600">
+              Har bir qatorda, ustunda va 2×2 blokda 1-4 raqamlari takrorlanmasin
+            </div>
+          )}
+        </div>
+
+        {/* Игровое поле */}
+        <div className="bg-white rounded-3xl p-4 shadow-lg border border-stone-100">
+          <div className="grid grid-cols-4 gap-1">
+            {board.map((row, r) =>
+              row.map((cell, c) => {
+                const isGiven = PUZZLES[puzzleIndex].puzzle[r][c] !== 0;
+                const isSelected = selected?.[0] === r && selected?.[1] === c;
+                const isError = errors.some(([i, j]) => i === r && j === c);
+                const borderR = (c + 1) % 2 === 0 && c !== 3 ? 'border-r-4 border-stone-700' : '';
+                const borderB = (r + 1) % 2 === 0 && r !== 3 ? 'border-b-4 border-stone-700' : '';
+
+                return (
+                  <button
+                    key={`${r}-${c}`}
+                    onClick={() => handleCellClick(r, c)}
+                    className={`aspect-square rounded-lg flex items-center justify-center text-3xl font-bold transition-all ${borderR} ${borderB} ${
+                      isGiven
+                        ? 'bg-stone-200 text-stone-800 cursor-not-allowed'
+                        : isError
+                        ? 'bg-rose-100 text-rose-700 border-2 border-rose-400'
+                        : isSelected
+                        ? 'bg-violet-200 text-violet-800 ring-4 ring-violet-400'
+                        : 'bg-stone-50 text-violet-700 hover:bg-violet-50'
+                    }`}
+                  >
+                    {cell !== 0 ? cell : ''}
+                  </button>
+                );
+              })
+            )}
+          </div>
+        </div>
+
+        {/* Цифры */}
+        <div className="grid grid-cols-5 gap-2">
+          {[1, 2, 3, 4].map((num) => (
+            <button
+              key={num}
+              onClick={() => handleNumber(num)}
+              disabled={!selected || won}
+              className="aspect-square bg-linear-to-br from-violet-500 to-purple-600 text-white rounded-2xl font-bold text-3xl shadow-lg active:scale-95 transition disabled:opacity-30"
+            >
+              {num}
+            </button>
+          ))}
+          <button
+            onClick={handleClear}
+            disabled={!selected || won}
+            className="aspect-square bg-stone-200 text-stone-700 rounded-2xl font-bold text-2xl shadow-lg active:scale-95 transition disabled:opacity-30"
+          >
+            ⌫
+          </button>
+        </div>
+
+        {/* Кнопки */}
+        <div className="grid grid-cols-2 gap-3">
+          <button
+            onClick={restart}
+            className="py-4 bg-stone-700 text-white rounded-2xl font-bold shadow-lg active:scale-95 transition"
+          >
+            🔄 Qaytadan
+          </button>
+          <button
+            onClick={() => loadPuzzle((puzzleIndex + 1) % PUZZLES.length)}
+            className="py-4 bg-linear-to-br from-violet-500 to-purple-600 text-white rounded-2xl font-bold shadow-lg active:scale-95 transition"
+          >
+            ➡️ Keyingi
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+// ============ /SUDOKU ============

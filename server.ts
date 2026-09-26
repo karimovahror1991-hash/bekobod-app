@@ -39,7 +39,50 @@ app.use((req, res, next) => {
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' });
 });
+// Трекинг открытия приложения
+app.post('/api/track', async (req, res) => {
+  try {
+    const { userId, username, firstName } = req.body;
+    if (!userId) return res.status(400).json({ error: 'userId required' });
 
+    await pool.query(
+      `INSERT INTO app_users (user_id, username, first_name, last_seen)
+       VALUES ($1, $2, $3, NOW())
+       ON CONFLICT (user_id)
+       DO UPDATE SET username = EXCLUDED.username, first_name = EXCLUDED.first_name, last_seen = NOW()`,
+      [userId, username || null, firstName || null]
+    );
+    res.json({ ok: true });
+  } catch (error: any) {
+    console.error('Track error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Статистика (только главный админ)
+app.get('/api/stats', async (req, res) => {
+  try {
+    const { adminId } = req.query;
+    if (Number(adminId) !== 988368940) {
+      return res.status(403).json({ error: 'Доступ запрещён' });
+    }
+
+    const total = await pool.query('SELECT COUNT(*) FROM app_users');
+    const online24 = await pool.query("SELECT COUNT(*) FROM app_users WHERE last_seen > NOW() - INTERVAL '24 hours'");
+    const week = await pool.query("SELECT COUNT(*) FROM app_users WHERE last_seen > NOW() - INTERVAL '7 days'");
+    const month = await pool.query("SELECT COUNT(*) FROM app_users WHERE last_seen > NOW() - INTERVAL '30 days'");
+
+    res.json({
+      total: Number(total.rows[0].count),
+      online24: Number(online24.rows[0].count),
+      week: Number(week.rows[0].count),
+      month: Number(month.rows[0].count),
+    });
+  } catch (error: any) {
+    console.error('Stats error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
 // ============ TELEGRAM WEBHOOK ============
 app.post('/api/telegram-webhook', async (req, res) => {
   try {
@@ -404,6 +447,22 @@ if ((message?.caption?.startsWith('/add_news')) && ADMINS.includes(message.from.
         }
       }
     }
+        // Команда /stats (статистика приложения, только главный админ)
+    if (message?.text === '/stats' && message.from.id === SUPER_ADMIN) {
+      const total = await pool.query('SELECT COUNT(*) FROM app_users');
+      const online24 = await pool.query("SELECT COUNT(*) FROM app_users WHERE last_seen > NOW() - INTERVAL '24 hours'");
+      const week = await pool.query("SELECT COUNT(*) FROM app_users WHERE last_seen > NOW() - INTERVAL '7 days'");
+      const month = await pool.query("SELECT COUNT(*) FROM app_users WHERE last_seen > NOW() - INTERVAL '30 days'");
+
+      await sendTelegramMessage(
+        message.from.id,
+        `📊 <b>Ilova statistikasi</b>\n\n` +
+        `👥 <b>Jami ochganlar:</b> ${total.rows[0].count}\n\n` +
+        `🟢 <b>Onlayn (24 soat):</b> ${online24.rows[0].count}\n` +
+        `📅 <b>Faol (7 kun):</b> ${week.rows[0].count}\n` +
+        `📆 <b>Faol (30 kun):</b> ${month.rows[0].count}`
+      );
+    }
     // Команда /delete_book ID
     if (message?.text?.startsWith('/delete_book') && ADMINS.includes(message.from.id)) {
       const bookId = Number(message.text.split(' ')[1]);
@@ -620,7 +679,7 @@ app.get('/api/city-taxi/list', async (req, res) => {
 app.post('/api/city-taxi/create', async (req, res) => {
   try {
     const { adminId, name, phone, description } = req.body;
-    if (Number(adminId) !== 988368940) {
+    if (!ADMINS.includes(Number(adminId))) {
       return res.status(403).json({ error: 'Доступ запрещён' });
     }
     if (!name || !phone) {
@@ -641,7 +700,7 @@ app.post('/api/city-taxi/create', async (req, res) => {
 app.post('/api/city-taxi/delete', async (req, res) => {
   try {
     const { adminId, taxiId } = req.body;
-    if (Number(adminId) !== 988368940) {
+    if (!ADMINS.includes(Number(adminId))) {
       return res.status(403).json({ error: 'Доступ запрещён' });
     }
     const result = await pool.query('DELETE FROM city_taxi WHERE id = $1 RETURNING name', [taxiId]);
@@ -740,7 +799,7 @@ app.get('/api/admin/my-messages', async (req, res) => {
 app.get('/api/admin/all-messages', async (req, res) => {
   try {
     const { adminId } = req.query;
-    if (Number(adminId) !== 988368940) return res.status(403).json({ error: 'Доступ запрещён' });
+    if (!ADMINS.includes(Number(adminId))) return res.status(403).json({ error: 'Доступ запрещён' });
     const result = await pool.query('SELECT * FROM admin_messages ORDER BY created_at DESC LIMIT 50');
     res.json({ messages: result.rows });
   } catch (error: any) {
@@ -752,7 +811,7 @@ app.get('/api/admin/all-messages', async (req, res) => {
 app.post('/api/admin/reply', async (req, res) => {
   try {
     const { adminId, messageId, reply } = req.body;
-    if (Number(adminId) !== 988368940) return res.status(403).json({ error: 'Доступ запрещён' });
+    if (!ADMINS.includes(Number(adminId))) return res.status(403).json({ error: 'Доступ запрещён' });
     if (!messageId || !reply || !reply.trim()) return res.status(400).json({ error: 'Ответ не может быть пустым' });
     await pool.query("UPDATE admin_messages SET reply = $1, status = 'answered', replied_at = NOW() WHERE id = $2", [reply.trim(), messageId]);
     res.json({ ok: true });
@@ -785,7 +844,7 @@ app.get('/api/contacts/list', async (req, res) => {
 app.post('/api/contacts/create', async (req, res) => {
   try {
     const { adminId, category, name, phone, address } = req.body;
-    if (Number(adminId) !== 988368940) return res.status(403).json({ error: 'Доступ запрещён' });
+    if (!ADMINS.includes(Number(adminId))) return res.status(403).json({ error: 'Доступ запрещён' });
     if (!category || !name) return res.status(400).json({ error: 'Укажите категорию и название' });
     const result = await pool.query(
       'INSERT INTO contacts (category, name, phone, address) VALUES ($1, $2, $3, $4) RETURNING *',
@@ -834,7 +893,7 @@ app.get('/api/restaurants/list', async (req, res) => {
 app.post('/api/restaurants/create', async (req, res) => {
   try {
     const { adminId, name, category, address, phone, description } = req.body;
-    if (Number(adminId) !== 988368940) return res.status(403).json({ error: 'Доступ запрещён' });
+    if (!ADMINS.includes(Number(adminId))) return res.status(403).json({ error: 'Доступ запрещён' });
     if (!name) return res.status(400).json({ error: 'Укажите название' });
     const result = await pool.query('INSERT INTO restaurants (name, category, address, phone, description) VALUES ($1, $2, $3, $4, $5) RETURNING *', [name, category || null, address || null, phone || null, description || null]);
     res.json({ restaurant: result.rows[0] });
@@ -903,7 +962,7 @@ app.get('/api/restaurants/rating/:restaurantId', async (req, res) => {
 app.post('/api/news/create', async (req, res) => {
   try {
     const { adminId, category, title, content, imageUrl, source } = req.body;
-    if (Number(adminId) !== 988368940) return res.status(403).json({ error: 'Доступ запрещён' });
+    if (!ADMINS.includes(Number(adminId))) return res.status(403).json({ error: 'Доступ запрещён' });
     if (!category || !title) return res.status(400).json({ error: 'Укажите категорию и заголовок' });
     const result = await pool.query('INSERT INTO news (category, title, content, image_url, source) VALUES ($1, $2, $3, $4, $5) RETURNING *', [category, title, content || null, imageUrl || null, source || null]);
     res.json({ news: result.rows[0] });
@@ -1005,7 +1064,7 @@ app.post('/api/events/birthday-request', async (req, res) => {
 app.post('/api/events/approve', async (req, res) => {
   try {
     const { adminId, eventId } = req.body;
-    if (Number(adminId) !== 988368940) return res.status(403).json({ error: 'Доступ запрещён' });
+    if (!ADMINS.includes(Number(adminId))) return res.status(403).json({ error: 'Доступ запрещён' });
     await pool.query("UPDATE events SET status = 'active' WHERE id = $1", [eventId]);
     res.json({ ok: true });
   } catch (error: any) {
@@ -1128,7 +1187,7 @@ app.post('/api/med/create', async (req, res) => {
   try {
     const { adminId, type, name, specialty, phone, address, description } = req.body;
 
-    if (Number(adminId) !== 988368940) {
+    if (!ADMINS.includes(Number(adminId))) {
       return res.status(403).json({ error: 'Доступ запрещён' });
     }
 
@@ -1178,7 +1237,7 @@ app.post('/api/contacts/create', async (req, res) => {
   try {
     const { adminId, category, name, phone, address } = req.body;
 
-    if (Number(adminId) !== 988368940) {
+    if (!ADMINS.includes(Number(adminId))) {
       return res.status(403).json({ error: 'Доступ запрещён' });
     }
 
@@ -1222,7 +1281,7 @@ app.get('/api/books/list', async (req, res) => {
 app.post('/api/books/create', async (req, res) => {
   try {
     const { adminId, category, title, author, description, fileUrl, coverUrl } = req.body;
-    if (Number(adminId) !== 988368940) return res.status(403).json({ error: 'Доступ запрещён' });
+    if (!ADMINS.includes(Number(adminId))) return res.status(403).json({ error: 'Доступ запрещён' });
     if (!category || !title || !fileUrl) return res.status(400).json({ error: 'Укажите категорию, название и ссылку на файл' });
 
     const result = await pool.query(

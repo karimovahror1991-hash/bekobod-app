@@ -72,7 +72,19 @@ function App() {
     if (tg?.initDataUnsafe?.user?.id) {
       setUserId(tg.initDataUnsafe.user.id);
     }
-
+    // Трекинг открытия приложения
+    const user = tg?.initDataUnsafe?.user;
+    if (user?.id) {
+      fetch('https://bekobod-app-1.onrender.com/api/track', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user.id,
+          username: user.username || null,
+          firstName: user.first_name || null,
+        }),
+      }).catch(() => {});
+    }
     // Отключаем свайп вниз для закрытия приложения
     if (tg?.disableVerticalSwipes) {
       tg.disableVerticalSwipes();

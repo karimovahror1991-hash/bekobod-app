@@ -25,7 +25,7 @@ const CATEGORY_INFO: CategoryInfo[] = [
   { id: 'hokimiyat', title: 'Hokimiyat', icon: '🏛️', gradient: 'from-indigo-500 to-violet-600' },
   { id: 'aloqa', title: 'Aloqa va Internet', icon: '📡', gradient: 'from-cyan-500 to-blue-600' },
   { id: 'banklar', title: 'Banklar', icon: '🏦', gradient: 'from-emerald-500 to-green-600' },
-  { id: 'soliq', title: 'Soliq va boshqa xizmatlar', icon: '🏢', gradient: 'from-amber-500 to-orange-600' },
+  { id: 'soliq', title: 'Boshqa xizmatlar', icon: '🏢', gradient: 'from-amber-500 to-orange-600' },
   ];
 
 export const EmergencyView: React.FC<EmergencyViewProps> = ({ onClose }) => {

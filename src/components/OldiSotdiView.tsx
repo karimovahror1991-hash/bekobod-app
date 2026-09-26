@@ -36,6 +36,7 @@ export const OldiSotdiView: React.FC<OldiSotdiViewProps> = ({ onClose, userId })
   const [tab, setTab] = useState<'list' | 'create'>('list');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
+  const [subBadges, setSubBadges] = useState<{ [key: string]: number }>({});
 
   // Форма
   const [category, setCategory] = useState('transport');
@@ -66,6 +67,28 @@ export const OldiSotdiView: React.FC<OldiSotdiViewProps> = ({ onClose, userId })
     loadListings();
   }, []);
 
+  // Загрузка бейджей подкатегорий
+  useEffect(() => {
+    if (!userId) return;
+
+    const loadSubBadges = async () => {
+      const cats = CATEGORIES.map(c => c.id);
+      const results: { [key: string]: number } = {};
+      for (const c of cats) {
+        try {
+          const res = await fetch(`${API_URL}/api/badge-sub/oldi_sotdi/${c}?userId=${userId}`);
+          const data = await res.json();
+          results[c] = data.count || 0;
+        } catch {
+          results[c] = 0;
+        }
+      }
+      setSubBadges(results);
+    };
+
+    loadSubBadges();
+  }, [userId, API_URL]);
+
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
@@ -86,7 +109,7 @@ export const OldiSotdiView: React.FC<OldiSotdiViewProps> = ({ onClose, userId })
         const base64: string = await new Promise((resolve) => {
           reader.onload = () => {
             const result = reader.result as string;
-            resolve(result.split(',')[1]); // убираем "data:image/...;base64,"
+            resolve(result.split(',')[1]);
           };
           reader.readAsDataURL(file);
         });
@@ -548,12 +571,28 @@ export const OldiSotdiView: React.FC<OldiSotdiViewProps> = ({ onClose, userId })
         <div className="grid grid-cols-2 gap-3">
           {CATEGORIES.map((cat) => {
             const count = listings.filter(l => l.category === cat.id).length;
+            const badge = subBadges[cat.id] || 0;
             return (
               <button
                 key={cat.id}
-                onClick={() => setSelectedCategory(cat.id)}
-                className={`bg-linear-to-br ${cat.gradient} text-white rounded-3xl p-6 flex flex-col items-center justify-center shadow-xl hover:shadow-2xl transition-all duration-300 active:scale-95 min-h-40`}
+                onClick={() => {
+                  setSelectedCategory(cat.id);
+                  if (userId) {
+                    fetch(`${API_URL}/api/badge-sub/oldi_sotdi/${cat.id}/seen`, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ userId }),
+                    }).catch(() => {});
+                    setSubBadges(prev => ({ ...prev, [cat.id]: 0 }));
+                  }
+                }}
+                className={`relative bg-linear-to-br ${cat.gradient} text-white rounded-3xl p-6 flex flex-col items-center justify-center shadow-xl hover:shadow-2xl transition-all duration-300 active:scale-95 min-h-40`}
               >
+                {badge > 0 && (
+                  <div className="absolute top-3 right-3 min-w-7 h-7 px-2 bg-rose-500 text-white text-sm font-bold rounded-full flex items-center justify-center shadow-lg border-2 border-white">
+                    {badge > 99 ? '99+' : badge}
+                  </div>
+                )}
                 <div className="text-6xl mb-3">{cat.icon}</div>
                 <div className="font-bold text-base text-white text-center leading-tight">
                   {cat.label}

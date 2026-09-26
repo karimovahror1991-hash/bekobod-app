@@ -1,4 +1,5 @@
 import express from 'express';
+import rateLimit from 'express-rate-limit';
 import path from 'path';
 import dotenv from 'dotenv';
 import { Pool } from 'pg';
@@ -7,6 +8,7 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+app.set('trust proxy', 1);
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -26,8 +28,27 @@ async function sendTelegramMessage(chatId: number, text: string) {
   });
 }
 
-app.use(express.json());
+app.use(express.json({ limit: '100kb' }));
 
+// Глобальный лимит: 100 запросов в минуту с одного IP
+const globalLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Juda ko'p so'rov. Keyinroq urinib ko'ring." }
+});
+
+// Строгий лимит: 10 запросов в минуту (для загрузки фото, перевода, трекинга)
+const strictLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Juda ko'p so'rov. 1 daqiqadan keyin urinib ko'ring." }
+});
+
+app.use('/api', globalLimiter);
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Headers', 'Content-Type');
@@ -40,7 +61,7 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' });
 });
 // Трекинг открытия приложения
-app.post('/api/track', async (req, res) => {
+app.post('/api/track', strictLimiter, async (req, res) => {
   try {
     const { userId, username, firstName } = req.body;
     if (!userId) return res.status(400).json({ error: 'userId required' });
@@ -1580,7 +1601,7 @@ app.post('/api/books/create', async (req, res) => {
   }
 });
 // ============ TRANSLATE ============
-app.post('/api/translate', async (req, res) => {
+app.post('/api/translate', strictLimiter, async (req, res) => {
   try {
     const { text, from, to } = req.body;
     if (!text || !from || !to) {
@@ -1601,7 +1622,7 @@ app.post('/api/translate', async (req, res) => {
 });
 // ============ OLDI SOTDI (LISTINGS) ============
 // Загрузка фото на ImgBB
-app.post('/api/upload-image', async (req, res) => {
+app.post('/api/upload-image', strictLimiter, async (req, res) => {
   try {
     const { image } = req.body;
     if (!image) return res.status(400).json({ error: 'image required' });

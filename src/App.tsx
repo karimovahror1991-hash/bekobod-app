@@ -364,15 +364,9 @@ function App() {
                   {/* Затемнение снизу для читаемости */}
                   <div className="absolute bottom-0 left-0 right-0 h-3/4 bg-linear-to-t from-black/90 via-black/50 to-transparent" />
 
-                  {/* CTA сверху — если есть */}
-                  {ad.cta && (
-                    <div className="absolute top-4 left-1/2 -translate-x-1/2 px-4 py-2 bg-rose-500 text-white rounded-full text-xs font-bold shadow-lg whitespace-nowrap">
-                      🔥 {ad.cta}
-                    </div>
-                  )}
-
-                  {/* Иконка если без фото */}
-                  {!ad.image_url && !ad.cta && (
+                  
+                                    {/* Иконка если без фото */}
+                  {!ad.image_url && (
                     <div className="absolute top-6 left-1/2 -translate-x-1/2 text-4xl">📢</div>
                   )}
 

@@ -410,7 +410,7 @@ function App() {
               );
             })
           )}
-          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex space-x-1.5">
+                   <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex space-x-1.5">
             {ads.map((_, index) => (
               <button
                 key={index}
@@ -421,6 +421,9 @@ function App() {
               />
             ))}
           </div>
+        </div>
+        <div className="text-center mt-2 text-[10px] text-stone-400 font-medium">
+          📢 Reklama: {ads.length} / 4
         </div>
       </div>
 

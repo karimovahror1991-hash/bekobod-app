@@ -136,7 +136,7 @@ export const OldiSotdiView: React.FC<OldiSotdiViewProps> = ({ onClose, userId })
     setImages((prev) => prev.filter((u) => u !== url));
   };
 
-  const handleCreate = async (e: React.FormEvent) => {
+    const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim() || !phone.trim()) return;
 
@@ -162,13 +162,19 @@ export const OldiSotdiView: React.FC<OldiSotdiViewProps> = ({ onClose, userId })
           phone: normalizedPhone,
           imageUrls: images,
           userId,
+          username: (window as any).Telegram?.WebApp?.initDataUnsafe?.user?.username || null,
+          firstName: (window as any).Telegram?.WebApp?.initDataUnsafe?.user?.first_name || null,
         }),
       });
+
       const data = await res.json();
+
       if (data.error) {
         alert(data.error);
         return;
       }
+
+      alert("✅ E'loningiz moderatsiyaga yuborildi!\n\nAdmin tekshirgandan so'ng e'lon paydo bo'ladi.");
       setTitle('');
       setDescription('');
       setPrice('');

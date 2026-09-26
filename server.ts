@@ -586,6 +586,57 @@ if ((message?.caption?.startsWith('/add_news')) && ADMINS.includes(message.from.
         }
       }
     }
+        // Одобрить объявление (только главный админ)
+    if (message?.text?.startsWith('/approve_listing') && message.from.id === SUPER_ADMIN) {
+      const id = Number(message.text.split(' ')[1]);
+      if (!id) {
+        await sendTelegramMessage(message.from.id, "❌ /approve_listing ID");
+      } else {
+        const result = await pool.query(
+          "UPDATE listings SET status = 'active' WHERE id = $1 RETURNING title, user_id, username",
+          [id]
+        );
+        if (result.rows.length === 0) {
+          await sendTelegramMessage(message.from.id, `❌ Topilmadi (ID: ${id})`);
+        } else {
+          await sendTelegramMessage(message.from.id, `✅ E'lon #${id} tasdiqlandi: <b>${result.rows[0].title}</b>`);
+
+          // Уведомление автору
+          if (result.rows[0].user_id) {
+            await sendTelegramMessage(
+              result.rows[0].user_id,
+              `✅ <b>E'loningiz tasdiqlandi!</b>\n\n📝 ${result.rows[0].title}\n\nU endi Oldi sotdi bo'limida ko'rinadi.`
+            );
+          }
+        }
+      }
+    }
+
+    // Отклонить объявление (только главный админ)
+    if (message?.text?.startsWith('/reject_listing') && message.from.id === SUPER_ADMIN) {
+      const id = Number(message.text.split(' ')[1]);
+      if (!id) {
+        await sendTelegramMessage(message.from.id, "❌ /reject_listing ID");
+      } else {
+        const result = await pool.query(
+          "UPDATE listings SET status = 'rejected' WHERE id = $1 RETURNING title, user_id",
+          [id]
+        );
+        if (result.rows.length === 0) {
+          await sendTelegramMessage(message.from.id, `❌ Topilmadi (ID: ${id})`);
+        } else {
+          await sendTelegramMessage(message.from.id, `❌ E'lon #${id} rad etildi`);
+
+          // Уведомление автору
+          if (result.rows[0].user_id) {
+            await sendTelegramMessage(
+              result.rows[0].user_id,
+              `❌ <b>E'loningiz rad etildi</b>\n\n📝 ${result.rows[0].title}\n\nQoidalarga mos kelmaganligi sababli o'chirildi.`
+            );
+          }
+        }
+      }
+    }
         // Команда /stats (статистика приложения, только главный админ)
     if (message?.text === '/stats' && message.from.id === SUPER_ADMIN) {
       const total = await pool.query('SELECT COUNT(*) FROM app_users');
@@ -1508,37 +1559,38 @@ app.get('/api/listings/list', async (req, res) => {
 // Создать объявление
 app.post('/api/listings/create', async (req, res) => {
   try {
-    const { category, title, description, price, phone, imageUrls, userId } = req.body;
+    const { category, title, description, price, phone, imageUrls, userId, username, firstName } = req.body;
     if (!category || !title || !phone) {
       return res.status(400).json({ error: 'Kategoriya, sarlavha va telefon kerak' });
     }
     const result = await pool.query(
-      `INSERT INTO listings (category, title, description, price, phone, image_urls, user_id)
-       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
-      [category, title, description || null, price || null, phone, imageUrls || [], userId || null]
+      `INSERT INTO listings (category, title, description, price, phone, image_urls, user_id, username, first_name, status)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'pending') RETURNING *`,
+      [category, title, description || null, price || null, phone, imageUrls || [], userId || null, username || null, firstName || null]
     );
-    res.json({ listing: result.rows[0] });
+
+    // Уведомление главному админу
+    const photosCount = (imageUrls || []).length;
+    const authorInfo = username ? `@${username}` : (firstName || 'Foydalanuvchi');
+
+    await sendTelegramMessage(
+      SUPER_ADMIN,
+      `🆕 <b>Yangi e'lon (moderatsiya kerak)</b>\n\n` +
+      `👤 ${authorInfo}\n` +
+      `🆔 <code>${userId}</code>\n\n` +
+      `📂 ${category}\n` +
+      `📝 ${title}\n` +
+      `💰 ${price || "yo'q"}\n` +
+      `📞 ${phone}\n` +
+      `🖼 Rasmlar: ${photosCount} ta\n` +
+      `${description ? `📄 ${description.substring(0, 200)}...` : ''}\n\n` +
+      `✅ Tasdiqlash: <code>/approve_listing ${result.rows[0].id}</code>\n` +
+      `❌ Rad etish: <code>/reject_listing ${result.rows[0].id}</code>`
+    );
+
+    res.json({ listing: result.rows[0], pending: true });
   } catch (error: any) {
     console.error('Listing create error:', error);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Удалить объявление (только своё)
-app.post('/api/listings/delete', async (req, res) => {
-  try {
-    const { listingId, userId } = req.body;
-    if (!listingId || !userId) return res.status(400).json({ error: 'ID kerak' });
-    const result = await pool.query(
-      'DELETE FROM listings WHERE id = $1 AND user_id = $2 RETURNING title',
-      [listingId, userId]
-    );
-    if (result.rows.length === 0) {
-      return res.status(403).json({ error: "Bu e'lon sizga tegishli emas" });
-    }
-    res.json({ ok: true, title: result.rows[0].title });
-  } catch (error: any) {
-    console.error('Listing delete error:', error);
     res.status(500).json({ error: error.message });
   }
 });

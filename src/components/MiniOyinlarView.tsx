@@ -139,6 +139,9 @@ export const MiniOyinlarView: React.FC<MiniOyinlarViewProps> = ({ onClose }) => 
         if (selectedGame === 'guess') {
       return <GuessGame onClose={() => setSelectedGame(null)} game={game} />;
     }
+        if (selectedGame === 'tictactoe') {
+      return <TicTacToeGame onClose={() => setSelectedGame(null)} game={game} />;
+    }
     return (
       <div className="min-h-screen bg-linear-to-b from-stone-50 to-stone-100">
         <div className={`bg-linear-to-br ${game?.gradient} text-white sticky top-0 z-20 shadow-md`}>
@@ -592,3 +595,195 @@ const GuessGame: React.FC<{ onClose: () => void; game?: Game }> = ({ onClose, ga
   );
 };
 // ============ /SONNI TOP ============
+// ============ KRESTIK-NOLIK ============
+type Cell = 'X' | 'O' | null;
+
+const TicTacToeGame: React.FC<{ onClose: () => void; game?: Game }> = ({ onClose, game }) => {
+  const [board, setBoard] = useState<Cell[]>(Array(9).fill(null));
+  const [isPlayerTurn, setIsPlayerTurn] = useState(true);
+  const [winner, setWinner] = useState<Cell | 'draw' | null>(null);
+  const [stats, setStats] = useState({ win: 0, lose: 0, draw: 0 });
+
+  const WIN_LINES = [
+    [0, 1, 2], [3, 4, 5], [6, 7, 8],
+    [0, 3, 6], [1, 4, 7], [2, 5, 8],
+    [0, 4, 8], [2, 4, 6],
+  ];
+
+  const checkWinner = (b: Cell[]): Cell | 'draw' | null => {
+    for (const [a, c, d] of WIN_LINES) {
+      if (b[a] && b[a] === b[c] && b[a] === b[d]) return b[a];
+    }
+    if (b.every(cell => cell !== null)) return 'draw';
+    return null;
+  };
+
+  // Простой AI: 1) выиграть, 2) блокировать, 3) центр, 4) угол, 5) рандом
+  const computerMove = (b: Cell[]): number => {
+    // 1. Выиграть
+    for (const [a, c, d] of WIN_LINES) {
+      const line = [b[a], b[c], b[d]];
+      const oCount = line.filter(x => x === 'O').length;
+      const emptyIdx = [a, c, d].find(i => b[i] === null);
+      if (oCount === 2 && emptyIdx !== undefined) return emptyIdx;
+    }
+    // 2. Блокировать
+    for (const [a, c, d] of WIN_LINES) {
+      const line = [b[a], b[c], b[d]];
+      const xCount = line.filter(x => x === 'X').length;
+      const emptyIdx = [a, c, d].find(i => b[i] === null);
+      if (xCount === 2 && emptyIdx !== undefined) return emptyIdx;
+    }
+    // 3. Центр
+    if (b[4] === null) return 4;
+    // 4. Углы
+    const corners = [0, 2, 6, 8].filter(i => b[i] === null);
+    if (corners.length > 0) return corners[Math.floor(Math.random() * corners.length)];
+    // 5. Рандом
+    const empty = b.map((c, i) => c === null ? i : -1).filter(i => i !== -1);
+    return empty[Math.floor(Math.random() * empty.length)];
+  };
+
+  const handleClick = (index: number) => {
+    if (board[index] || winner || !isPlayerTurn) return;
+
+    const newBoard = [...board];
+    newBoard[index] = 'X';
+    setBoard(newBoard);
+
+    const w = checkWinner(newBoard);
+    if (w) {
+      setWinner(w);
+      if (w === 'X') setStats(prev => ({ ...prev, win: prev.win + 1 }));
+      else if (w === 'O') setStats(prev => ({ ...prev, lose: prev.lose + 1 }));
+      else setStats(prev => ({ ...prev, draw: prev.draw + 1 }));
+      return;
+    }
+
+    setIsPlayerTurn(false);
+
+    setTimeout(() => {
+      const compIdx = computerMove(newBoard);
+      const afterComp = [...newBoard];
+      afterComp[compIdx] = 'O';
+      setBoard(afterComp);
+
+      const w2 = checkWinner(afterComp);
+      if (w2) {
+        setWinner(w2);
+        if (w2 === 'X') setStats(prev => ({ ...prev, win: prev.win + 1 }));
+        else if (w2 === 'O') setStats(prev => ({ ...prev, lose: prev.lose + 1 }));
+        else setStats(prev => ({ ...prev, draw: prev.draw + 1 }));
+      }
+      setIsPlayerTurn(true);
+    }, 400);
+  };
+
+  const restart = () => {
+    setBoard(Array(9).fill(null));
+    setIsPlayerTurn(true);
+    setWinner(null);
+  };
+
+  const resetStats = () => {
+    setStats({ win: 0, lose: 0, draw: 0 });
+  };
+
+  return (
+    <div className="min-h-screen bg-linear-to-b from-stone-50 to-stone-100">
+      <div className={`bg-linear-to-br ${game?.gradient} text-white sticky top-0 z-20 shadow-md`}>
+        <div className="max-w-2xl mx-auto px-4 py-4 flex items-center space-x-3">
+          <button
+            onClick={onClose}
+            className="w-11 h-11 rounded-2xl bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"
+          >
+            <ArrowLeft className="w-6 h-6 text-white" />
+          </button>
+          <h1 className="font-bold text-xl text-white">✏️ Krestik-nolik</h1>
+        </div>
+      </div>
+
+      <div className="max-w-2xl mx-auto px-4 py-6 space-y-5">
+        {/* Статус */}
+        <div className="bg-white rounded-3xl p-4 shadow-lg border border-stone-100 text-center">
+          {winner ? (
+            <div className={`text-xl font-bold ${
+              winner === 'X' ? 'text-emerald-600' :
+              winner === 'O' ? 'text-rose-600' :
+              'text-stone-500'
+            }`}>
+              {winner === 'X' && '🎉 Siz yutdingiz!'}
+              {winner === 'O' && '😢 Kompyuter yutdi'}
+              {winner === 'draw' && '🤝 Durang'}
+            </div>
+          ) : (
+            <div className="text-base font-bold text-stone-600">
+              {isPlayerTurn ? '👤 Sizning navbatingiz (X)' : '🤖 Kompyuter o\'ylayapti...'}
+            </div>
+          )}
+        </div>
+
+        {/* Игровое поле */}
+        <div className="bg-white rounded-3xl p-4 shadow-lg border border-stone-100">
+          <div className="grid grid-cols-3 gap-2">
+            {board.map((cell, i) => (
+              <button
+                key={i}
+                onClick={() => handleClick(i)}
+                disabled={!!cell || !!winner || !isPlayerTurn}
+                className={`aspect-square rounded-2xl flex items-center justify-center text-5xl font-bold transition-all active:scale-95 ${
+                  cell === 'X'
+                    ? 'bg-linear-to-br from-emerald-500 to-teal-600 text-white shadow-lg'
+                    : cell === 'O'
+                    ? 'bg-linear-to-br from-rose-500 to-pink-600 text-white shadow-lg'
+                    : 'bg-stone-50 border-2 border-stone-200 hover:border-cyan-300'
+                } disabled:cursor-not-allowed`}
+              >
+                {cell === 'X' && '✕'}
+                {cell === 'O' && '○'}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Кнопка заново */}
+        <button
+          onClick={restart}
+          className="w-full py-5 bg-linear-to-br from-cyan-500 to-blue-600 text-white rounded-2xl font-bold text-lg shadow-lg active:scale-95 transition"
+        >
+          🔄 Yangi o'yin
+        </button>
+
+        {/* Статистика */}
+        <div className="bg-white rounded-3xl p-6 shadow-lg border border-stone-100">
+          <div className="flex items-center justify-between mb-4">
+            <div className="text-xs font-bold text-stone-700 uppercase tracking-wide">
+              Statistika
+            </div>
+            <button
+              onClick={resetStats}
+              className="text-xs text-stone-400 hover:text-rose-500 transition font-semibold"
+            >
+              Tozalash
+            </button>
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            <div className="bg-emerald-50 rounded-2xl p-3 text-center">
+              <div className="text-2xl font-bold text-emerald-600">{stats.win}</div>
+              <div className="text-[10px] text-stone-500 font-semibold">G'alaba</div>
+            </div>
+            <div className="bg-stone-100 rounded-2xl p-3 text-center">
+              <div className="text-2xl font-bold text-stone-600">{stats.draw}</div>
+              <div className="text-[10px] text-stone-500 font-semibold">Durang</div>
+            </div>
+            <div className="bg-rose-50 rounded-2xl p-3 text-center">
+              <div className="text-2xl font-bold text-rose-600">{stats.lose}</div>
+              <div className="text-[10px] text-stone-500 font-semibold">Mag'lubiyat</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+// ============ /KRESTIK-NOLIK ============

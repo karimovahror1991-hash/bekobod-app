@@ -133,6 +133,9 @@ export const MiniOyinlarView: React.FC<MiniOyinlarViewProps> = ({ onClose }) => 
     if (selectedGame === 'coin') {
       return <MonetkaGame onClose={() => setSelectedGame(null)} game={game} />;
     }
+        if (selectedGame === 'rps') {
+      return <RPSGame onClose={() => setSelectedGame(null)} game={game} />;
+    }
     return (
       <div className="min-h-screen bg-linear-to-b from-stone-50 to-stone-100">
         <div className={`bg-linear-to-br ${game?.gradient} text-white sticky top-0 z-20 shadow-md`}>
@@ -306,3 +309,149 @@ const MonetkaGame: React.FC<{ onClose: () => void; game?: Game }> = ({ onClose, 
   );
 };
 // ============ /MONETKA ============
+// ============ RPS (Tosh-qaychi-qog'oz) ============
+type RPSChoice = 'tosh' | 'qaychi' | 'qogoz';
+
+const RPSGame: React.FC<{ onClose: () => void; game?: Game }> = ({ onClose, game }) => {
+  const [playerChoice, setPlayerChoice] = useState<RPSChoice | null>(null);
+  const [compChoice, setCompChoice] = useState<RPSChoice | null>(null);
+  const [result, setResult] = useState<'win' | 'lose' | 'draw' | null>(null);
+  const [playing, setPlaying] = useState(false);
+  const [stats, setStats] = useState({ win: 0, lose: 0, draw: 0 });
+
+  const choices: { id: RPSChoice; label: string; icon: string; beats: RPSChoice }[] = [
+    { id: 'tosh', label: 'Tosh', icon: '✊', beats: 'qaychi' },
+    { id: 'qaychi', label: 'Qaychi', icon: '✌️', beats: 'qogoz' },
+    { id: 'qogoz', label: "Qog'oz", icon: '✋', beats: 'tosh' },
+  ];
+
+  const play = (choice: RPSChoice) => {
+    if (playing) return;
+    setPlaying(true);
+    setPlayerChoice(choice);
+    setCompChoice(null);
+    setResult(null);
+
+    setTimeout(() => {
+      const randomComp = choices[Math.floor(Math.random() * 3)].id;
+      setCompChoice(randomComp);
+
+      let res: 'win' | 'lose' | 'draw';
+      if (choice === randomComp) {
+        res = 'draw';
+      } else if (choices.find(c => c.id === choice)?.beats === randomComp) {
+        res = 'win';
+      } else {
+        res = 'lose';
+      }
+
+      setResult(res);
+      setStats(prev => ({ ...prev, [res]: prev[res] + 1 }));
+      setPlaying(false);
+    }, 700);
+  };
+
+  const resetStats = () => {
+    setStats({ win: 0, lose: 0, draw: 0 });
+    setPlayerChoice(null);
+    setCompChoice(null);
+    setResult(null);
+  };
+
+  const getIcon = (choice: RPSChoice | null) => {
+    if (!choice) return '❓';
+    return choices.find(c => c.id === choice)?.icon || '❓';
+  };
+
+  return (
+    <div className="min-h-screen bg-linear-to-b from-stone-50 to-stone-100">
+      <div className={`bg-linear-to-br ${game?.gradient} text-white sticky top-0 z-20 shadow-md`}>
+        <div className="max-w-2xl mx-auto px-4 py-4 flex items-center space-x-3">
+          <button
+            onClick={onClose}
+            className="w-11 h-11 rounded-2xl bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"
+          >
+            <ArrowLeft className="w-6 h-6 text-white" />
+          </button>
+          <h1 className="font-bold text-xl text-white">✊ Tosh-qaychi-qog'oz</h1>
+        </div>
+      </div>
+
+      <div className="max-w-2xl mx-auto px-4 py-6 space-y-5">
+        {/* Арена */}
+        <div className="bg-white rounded-3xl p-6 shadow-lg border border-stone-100">
+          <div className="grid grid-cols-3 gap-2 items-center">
+            <div className="text-center">
+              <div className="text-[10px] font-bold text-stone-400 uppercase mb-2">Siz</div>
+              <div className="text-6xl">{getIcon(playerChoice)}</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-stone-400">VS</div>
+            </div>
+            <div className="text-center">
+              <div className="text-[10px] font-bold text-stone-400 uppercase mb-2">Kompyuter</div>
+              <div className="text-6xl">{playing ? '❓' : getIcon(compChoice)}</div>
+            </div>
+          </div>
+
+          {result && (
+            <div className={`mt-6 text-center text-2xl font-bold ${
+              result === 'win' ? 'text-emerald-600' :
+              result === 'lose' ? 'text-rose-600' :
+              'text-stone-500'
+            }`}>
+              {result === 'win' && '🎉 Siz yutdingiz!'}
+              {result === 'lose' && '😢 Siz yutqazdingiz'}
+              {result === 'draw' && '🤝 Durang'}
+            </div>
+          )}
+        </div>
+
+        {/* Кнопки выбора */}
+        <div className="grid grid-cols-3 gap-3">
+          {choices.map((c) => (
+            <button
+              key={c.id}
+              onClick={() => play(c.id)}
+              disabled={playing}
+              className="bg-white rounded-3xl p-4 shadow-lg border-2 border-stone-100 hover:border-rose-300 active:scale-95 transition-all disabled:opacity-50 flex flex-col items-center space-y-2"
+            >
+              <div className="text-5xl">{c.icon}</div>
+              <div className="font-bold text-sm text-stone-700">{c.label}</div>
+            </button>
+          ))}
+        </div>
+
+        {/* Статистика */}
+        <div className="bg-white rounded-3xl p-6 shadow-lg border border-stone-100">
+          <div className="flex items-center justify-between mb-4">
+            <div className="text-xs font-bold text-stone-700 uppercase tracking-wide">
+              Statistika
+            </div>
+            <button
+              onClick={resetStats}
+              className="text-xs text-stone-400 hover:text-rose-500 transition font-semibold"
+            >
+              Tozalash
+            </button>
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            <div className="bg-emerald-50 rounded-2xl p-3 text-center">
+              <div className="text-2xl font-bold text-emerald-600">{stats.win}</div>
+              <div className="text-[10px] text-stone-500 font-semibold">G'alaba</div>
+            </div>
+            <div className="bg-stone-100 rounded-2xl p-3 text-center">
+              <div className="text-2xl font-bold text-stone-600">{stats.draw}</div>
+              <div className="text-[10px] text-stone-500 font-semibold">Durang</div>
+            </div>
+            <div className="bg-rose-50 rounded-2xl p-3 text-center">
+              <div className="text-2xl font-bold text-rose-600">{stats.lose}</div>
+              <div className="text-[10px] text-stone-500 font-semibold">Mag'lubiyat</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+// ============ /RPS ============

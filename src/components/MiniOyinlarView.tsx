@@ -909,9 +909,9 @@ const SudokuGame: React.FC<{ onClose: () => void; game?: Game }> = ({ onClose, g
           )}
         </div>
 
-        {/* Игровое поле */}
+                {/* Игровое поле */}
         <div className="bg-white rounded-3xl p-4 shadow-lg border border-stone-100">
-          <div className="grid grid-cols-4 gap-1">
+          <div className="grid grid-cols-4 gap-1.5 max-w-md mx-auto">
             {board.map((row, r) =>
               row.map((cell, c) => {
                 const isGiven = PUZZLES[puzzleIndex].puzzle[r][c] !== 0;
@@ -924,7 +924,7 @@ const SudokuGame: React.FC<{ onClose: () => void; game?: Game }> = ({ onClose, g
                   <button
                     key={`${r}-${c}`}
                     onClick={() => handleCellClick(r, c)}
-                    className={`aspect-square rounded-lg flex items-center justify-center text-3xl font-bold transition-all ${borderR} ${borderB} ${
+                    className={`aspect-square rounded-xl flex items-center justify-center text-5xl font-bold transition-all ${borderR} ${borderB} ${
                       isGiven
                         ? 'bg-stone-200 text-stone-800 cursor-not-allowed'
                         : isError
@@ -935,7 +935,7 @@ const SudokuGame: React.FC<{ onClose: () => void; game?: Game }> = ({ onClose, g
                     }`}
                   >
                     {cell !== 0 ? cell : ''}
-                  </button>
+                </button>
                 );
               })
             )}

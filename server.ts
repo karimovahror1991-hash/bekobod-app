@@ -594,6 +594,20 @@ app.post('/api/telegram-webhook', async (req, res) => {
         );
       }
     }
+        // Команда /delete_med ID
+    if (message?.text?.startsWith('/delete_med') && ADMINS.includes(message.from.id)) {
+      const medId = Number(message.text.split(' ')[1]);
+      if (!medId) {
+        await sendTelegramMessage(message.from.id, "❌ /delete_med ID");
+      } else {
+        const result = await pool.query('DELETE FROM doctors WHERE id = $1 RETURNING name', [medId]);
+        if (result.rows.length === 0) {
+          await sendTelegramMessage(message.from.id, `❌ Topilmadi (ID: ${medId})`);
+        } else {
+          await sendTelegramMessage(message.from.id, `✅ O'chirildi: ${result.rows[0].name}`);
+        }
+      }
+    }
     // Команда /add_news (ручное добавление новости)
     if (message?.text?.startsWith('/add_news') && ADMINS.includes(message.from.id)) {
       const parts = message.text.split('|').map((s: string) => s.trim());

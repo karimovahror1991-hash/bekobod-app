@@ -1556,7 +1556,7 @@ app.get('/api/prayer-times', async (req, res) => {
     // Hijri дата (можно взять с Aladhan отдельно, если нужно)
     let hijri = { day: '', month: '', year: '' };
     try {
-      const hRes = await fetch('https://api.aladhan.com/v1/gToH?date=' + dateKey.split('.').reverse().join('-'));
+           const hRes = await fetch('https://api.aladhan.com/v1/gToH?date=' + dateKey);
       const hData = await hRes.json();
       if (hData.code === 200) {
         hijri = {

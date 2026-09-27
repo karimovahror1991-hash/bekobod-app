@@ -1,4 +1,3 @@
-import { HayitlarView } from './HayitlarView';
 import { SuralarView } from './SuralarView';
 import { DuolarView } from './DuolarView';
 import { QiblaView } from './QiblaView';
@@ -14,7 +13,6 @@ const CATEGORIES = [
   { id: 'qibla', label: 'Qibla', icon: '🧭', gradient: 'from-blue-500 to-indigo-600' },
   { id: 'duolar', label: 'Duolar', icon: '📿', gradient: 'from-purple-500 to-violet-600' },
   { id: 'suralar', label: 'Suralar', icon: '📖', gradient: 'from-amber-500 to-orange-600' },
-  { id: 'hayitlar', label: 'Hayitlar', icon: '🎉', gradient: 'from-rose-500 to-pink-600' },
 ];
 
 export const IbodatView: React.FC<IbodatViewProps> = ({ onClose }) => {
@@ -47,10 +45,7 @@ export const IbodatView: React.FC<IbodatViewProps> = ({ onClose }) => {
   if (selectedCategory === 'suralar') {
     return <SuralarView onClose={() => setSelectedCategory(null)} />;
   }
-    // Экран «Hayitlar»
-  if (selectedCategory === 'hayitlar') {
-    return <HayitlarView onClose={() => setSelectedCategory(null)} />;
-  }
+  
     // Экран «Namoz vaqtlari»
   if (selectedCategory === 'namoz') {
     const catInfo = CATEGORIES.find(c => c.id === 'namoz');

@@ -82,14 +82,16 @@ export const IbodatView: React.FC<IbodatViewProps> = ({ onClose }) => {
             </div>
           ) : prayer ? (
             <>
-              {/* Дата */}
-              <div className="bg-white rounded-3xl p-5 shadow-sm border border-stone-100 space-y-2">
-                <div className="text-center text-stone-700 font-bold">
+                           {/* Дата */}
+              <div className="bg-linear-to-br from-emerald-500 to-teal-600 rounded-3xl p-5 shadow-lg text-white text-center space-y-1">
+                <div className="text-lg font-bold">
                   {prayer.gregorian?.date}
                 </div>
-                <div className="text-center text-sm text-emerald-700 font-semibold">
-                  {prayer.hijri?.day} {prayer.hijri?.month} {prayer.hijri?.year} Ҳ
-                </div>
+                {prayer.hijri?.day && prayer.hijri?.month && prayer.hijri?.year ? (
+                  <div className="text-sm font-semibold text-white/90">
+                    {prayer.hijri.day} {prayer.hijri.month} {prayer.hijri.year} Ҳ
+                  </div>
+                ) : null}
               </div>
 
               {/* Времена намаза */}

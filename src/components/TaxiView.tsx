@@ -364,7 +364,12 @@ export const TaxiView: React.FC<TaxiViewProps> = ({ onClose }) => {
                             ⭐ Baholash
                           </button>
                         </div>
-
+                        {ride.driver_phone && (
+                          <div className="flex items-center space-x-2 text-sm text-stone-700">
+                            <Phone className="w-4 h-4 shrink-0 text-emerald-500" />
+                            <span className="font-semibold">{ride.driver_phone}</span>
+                          </div>
+                        )}
                         {/* Прогресс-бар */}
                         <div>
                           <div className="flex items-center justify-between text-xs text-stone-500 mb-1.5">

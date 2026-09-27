@@ -1814,6 +1814,55 @@ app.post('/api/listings/create', async (req, res) => {
   }
 });
 
+// Пометить объявление как проданное
+app.post('/api/listings/sold', async (req, res) => {
+  try {
+    const { listingId, userId } = req.body;
+    if (!listingId || !userId) return res.status(400).json({ error: 'ID kerak' });
+
+    // Проверяем, что объявление принадлежит пользователю
+    const check = await pool.query(
+      'SELECT user_id, title FROM listings WHERE id = $1',
+      [listingId]
+    );
+    if (check.rows.length === 0) {
+      return res.status(404).json({ error: 'E\'lon topilmadi' });
+    }
+    if (Number(check.rows[0].user_id) !== Number(userId)) {
+      return res.status(403).json({ error: 'Bu e\'lon sizga tegishli emas' });
+    }
+
+    // Помечаем как sold (не удаляем, чтобы сохранить историю)
+    await pool.query(
+      "UPDATE listings SET status = 'sold' WHERE id = $1",
+      [listingId]
+    );
+
+    res.json({ ok: true, title: check.rows[0].title });
+  } catch (error: any) {
+    console.error('Listing sold error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Удалить объявление (только своё)
+app.post('/api/listings/delete', async (req, res) => {
+  try {
+    const { listingId, userId } = req.body;
+    if (!listingId || !userId) return res.status(400).json({ error: 'ID kerak' });
+    const result = await pool.query(
+      'DELETE FROM listings WHERE id = $1 AND user_id = $2 RETURNING title',
+      [listingId, userId]
+    );
+    if (result.rows.length === 0) {
+      return res.status(403).json({ error: "Bu e'lon sizga tegishli emas" });
+    }
+    res.json({ ok: true, title: result.rows[0].title });
+  } catch (error: any) {
+    console.error('Listing delete error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
 // ============ ADS (реклама) ============
 
 // Список активной рекламы

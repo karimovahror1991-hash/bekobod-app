@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Loader2, Plus, Phone, Trash2, X, Image as ImageIcon } from 'lucide-react';
+import { ArrowLeft, Loader2, Plus, Phone, Trash2, X, Image as ImageIcon, Check } from 'lucide-react';
 
 interface OldiSotdiViewProps {
   onClose: () => void;
@@ -211,7 +211,27 @@ export const OldiSotdiView: React.FC<OldiSotdiViewProps> = ({ onClose, userId })
       console.error(err);
     }
   };
+  const handleSold = async (listingId: number) => {
+    if (!userId) return;
+    if (!confirm("E'lonni 'Sotildi' deb belgilaysizmi?")) return;
 
+    try {
+      const res = await fetch(`${API_URL}/api/listings/sold`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ listingId, userId }),
+      });
+      const data = await res.json();
+      if (data.error) {
+        alert(data.error);
+        return;
+      }
+      setSelectedListing(null);
+      loadListings();
+    } catch (err) {
+      console.error(err);
+    }
+  };
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
     const now = new Date();
@@ -298,14 +318,24 @@ export const OldiSotdiView: React.FC<OldiSotdiViewProps> = ({ onClose, userId })
               <span>Qo'ng'iroq qilish</span>
             </a>
 
-            {userId && selectedListing.user_id === userId && (
-              <button
-                onClick={() => handleDelete(selectedListing.id)}
-                className="w-full py-3 bg-rose-100 hover:bg-rose-200 text-rose-700 rounded-2xl font-bold flex items-center justify-center space-x-2 transition active:scale-95"
-              >
-                <Trash2 className="w-5 h-5" />
-                <span>E'lonni o'chirish</span>
-              </button>
+                        {userId && selectedListing.user_id === userId && (
+              <>
+                <button
+                  onClick={() => handleSold(selectedListing.id)}
+                  className="w-full py-4 bg-linear-to-br from-emerald-500 to-green-600 text-white rounded-2xl font-bold flex items-center justify-center space-x-2 transition shadow-lg active:scale-95"
+                >
+                  <Check className="w-5 h-5" />
+                  <span>✅ Sotildi</span>
+                </button>
+
+                <button
+                  onClick={() => handleDelete(selectedListing.id)}
+                  className="w-full py-3 bg-rose-100 hover:bg-rose-200 text-rose-700 rounded-2xl font-bold flex items-center justify-center space-x-2 transition active:scale-95"
+                >
+                  <Trash2 className="w-5 h-5" />
+                  <span>E'lonni o'chirish</span>
+                </button>
+              </>
             )}
           </div>
         </div>

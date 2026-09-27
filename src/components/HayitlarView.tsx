@@ -11,7 +11,7 @@ export const HayitlarView: React.FC<HayitlarViewProps> = ({ onClose }) => {
     <div className="min-h-screen bg-linear-to-b from-rose-50 to-pink-100">
       {/* Заголовок */}
       <div className="bg-linear-to-br from-rose-600 to-pink-700 text-white sticky top-0 z-20 shadow-md">
-        <div className="max-w-2xl mx-auto px-4 py-4 flex items-center space-x-3">
+        <div className="max-w-2xl mx-auto px-4 pt-6 pb-4 flex items-center space-x-3">
           <button
             onClick={onClose}
             className="w-11 h-11 rounded-2xl bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"

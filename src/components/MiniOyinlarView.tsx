@@ -56,7 +56,7 @@ const RandomizerGame: React.FC<{ onClose: () => void; game?: Game }> = ({ onClos
   return (
     <div className="min-h-screen bg-linear-to-b from-stone-50 to-stone-100">
       <div className={`bg-linear-to-br ${game?.gradient} text-white sticky top-0 z-20 shadow-md`}>
-        <div className="max-w-2xl mx-auto px-4 py-4 flex items-center space-x-3">
+        <div className="max-w-2xl mx-auto px-4 pt-6 pb-4 flex items-center space-x-3">
           <button
             onClick={onClose}
             className="w-11 h-11 rounded-2xl bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"
@@ -160,7 +160,7 @@ export const MiniOyinlarView: React.FC<MiniOyinlarViewProps> = ({ onClose }) => 
     return (
       <div className="min-h-screen bg-linear-to-b from-stone-50 to-stone-100">
         <div className={`bg-linear-to-br ${game?.gradient} text-white sticky top-0 z-20 shadow-md`}>
-          <div className="max-w-2xl mx-auto px-4 py-4 flex items-center space-x-3">
+          <div className="max-w-2xl mx-auto px-4 pt-6 pb-4 flex items-center space-x-3">
             <button
               onClick={() => setSelectedGame(null)}
               className="w-11 h-11 rounded-2xl bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"
@@ -185,7 +185,7 @@ export const MiniOyinlarView: React.FC<MiniOyinlarViewProps> = ({ onClose }) => 
   return (
     <div className="min-h-screen bg-linear-to-b from-stone-50 to-stone-100">
       <div className="bg-white/95 backdrop-blur-lg border-b border-stone-200 sticky top-0 z-20 shadow-sm">
-        <div className="max-w-2xl mx-auto px-4 py-4 flex items-center space-x-3">
+        <div className="max-w-2xl mx-auto px-4 pt-6 pb-4 flex items-center space-x-3">
           <button
             onClick={onClose}
             className="w-11 h-11 rounded-2xl bg-stone-100 hover:bg-amber-100 flex items-center justify-center transition-colors"
@@ -249,7 +249,7 @@ const MonetkaGame: React.FC<{ onClose: () => void; game?: Game }> = ({ onClose, 
   return (
     <div className="min-h-screen bg-linear-to-b from-stone-50 to-stone-100">
       <div className={`bg-linear-to-br ${game?.gradient} text-white sticky top-0 z-20 shadow-md`}>
-        <div className="max-w-2xl mx-auto px-4 py-4 flex items-center space-x-3">
+        <div className="max-w-2xl mx-auto px-4 pt-6 pb-4 flex items-center space-x-3">
           <button
             onClick={onClose}
             className="w-11 h-11 rounded-2xl bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"
@@ -387,7 +387,7 @@ const RPSGame: React.FC<{ onClose: () => void; game?: Game }> = ({ onClose, game
   return (
     <div className="min-h-screen bg-linear-to-b from-stone-50 to-stone-100">
       <div className={`bg-linear-to-br ${game?.gradient} text-white sticky top-0 z-20 shadow-md`}>
-        <div className="max-w-2xl mx-auto px-4 py-4 flex items-center space-x-3">
+        <div className="max-w-2xl mx-auto px-4 pt-6 pb-4 flex items-center space-x-3">
           <button
             onClick={onClose}
             className="w-11 h-11 rounded-2xl bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"
@@ -516,7 +516,7 @@ const GuessGame: React.FC<{ onClose: () => void; game?: Game }> = ({ onClose, ga
   return (
     <div className="min-h-screen bg-linear-to-b from-stone-50 to-stone-100">
       <div className={`bg-linear-to-br ${game?.gradient} text-white sticky top-0 z-20 shadow-md`}>
-        <div className="max-w-2xl mx-auto px-4 py-4 flex items-center space-x-3">
+        <div className="max-w-2xl mx-auto px-4 pt-6 pb-4 flex items-center space-x-3">
           <button
             onClick={onClose}
             className="w-11 h-11 rounded-2xl bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"
@@ -707,7 +707,7 @@ const TicTacToeGame: React.FC<{ onClose: () => void; game?: Game }> = ({ onClose
   return (
     <div className="min-h-screen bg-linear-to-b from-stone-50 to-stone-100">
       <div className={`bg-linear-to-br ${game?.gradient} text-white sticky top-0 z-20 shadow-md`}>
-        <div className="max-w-2xl mx-auto px-4 py-4 flex items-center space-x-3">
+        <div className="max-w-2xl mx-auto px-4 pt-6 pb-4 flex items-center space-x-3">
           <button
             onClick={onClose}
             className="w-11 h-11 rounded-2xl bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"
@@ -950,7 +950,7 @@ const SudokuGame: React.FC<{ onClose: () => void; game?: Game }> = ({ onClose, g
   return (
     <div className="min-h-screen bg-linear-to-b from-stone-50 to-stone-100">
       <div className={`bg-linear-to-br ${game?.gradient} text-white sticky top-0 z-20 shadow-md`}>
-        <div className="max-w-2xl mx-auto px-4 py-4 flex items-center space-x-3">
+        <div className="max-w-2xl mx-auto px-4 pt-6 pb-4 flex items-center space-x-3">
           <button
             onClick={onClose}
             className="w-11 h-11 rounded-2xl bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"
@@ -1148,7 +1148,7 @@ const Puzzle15Game: React.FC<{ onClose: () => void; game?: Game }> = ({ onClose,
   return (
     <div className="min-h-screen bg-linear-to-b from-stone-50 to-stone-100">
       <div className={`bg-linear-to-br ${game?.gradient} text-white sticky top-0 z-20 shadow-md`}>
-        <div className="max-w-2xl mx-auto px-4 py-4 flex items-center space-x-3">
+        <div className="max-w-2xl mx-auto px-4 pt-6 pb-4 flex items-center space-x-3">
           <button
             onClick={onClose}
             className="w-11 h-11 rounded-2xl bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"
@@ -1300,7 +1300,7 @@ const MathGame: React.FC<{ onClose: () => void; game?: Game }> = ({ onClose, gam
   return (
     <div className="min-h-screen bg-linear-to-b from-stone-50 to-stone-100">
       <div className={`bg-linear-to-br ${game?.gradient} text-white sticky top-0 z-20 shadow-md`}>
-        <div className="max-w-2xl mx-auto px-4 py-4 flex items-center space-x-3">
+        <div className="max-w-2xl mx-auto px-4 pt-6 pb-4 flex items-center space-x-3">
           <button
             onClick={onClose}
             className="w-11 h-11 rounded-2xl bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"
@@ -1617,7 +1617,7 @@ const Game2048: React.FC<{ onClose: () => void; game?: Game }> = ({ onClose, gam
   return (
     <div className="min-h-screen bg-linear-to-b from-stone-50 to-stone-100">
       <div className={`bg-linear-to-br ${game?.gradient} text-white sticky top-0 z-20 shadow-md`}>
-        <div className="max-w-2xl mx-auto px-4 py-4 flex items-center space-x-3">
+        <div className="max-w-2xl mx-auto px-4 pt-6 pb-4 flex items-center space-x-3">
           <button
             onClick={onClose}
             className="w-11 h-11 rounded-2xl bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"

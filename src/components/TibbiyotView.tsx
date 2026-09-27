@@ -46,7 +46,7 @@ export const TibbiyotView: React.FC<TibbiyotViewProps> = ({ onClose }) => {
     return (
       <div className="min-h-screen bg-linear-to-b from-rose-50 to-red-100">
         <div className="bg-linear-to-br from-red-600 to-rose-700 text-white sticky top-0 z-20 shadow-md">
-          <div className="max-w-2xl mx-auto px-4 py-4 flex items-center space-x-3">
+          <div className="max-w-2xl mx-auto px-4 pt-6 pb-4 flex items-center space-x-3">
             <button
               onClick={() => setSelectedCategory(null)}
               className="w-11 h-11 rounded-2xl bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"
@@ -92,7 +92,7 @@ export const TibbiyotView: React.FC<TibbiyotViewProps> = ({ onClose }) => {
   return (
     <div className="min-h-screen bg-linear-to-b from-rose-50 to-red-100">
       <div className="bg-white/95 backdrop-blur-lg border-b border-stone-200 sticky top-0 z-20 shadow-sm">
-        <div className="max-w-2xl mx-auto px-4 py-4 flex items-center space-x-3">
+        <div className="max-w-2xl mx-auto px-4 pt-6 pb-4 flex items-center space-x-3">
           <button
             onClick={onClose}
             className="w-11 h-11 rounded-2xl bg-stone-100 hover:bg-amber-100 flex items-center justify-center transition-colors"

@@ -352,7 +352,7 @@ app.post('/api/telegram-webhook', async (req, res) => {
       return res.sendStatus(403);
     }
     const { message } = req.body;
-    // Команда /start — инструкция
+        // Команда /start — инструкция
     if (message?.text === '/start') {
       await sendTelegramMessage(
         message.from.id,
@@ -363,11 +363,14 @@ app.post('/api/telegram-webhook', async (req, res) => {
         `      ⬇️\n` +
         `   🟦 <b>Ochish</b> 🟦\n` +
         `      ⬆️\n\n` +
-        `Agar tugma ko'rinmasa, ekranni pastga torting yoki Telegramni qayta ishga tushiring.`
+        `Agar tugma ko'rinmasa, ekranni pastga torting yoki Telegramni qayta ishga tushiring.\n\n` +
+        `━━━━━━━━━━━━━━━━━━━━\n\n` +
+        `📌 <b>Maslahat:</b> Botni yo'qotmaslik uchun uni <b>yuqoriga qadab qo'ying</b> (Pin).\n\n` +
+        `Buning uchun:\n` +
+        `1️⃣ Chat ustiga uzoq bosing\n` +
+        `2️⃣ <b>Pin</b> tugmasini tanlang\n\n` +
+        `Shunda ilova doim qo'l ostingizda bo'ladi! 🚀`
       );
-      return res.sendStatus(200);
-    }
-    if (!message?.from) {
       return res.sendStatus(200);
     }
      // Команда /add_place (с фото или без)

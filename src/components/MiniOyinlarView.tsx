@@ -23,6 +23,7 @@ const GAMES: Game[] = [
   { id: 'puzzle15', title: '15-puzzle', icon: '🧩', gradient: 'from-cyan-500 to-teal-600', description: 'Raqamlarni tartibga soling' },
   { id: 'math', title: 'Tez hisoblash', icon: '➕', gradient: 'from-orange-500 to-red-600', description: 'Tez hisoblash musobaqasi' },
   { id: 'game2048', title: '2048', icon: '🎲', gradient: 'from-yellow-500 to-orange-600', description: 'Raqamlarni birlashtiring' },
+  { id: 'quiz', title: 'Viktorina', icon: '🧠', gradient: 'from-indigo-500 to-purple-600', description: "Kim millioner bo'lishni xohlaydi" },
   ];
 
 // ============ RANDOMIZER ============
@@ -156,6 +157,9 @@ export const MiniOyinlarView: React.FC<MiniOyinlarViewProps> = ({ onClose }) => 
     }
         if (selectedGame === 'game2048') {
       return <Game2048 onClose={() => setSelectedGame(null)} game={game} />;
+    }
+        if (selectedGame === 'quiz') {
+      return <QuizGame onClose={() => setSelectedGame(null)} game={game} />;
     }
     return (
       <div className="min-h-screen bg-linear-to-b from-stone-50 to-stone-100">
@@ -1724,3 +1728,222 @@ const Game2048: React.FC<{ onClose: () => void; game?: Game }> = ({ onClose, gam
   );
 };
 // ============ /2048 ============
+// ============ VIKTORINA (Кто хочет стать миллионером) ============
+const QuizGame: React.FC<{ onClose: () => void; game?: Game }> = ({ onClose, game }) => {
+  const ALL_QUESTIONS = [
+    // Узбекистан
+    { q: "O'zbekistonning poytaxti qaysi shahar?", a: ["Samarqand", "Toshkent", "Buxoro", "Namangan"], correct: 1 },
+    { q: "Bekobod qaysi viloyatda joylashgan?", a: ["Toshkent", "Sirdaryo", "Farg'ona", "Jizzax"], correct: 0 },
+    { q: "O'zbekiston qachon mustaqil bo'ldi?", a: ["1990", "1991", "1992", "1993"], correct: 1 },
+    { q: "O'zbekistonning eng katta daryosi?", a: ["Sirdaryo", "Amudaryo", "Zarafshon", "Chirchiq"], correct: 1 },
+    { q: "Registon maydoni qaysi shaharda?", a: ["Buxoro", "Xiva", "Samarqand", "Shahrisabz"], correct: 2 },
+    { q: "Alisher Navoiy qaysi asrda yashagan?", a: ["XIV", "XV", "XVI", "XVII"], correct: 1 },
+    { q: "O'zbekistonning eng baland nuqtasi?", a: ["Xazrat Sulton", "Beshtor", "Chimyon", "Bobotog'"], correct: 0 },
+    { q: "Buxorodagi mashhur minora nomi?", a: ["Kalyan", "Kalon", "Islom-Xo'ja", "Chor-Minor"], correct: 0 },
+    { q: "O'zbekiston aholisi qancha (2024)?", a: ["25 mln", "30 mln", "37 mln", "45 mln"], correct: 2 },
+    { q: "O'zbek tilida nechta harf bor?", a: ["26", "28", "29", "31"], correct: 2 },
+    { q: "Amir Temur qaysi shaharda tug'ilgan?", a: ["Samarqand", "Shahrisabz", "Buxoro", "Toshkent"], correct: 1 },
+    { q: "O'zbekistonning davlat gerbida nima tasvirlangan?", a: ["Burgut", "Humo", "Sher", "Kabutar"], correct: 1 },
+    { q: "Xiva qaysi viloyatda joylashgan?", a: ["Buxoro", "Xorazm", "Navoiy", "Qashqadaryo"], correct: 1 },
+    { q: "O'zbekiston qaysi yilda BMTga a'zo bo'ldi?", a: ["1991", "1992", "1993", "1994"], correct: 1 },
+    { q: "O'zbekistondagi eng katta ko'l?", a: ["Orol", "Tuzkon", "Aydar", "Sarykamish"], correct: 0 },
+    // Общие знания
+    { q: "Quyosh sistemasidagi eng katta sayyora?", a: ["Yer", "Mars", "Yupiter", "Saturn"], correct: 2 },
+    { q: "Suvning kimyoviy formulasi?", a: ["CO2", "H2O", "O2", "N2"], correct: 1 },
+    { q: "Dunyodagi eng baland tog'?", a: ["Elbrus", "Everest", "Kilimanjaro", "Montblan"], correct: 1 },
+    { q: "Eng katta okean?", a: ["Atlantika", "Hind", "Tinch", "Shimoliy Muz"], correct: 2 },
+    { q: "Inson tanasidagi eng katta organ?", a: ["Yurak", "Jigar", "Teri", "O'pka"], correct: 2 },
+    { q: "1 yilda nechta kun bor?", a: ["360", "365", "366", "370"], correct: 1 },
+    { q: "Eng katta qit'a?", a: ["Afrika", "Osiyo", "Yevropa", "Amerika"], correct: 1 },
+    { q: "Kompyuterning miyasi nima?", a: ["Monitor", "Protsessor", "Klaviatura", "Sichqoncha"], correct: 1 },
+    { q: "Eng tez hayvon?", a: ["Sher", "Gepard", "Yo'lbars", "Ot"], correct: 1 },
+    { q: "Quyosh qaysi tomondan chiqadi?", a: ["G'arb", "Sharq", "Shimol", "Janub"], correct: 1 },
+    { q: "Eng katta davlat (maydon bo'yicha)?", a: ["Xitoy", "AQSh", "Rossiya", "Kanada"], correct: 2 },
+    { q: "Eng ko'p aholisi bo'lgan davlat?", a: ["Xitoy", "Hindiston", "AQSh", "Indoneziya"], correct: 1 },
+    { q: "Suv necha gradusda qaynaydi?", a: ["50°C", "90°C", "100°C", "120°C"], correct: 2 },
+    { q: "Eng katta hayvon?", a: ["Fil", "Kit", "Akula", "Begemot"], correct: 1 },
+    { q: "Piyoda yurish foydalimi?", a: ["Yo'q", "Ha", "Bilmadim", "Ba'zan"], correct: 1 },
+  ];
+
+  const shuffle = <T,>(arr: T[]): T[] => {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  };
+
+  const buildQuestions = () => {
+    return shuffle(ALL_QUESTIONS).slice(0, 15).map((q) => {
+      // Перемешиваем варианты ответа, запоминаем новый индекс правильного
+      const correctText = q.a[q.correct];
+      const shuffledAnswers = shuffle(q.a);
+      const newCorrect = shuffledAnswers.indexOf(correctText);
+      return {
+        q: q.q,
+        a: shuffledAnswers,
+        correct: newCorrect,
+      };
+    });
+  };
+
+  const [questions, setQuestions] = useState(() => buildQuestions());
+  const [current, setCurrent] = useState(0);
+  const [score, setScore] = useState(0);
+  const [selected, setSelected] = useState<number | null>(null);
+  const [gameOver, setGameOver] = useState(false);
+  const [finished, setFinished] = useState(false);
+  const [bestScore, setBestScore] = useState(0);
+
+  const handleAnswer = (idx: number) => {
+    if (selected !== null) return;
+    setSelected(idx);
+
+    setTimeout(() => {
+      if (idx === questions[current].correct) {
+        const newScore = score + 1;
+        setScore(newScore);
+
+        if (current + 1 >= questions.length) {
+          setFinished(true);
+          if (newScore > bestScore) setBestScore(newScore);
+        } else {
+          setCurrent(current + 1);
+          setSelected(null);
+        }
+      } else {
+        setGameOver(true);
+        if (score > bestScore) setBestScore(score);
+      }
+    }, 800);
+  };
+
+  const restart = () => {
+    setQuestions(buildQuestions());
+    setCurrent(0);
+    setScore(0);
+    setSelected(null);
+    setGameOver(false);
+    setFinished(false);
+  };
+
+  const q = questions[current];
+  const progress = ((current + 1) / questions.length) * 100;
+
+  return (
+    <div className="min-h-screen bg-linear-to-b from-stone-50 to-stone-100">
+      <div className={`bg-linear-to-br ${game?.gradient} text-white sticky top-0 z-20 shadow-md`}>
+        <div className="max-w-2xl mx-auto px-4 py-4 flex items-center space-x-3">
+          <button
+            onClick={onClose}
+            className="w-11 h-11 rounded-2xl bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"
+          >
+            <ArrowLeft className="w-6 h-6 text-white" />
+          </button>
+          <h1 className="font-bold text-xl text-white">🧠 Viktorina</h1>
+        </div>
+      </div>
+
+      <div className="max-w-2xl mx-auto px-4 py-6 space-y-5">
+        {/* Прогресс */}
+        <div className="bg-white rounded-3xl p-4 shadow-lg border border-stone-100 space-y-2">
+          <div className="flex justify-between text-xs font-bold text-stone-600">
+            <span>Savol {current + 1} / {questions.length}</span>
+            <span className="text-emerald-600">✅ {score}</span>
+          </div>
+          <div className="w-full bg-stone-100 rounded-full h-2">
+            <div
+              className="bg-linear-to-r from-indigo-500 to-purple-600 h-2 rounded-full transition-all duration-500"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+        </div>
+
+        {/* Вопрос */}
+        {!gameOver && !finished && (
+          <>
+            <div className="bg-white rounded-3xl p-6 shadow-lg border border-stone-100">
+              <div className="text-lg font-bold text-stone-900 text-center leading-snug">
+                {q.q}
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              {q.a.map((answer, idx) => {
+                const isCorrect = idx === q.correct;
+                const isSelected = idx === selected;
+                let bgClass = 'bg-white hover:bg-stone-50 border-stone-200 text-stone-900';
+                if (selected !== null) {
+                  if (isCorrect) bgClass = 'bg-emerald-500 text-white border-emerald-500';
+                  else if (isSelected) bgClass = 'bg-rose-500 text-white border-rose-500';
+                  else bgClass = 'bg-stone-100 text-stone-400 border-stone-200';
+                }
+                return (
+                  <button
+                    key={idx}
+                    onClick={() => handleAnswer(idx)}
+                    disabled={selected !== null}
+                    className={`w-full py-4 px-5 rounded-2xl font-bold text-left border-2 transition-all active:scale-[0.98] ${bgClass}`}
+                  >
+                    <span className="inline-block w-7 h-7 rounded-full bg-stone-200 text-stone-700 text-xs font-bold mr-3 text-center leading-7">
+                      {String.fromCharCode(65 + idx)}
+                    </span>
+                    {answer}
+                  </button>
+                );
+              })}
+            </div>
+          </>
+        )}
+
+        {/* Game Over */}
+        {gameOver && (
+          <div className="bg-linear-to-br from-rose-500 to-pink-600 rounded-3xl p-8 shadow-lg text-white text-center space-y-4">
+            <div className="text-6xl">😢</div>
+            <div className="text-2xl font-bold">Xato javob!</div>
+            <div className="text-lg">
+              To'g'ri javob: <b>{q.a[q.correct]}</b>
+            </div>
+            <div className="text-sm text-white/90">
+              Sizning natijangiz: <b>{score}</b> / {questions.length}
+            </div>
+            <button
+              onClick={restart}
+              className="w-full py-4 bg-white text-rose-700 rounded-2xl font-bold shadow-lg active:scale-95 transition"
+            >
+              🔄 Yana o'ynash
+            </button>
+          </div>
+        )}
+
+        {/* Победа */}
+        {finished && (
+          <div className="bg-linear-to-br from-emerald-500 to-teal-600 rounded-3xl p-8 shadow-lg text-white text-center space-y-4">
+            <div className="text-6xl">🏆</div>
+            <div className="text-2xl font-bold">Tabriklaymiz!</div>
+            <div className="text-lg">
+              Siz <b>{score}</b> / {questions.length} ta savolga javob berdingiz!
+            </div>
+            {score === questions.length && (
+              <div className="text-yellow-300 font-bold">💎 Siz haqiqiy millioner bo'ldingiz!</div>
+            )}
+            <button
+              onClick={restart}
+              className="w-full py-4 bg-white text-emerald-700 rounded-2xl font-bold shadow-lg active:scale-95 transition"
+            >
+              🔄 Yana o'ynash
+            </button>
+          </div>
+        )}
+
+        {bestScore > 0 && !finished && !gameOver && (
+          <div className="text-center text-xs text-stone-400">
+            🏆 Eng yaxshi: {bestScore} / {questions.length}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+// ============ /VIKTORINA ============

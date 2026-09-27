@@ -1,5 +1,6 @@
 import crypto from 'crypto';
 import express from 'express';
+import * as cheerio from 'cheerio';
 import rateLimit from 'express-rate-limit';
 import path from 'path';
 import dotenv from 'dotenv';
@@ -1482,20 +1483,110 @@ app.post('/api/events/approve', async (req, res) => {
   }
 });
 
-// ============ IBODAT (NAMOZ VAQTLARI) ============
+// ============ IBODAT (NAMOZ VAQTLARI — namoz-vaqti.uz) ============
+let prayerCache: { date: string; data: any } | null = null;
+
 app.get('/api/prayer-times', async (req, res) => {
   try {
-    const response = await fetch('https://api.aladhan.com/v1/timings?latitude=40.22&longitude=69.22&method=2');
-    const data = await response.json();
-    if (data.code !== 200) throw new Error('API error');
-    const timings = data.data.timings;
-    const hijri = data.data.date.hijri;
-    const gregorian = data.data.date.gregorian;
-    res.json({
-      timings: { Fajr: timings.Fajr, Sunrise: timings.Sunrise, Dhuhr: timings.Dhuhr, Asr: timings.Asr, Maghrib: timings.Maghrib, Isha: timings.Isha },
-      hijri: { day: hijri.day, month: hijri.month.en, year: hijri.year },
-      gregorian: { date: gregorian.date, weekday: gregorian.weekday.en },
+    const today = new Date().toLocaleDateString('ru-RU', { timeZone: 'Asia/Tashkent' });
+    // Формат: DD.MM.YYYY
+    const [day, month, year] = today.split('.').reverse().join('.').split('.');
+    // Пересобираем как DD.MM.YYYY
+    const todayStr = today.split('.').length === 3 ? today : today;
+    // Правильный формат: DD.MM.YYYY
+    const now = new Date();
+    const tashkentDate = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Tashkent' }));
+    const dd = String(tashkentDate.getDate()).padStart(2, '0');
+    const mm = String(tashkentDate.getMonth() + 1).padStart(2, '0');
+    const yyyy = tashkentDate.getFullYear();
+    const dateKey = `${dd}.${mm}.${yyyy}`;
+
+    // Кеш на 1 час
+    if (prayerCache && prayerCache.date === dateKey) {
+      return res.json(prayerCache.data);
+    }
+
+    const response = await fetch('https://namoz-vaqti.uz/?lang=lotin&period=month&region=bekobod');
+    const html = await response.text();
+    const $ = cheerio.load(html);
+
+    // Ищем строку таблицы с сегодняшней датой
+    let found: any = null;
+
+    $('tr').each((i, row) => {
+      const cells = $(row).find('td');
+      if (cells.length >= 7) {
+        const rowDate = $(cells[0]).text().trim();
+        if (rowDate === dateKey) {
+          found = {
+            date: rowDate,
+            Fajr: $(cells[1]).text().trim(),
+            Sunrise: $(cells[2]).text().trim(),
+            Dhuhr: $(cells[3]).text().trim(),
+            Asr: $(cells[4]).text().trim(),
+            Maghrib: $(cells[5]).text().trim(),
+            Isha: $(cells[6]).text().trim(),
+          };
+          return false; // break
+        }
+      }
     });
+
+    if (!found) {
+      // Если сегодня не нашли (например, конец месяца) — берём первую строку
+      const firstRow = $('tr').filter((i, row) => $(row).find('td').length >= 7).first();
+      const cells = firstRow.find('td');
+      if (cells.length >= 7) {
+        found = {
+          date: $(cells[0]).text().trim(),
+          Fajr: $(cells[1]).text().trim(),
+          Sunrise: $(cells[2]).text().trim(),
+          Dhuhr: $(cells[3]).text().trim(),
+          Asr: $(cells[4]).text().trim(),
+          Maghrib: $(cells[5]).text().trim(),
+          Isha: $(cells[6]).text().trim(),
+        };
+      }
+    }
+
+    if (!found) {
+      throw new Error('Namoz vaqtlari topilmadi');
+    }
+
+    // Hijri дата (можно взять с Aladhan отдельно, если нужно)
+    let hijri = { day: '', month: '', year: '' };
+    try {
+      const hRes = await fetch('https://api.aladhan.com/v1/gToH?date=' + dateKey.split('.').reverse().join('-'));
+      const hData = await hRes.json();
+      if (hData.code === 200) {
+        hijri = {
+          day: hData.data.hijri.day,
+          month: hData.data.hijri.month.en,
+          year: hData.data.hijri.year,
+        };
+      }
+    } catch (e) {
+      // Если не получилось — оставляем пустым
+    }
+
+    const result = {
+      timings: {
+        Fajr: found.Fajr,
+        Sunrise: found.Sunrise,
+        Dhuhr: found.Dhuhr,
+        Asr: found.Asr,
+        Maghrib: found.Maghrib,
+        Isha: found.Isha,
+      },
+      hijri,
+      gregorian: {
+        date: found.date,
+        weekday: tashkentDate.toLocaleDateString('en-US', { weekday: 'long', timeZone: 'Asia/Tashkent' }),
+      },
+    };
+
+    prayerCache = { date: dateKey, data: result };
+    res.json(result);
   } catch (error: any) {
     console.error('Prayer times error:', error);
     res.status(500).json({ error: error.message });

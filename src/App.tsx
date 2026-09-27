@@ -264,51 +264,55 @@ function App() {
         </div>
       </div>
 
-      {/* Погода */}
+           {/* Погода */}
       <div className="max-w-2xl w-full mx-auto px-4 pt-4">
         <div className="bg-linear-to-br from-sky-400 to-blue-600 rounded-3xl p-4 shadow-xl text-white">
           {weatherLoading ? (
-            <div className="text-center py-4 text-white/80 text-sm">Yuklanmoqda...</div>
+            <div className="text-center py-4 text-white text-sm">Yuklanmoqda...</div>
           ) : weather ? (
             <>
               <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center space-x-2 shrink-0">
-                  <div className="scale-90">
+                {/* Левая часть: иконка + температура */}
+                <div className="flex items-center space-x-3 shrink-0">
+                  <div className="scale-110">
                     {getWeatherIcon(weather.current?.weather_code || 0)}
                   </div>
                   <div>
-                    <div className="text-3xl font-bold leading-none">
+                    <div className="text-4xl font-bold leading-none drop-shadow-md">
                       {Math.round(weather.current?.temperature_2m || 0)}°
                     </div>
-                    <div className="text-[10px] text-white/80 mt-0.5 whitespace-nowrap">
+                    <div className="text-sm font-bold text-white mt-1 whitespace-nowrap drop-shadow-md">
                       ↑{Math.round(weather.daily?.temperature_2m_max?.[0] || 0)}° ↓
                       {Math.round(weather.daily?.temperature_2m_min?.[0] || 0)}°
                     </div>
                   </div>
                 </div>
 
-                <div className="text-center text-[10px] text-white/80 leading-tight px-2">
-                  <div className="font-semibold">
+                {/* Центр: дата */}
+                <div className="text-center text-sm text-white font-bold leading-tight px-2 drop-shadow-md">
+                  <div>
                     {new Date().toLocaleDateString('uz-UZ', { day: 'numeric', month: 'short' })}
                   </div>
-                  <div className="text-white/60">
+                  <div className="text-xs text-white/90 mt-0.5">
                     {new Date().toLocaleDateString('uz-UZ', { weekday: 'short' })}
                   </div>
                 </div>
 
-                <div className="text-right text-[10px] text-white/90 space-y-0.5 shrink-0">
-                  <div className="flex items-center justify-end space-x-1">
-                    <Droplets className="w-3 h-3" />
+                {/* Правая часть: влажность + ветер */}
+                <div className="text-right text-sm text-white font-bold space-y-1 shrink-0 drop-shadow-md">
+                  <div className="flex items-center justify-end space-x-1.5">
+                    <Droplets className="w-4 h-4" />
                     <span>{weather.current?.relative_humidity_2m || 0}%</span>
                   </div>
-                  <div className="flex items-center justify-end space-x-1">
-                    <Wind className="w-3 h-3" />
+                  <div className="flex items-center justify-end space-x-1.5">
+                    <Wind className="w-4 h-4" />
                     <span>{weather.current?.wind_speed_10m || 0} km/h</span>
                   </div>
                 </div>
               </div>
 
-              <div className="flex justify-between gap-1 pt-3 border-t border-white/20">
+              {/* Прогноз по 3 часа */}
+              <div className="flex justify-between gap-1 pt-3 border-t border-white/30">
                 {getThreeHourForecast(weather).map((slot, i) => {
                   const time = new Date(slot.time).toLocaleTimeString('ru-RU', {
                     hour: '2-digit',
@@ -316,22 +320,21 @@ function App() {
                   });
                   return (
                     <div key={i} className="flex flex-col items-center flex-1">
-                      <span className="text-[9px] text-white/70">{time}</span>
-                      <div className="scale-[0.55] my-0.5">
+                      <span className="text-xs font-bold text-white drop-shadow-md">{time}</span>
+                      <div className="scale-[0.6] my-0.5">
                         {getWeatherIcon(slot.code)}
                       </div>
-                      <span className="text-[10px] font-semibold">{slot.temp}°</span>
+                      <span className="text-sm font-bold text-white drop-shadow-md">{slot.temp}°</span>
                     </div>
                   );
                 })}
               </div>
             </>
           ) : (
-            <div className="text-center py-4 text-white/80 text-sm">—</div>
+            <div className="text-center py-4 text-white text-sm">—</div>
           )}
         </div>
       </div>
-
            {/* Карусель рекламы */}
       <div className="max-w-2xl w-full mx-auto px-4 pt-4">
         <div className="relative rounded-3xl overflow-hidden shadow-xl h-48">

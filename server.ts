@@ -356,16 +356,18 @@ app.post('/api/telegram-webhook', async (req, res) => {
     if (!message?.from) {
       return res.sendStatus(200);
     }
- // Команда /add_place (рестораны, кафе и т.д.)
-    if (message?.text?.startsWith('/add_place') && ADMINS.includes(message.from.id)) {
-      const parts = message.text.split('|').map((s: string) => s.trim());
-      
+     // Команда /add_place (с фото или без)
+    if ((message?.text?.startsWith('/add_place') || message?.caption?.startsWith('/add_place')) && ADMINS.includes(message.from.id)) {
+      const rawText = message.text || message.caption || '';
+      const parts = rawText.split('|').map((s: string) => s.trim());
+
       if (parts.length < 3) {
         await sendTelegramMessage(
           message.from.id,
           `❌ <b>Format:</b>\n<code>/add_place kategoriya | nomi | manzil | telefon | tavsif</code>\n\n` +
           `<b>Kategoriyalar:</b> fastfood, milliy, kafe, restoran, chayxana, shirinlik, yarim_tayyor\n\n` +
-          `<b>Misol:</b>\n<code>/add_place fastfood | AGASI FOOD | Bunyodkor 55 | +998903277714 | Mazali taomlar</code>`
+          `<b>Misol:</b>\n<code>/add_place fastfood | AGASI FOOD | Bunyodkor 55 | +998903277714 | Mazali taomlar</code>\n\n` +
+          `<b>Rasm bilan:</b> rasm yuborib, izohga shu formatni yozing`
         );
       } else {
         const category = parts[0].replace('/add_place', '').trim();
@@ -374,18 +376,35 @@ app.post('/api/telegram-webhook', async (req, res) => {
         const phone = parts[3] || null;
         const description = parts[4] || null;
 
+        // Картинка (если есть)
+        let imageUrl: string | null = null;
+        if (message.photo && message.photo.length > 0) {
+          const fileId = message.photo[message.photo.length - 1].file_id;
+          const botToken = process.env.TELEGRAM_BOT_TOKEN;
+          if (botToken) {
+            try {
+              const fileRes = await fetch(`https://api.telegram.org/bot${botToken}/getFile?file_id=${fileId}`);
+              const fileData: any = await fileRes.json();
+              if (fileData.ok) {
+                imageUrl = `https://api.telegram.org/file/bot${botToken}/${fileData.result.file_path}`;
+              }
+            } catch (e) {
+              console.error('Photo upload error:', e);
+            }
+          }
+        }
+
         const result = await pool.query(
-          'INSERT INTO restaurants (name, category, address, phone, description) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-          [name, category, address, phone, description]
+          'INSERT INTO restaurants (name, category, address, phone, description, image_url) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+          [name, category, address, phone, description, imageUrl]
         );
 
         await sendTelegramMessage(
           message.from.id,
-          `✅ <b>Qo'shildi!</b>\n\n📌 ${name}\n📍 ${address || "yo'q"}\n📞 ${phone || "yo'q"}\nID: <code>${result.rows[0].id}</code>`
+          `✅ <b>Qo'shildi!</b>\n\n📌 ${name}\n📍 ${address || "yo'q"}\n📞 ${phone || "yo'q"}\n🖼 ${imageUrl ? 'Ha' : "yo'q"}\nID: <code>${result.rows[0].id}</code>`
         );
       }
     }
-
     // Команда /delete_place ID
     if (message?.text?.startsWith('/delete_place') && ADMINS.includes(message.from.id)) {
       const placeId = Number(message.text.split(' ')[1]);
@@ -526,38 +545,55 @@ app.post('/api/telegram-webhook', async (req, res) => {
         }
       }
     }
-    if (message?.text?.startsWith('/add_med') && ADMINS.includes(message.from.id)) {
-      const parts = message.text.split('|').map((s: string) => s.trim());
+       // Команда /add_med (с фото или без)
+    if ((message?.text?.startsWith('/add_med') || message?.caption?.startsWith('/add_med')) && ADMINS.includes(message.from.id)) {
+      const rawText = message.text || message.caption || '';
+      const parts = rawText.split('|').map((s: string) => s.trim());
+
       if (parts.length < 3) {
-        await sendTelegramMessage(message.from.id, `❌ /add_med tur | nomi | manzil | telefon | tavsif`);
+        await sendTelegramMessage(
+          message.from.id,
+          `❌ <b>Format:</b>\n<code>/add_med tur | nomi | manzil | telefon | tavsif</code>\n\n` +
+          `<b>Turlar:</b> dorixona, kasalxona\n\n` +
+          `<b>Misol:</b>\n<code>/add_med dorixona | Dori-Darmon | Navoiy 10 | +998901234567 | 24/7 ishlaydi</code>\n\n` +
+          `<b>Rasm bilan:</b> rasm yuborib, izohga shu formatni yozing`
+        );
       } else {
         const type = parts[0].replace('/add_med', '').trim();
         const name = parts[1];
         const address = parts[2] || null;
         const phone = parts[3] || null;
         const description = parts[4] || null;
-        const result = await pool.query(
-          'INSERT INTO doctors (type, name, specialty, phone, address, description) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
-          [type, name, description || type, phone, address, null]
-        );
-        await sendTelegramMessage(message.from.id, `✅ ${type} qo'shildi! ID: ${result.rows[0].id}`);
-      }
-    }
 
-    if (message?.text?.startsWith('/delete_med') && ADMINS.includes(message.from.id)) {
-      const medId = Number(message.text.split(' ')[1]);
-      if (!medId) {
-        await sendTelegramMessage(message.from.id, "❌ /delete_med ID");
-      } else {
-        const result = await pool.query('DELETE FROM doctors WHERE id = $1 RETURNING name', [medId]);
-        if (result.rows.length === 0) {
-          await sendTelegramMessage(message.from.id, `❌ Topilmadi (ID: ${medId})`);
-        } else {
-          await sendTelegramMessage(message.from.id, `✅ O'chirildi: ${result.rows[0].name}`);
+        // Картинка
+        let imageUrl: string | null = null;
+        if (message.photo && message.photo.length > 0) {
+          const fileId = message.photo[message.photo.length - 1].file_id;
+          const botToken = process.env.TELEGRAM_BOT_TOKEN;
+          if (botToken) {
+            try {
+              const fileRes = await fetch(`https://api.telegram.org/bot${botToken}/getFile?file_id=${fileId}`);
+              const fileData: any = await fileRes.json();
+              if (fileData.ok) {
+                imageUrl = `https://api.telegram.org/file/bot${botToken}/${fileData.result.file_path}`;
+              }
+            } catch (e) {
+              console.error('Photo upload error:', e);
+            }
+          }
         }
+
+        const result = await pool.query(
+          'INSERT INTO doctors (type, name, specialty, phone, address, description, image_url) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
+          [type, name, description || type, phone, address, null, imageUrl]
+        );
+
+        await sendTelegramMessage(
+          message.from.id,
+          `✅ <b>${type} qo'shildi!</b>\n\n📌 ${name}\n🖼 ${imageUrl ? 'Ha' : "yo'q"}\nID: <code>${result.rows[0].id}</code>`
+        );
       }
     }
-    
     // Команда /add_news (ручное добавление новости)
     if (message?.text?.startsWith('/add_news') && ADMINS.includes(message.from.id)) {
       const parts = message.text.split('|').map((s: string) => s.trim());

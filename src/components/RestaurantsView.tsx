@@ -130,10 +130,18 @@ export const RestaurantsView: React.FC<RestaurantsViewProps> = ({ onClose }) => 
               {filteredRestaurants.map((restaurant) => {
                 const rating = ratings[restaurant.id];
                 return (
-                  <div
+                                    <div
                     key={restaurant.id}
-                    className="bg-white rounded-3xl p-5 shadow-sm border border-stone-100 space-y-3"
+                    className="bg-white rounded-3xl overflow-hidden shadow-sm border border-stone-100 space-y-3"
                   >
+                    {restaurant.image_url && (
+                      <img
+                        src={restaurant.image_url}
+                        alt={restaurant.name}
+                        className="w-full h-48 object-cover"
+                      />
+                    )}
+                    <div className="p-5 space-y-3">
                     <div className="flex items-start justify-between">
                       <h3 className="font-bold text-lg text-stone-900 leading-tight flex-1">
                         {restaurant.name}
@@ -181,6 +189,7 @@ export const RestaurantsView: React.FC<RestaurantsViewProps> = ({ onClose }) => 
                       >
                         ⭐ Baholash
                       </button>
+                                   </div>
                     </div>
                   </div>
                 );

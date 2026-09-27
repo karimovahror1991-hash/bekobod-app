@@ -14,6 +14,7 @@ interface MedItem {
   phone: string | null;
   address: string | null;
   description: string | null;
+  image_url: string | null;
 }
 
 const TYPE_INFO = {
@@ -74,10 +75,18 @@ export const MedListView: React.FC<MedListViewProps> = ({ onClose, type }) => {
         ) : (
           <div className="space-y-3">
             {items.map((item) => (
-              <div
+                            <div
                 key={item.id}
-                className="bg-white rounded-3xl p-5 shadow-sm border border-stone-100 space-y-3"
+                className="bg-white rounded-3xl overflow-hidden shadow-sm border border-stone-100"
               >
+                {item.image_url && (
+                  <img
+                    src={item.image_url}
+                    alt={item.name}
+                    className="w-full h-48 object-cover"
+                  />
+                )}
+                <div className="p-5 space-y-3">
                 <h3 className="font-bold text-lg text-stone-900">
                   {item.name}
                 </h3>
@@ -101,7 +110,8 @@ export const MedListView: React.FC<MedListViewProps> = ({ onClose, type }) => {
                     <Phone className="w-5 h-5" />
                     <span>Qo'ng'iroq qilish</span>
                   </a>
-                )}
+                           )}
+                </div>
               </div>
             ))}
           </div>

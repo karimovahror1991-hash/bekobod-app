@@ -280,7 +280,12 @@ export const OldiSotdiView: React.FC<OldiSotdiViewProps> = ({ onClose, userId })
                 {selectedListing.description}
               </p>
             )}
-
+            {selectedListing.phone && (
+              <div className="flex items-center space-x-2 text-sm text-stone-700 pt-3 border-t border-stone-100">
+                <Phone className="w-4 h-4 shrink-0 text-emerald-500" />
+                <span className="font-semibold">{selectedListing.phone}</span>
+              </div>
+            )}
             <div className="text-xs text-stone-400 pt-3 border-t border-stone-100">
               {formatDate(selectedListing.created_at)}
             </div>

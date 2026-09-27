@@ -44,7 +44,7 @@ const sections: Section[] = [
   { id: 'transport', titleUz: 'Transport', titleRu: 'Транспорт', icon: Bus, gradient: 'from-emerald-500 to-green-600' },
   { id: 'admin', titleUz: 'Administrator', titleRu: 'Администратор', icon: Mail, gradient: 'from-indigo-500 to-violet-600' },
   { id: 'tibbiyot', titleUz: 'Tibbiyot', titleRu: 'Медицина', icon: Heart, gradient: 'from-rose-500 to-red-600' },
-  { id: 'services', titleUz: 'Xizmatlar', titleRu: 'Услуги', icon: Wrench, gradient: 'from-cyan-500 to-teal-600' },
+    { id: 'services', titleUz: "Xizmat ko'rsatish", titleRu: 'Услуги', icon: Wrench, gradient: 'from-cyan-500 to-teal-600' },
   { id: 'jobs', titleUz: 'Vakansiya', titleRu: 'Вакансии', icon: Briefcase, gradient: 'from-violet-500 to-purple-600' },
   { id: 'emergency', titleUz: 'Shahar telefonlari', titleRu: 'Справочная служба', icon: Phone, gradient: 'from-rose-500 to-red-600' },
   { id: 'restaurants', titleUz: 'Restoran va kafelar', titleRu: 'Рестораны и кафе', icon: UtensilsCrossed, gradient: 'from-red-500 to-pink-600' },

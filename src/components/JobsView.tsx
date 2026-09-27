@@ -240,7 +240,12 @@ export const JobsView: React.FC<JobsViewProps> = ({ onClose }) => {
                         {getCategoryLabel(job.category)}
                       </div>
                     </div>
-
+                    {job.phone && (
+                      <div className="flex items-center space-x-2 text-sm text-stone-700">
+                        <Phone className="w-4 h-4 shrink-0 text-emerald-500" />
+                        <span className="font-semibold">{job.phone}</span>
+                      </div>
+                    )}
                     {job.salary && (
                       <div className="flex items-center space-x-1.5 text-sm font-semibold text-emerald-700 bg-emerald-50 px-3 py-2 rounded-xl">
                         <Wallet className="w-4 h-4" />

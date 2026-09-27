@@ -12,8 +12,10 @@ interface Restaurant {
   address: string | null;
   phone: string | null;
   description: string | null;
+  image_url: string | null;
   created_at: string;
 }
+
 
 const CATEGORIES = [
   { id: 'fastfood', label: 'Fast food', icon: '🍔', gradient: 'from-orange-500 to-red-600' },
@@ -134,11 +136,11 @@ export const RestaurantsView: React.FC<RestaurantsViewProps> = ({ onClose }) => 
                     key={restaurant.id}
                     className="bg-white rounded-3xl overflow-hidden shadow-sm border border-stone-100 space-y-3"
                   >
-                    {restaurant.image_url && (
+                                       {restaurant.image_url && (
                       <img
                         src={restaurant.image_url}
                         alt={restaurant.name}
-                        className="w-full h-48 object-cover"
+                        className="w-full max-h-64 object-contain bg-stone-100"
                       />
                     )}
                     <div className="p-5 space-y-3">

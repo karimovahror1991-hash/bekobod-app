@@ -79,11 +79,11 @@ export const MedListView: React.FC<MedListViewProps> = ({ onClose, type }) => {
                 key={item.id}
                 className="bg-white rounded-3xl overflow-hidden shadow-sm border border-stone-100"
               >
-                {item.image_url && (
+                               {item.image_url && (
                   <img
                     src={item.image_url}
                     alt={item.name}
-                    className="w-full h-48 object-cover"
+                    className="w-full max-h-64 object-contain bg-stone-100"
                   />
                 )}
                 <div className="p-5 space-y-3">

@@ -22,6 +22,7 @@ const GAMES: Game[] = [
   { id: 'sudoku', title: 'Sudoku 4×4', icon: '📝', gradient: 'from-violet-500 to-purple-600', description: 'Mantiqiy jumboq' },
   { id: 'puzzle15', title: '15-puzzle', icon: '🧩', gradient: 'from-cyan-500 to-teal-600', description: 'Raqamlarni tartibga soling' },
   { id: 'math', title: 'Tez hisoblash', icon: '➕', gradient: 'from-orange-500 to-red-600', description: 'Tez hisoblash musobaqasi' },
+  { id: 'game2048', title: '2048', icon: '🎲', gradient: 'from-yellow-500 to-orange-600', description: 'Raqamlarni birlashtiring' },
   ];
 
 // ============ RANDOMIZER ============
@@ -152,6 +153,9 @@ export const MiniOyinlarView: React.FC<MiniOyinlarViewProps> = ({ onClose }) => 
     }
         if (selectedGame === 'math') {
       return <MathGame onClose={() => setSelectedGame(null)} game={game} />;
+    }
+        if (selectedGame === 'game2048') {
+      return <Game2048 onClose={() => setSelectedGame(null)} game={game} />;
     }
     return (
       <div className="min-h-screen bg-linear-to-b from-stone-50 to-stone-100">
@@ -1425,3 +1429,298 @@ const MathGame: React.FC<{ onClose: () => void; game?: Game }> = ({ onClose, gam
   );
 };
 // ============ /TEZ HISOBLASH ============
+// ============ 2048 ============
+const Game2048: React.FC<{ onClose: () => void; game?: Game }> = ({ onClose, game }) => {
+  const SIZE = 4;
+
+  const createEmpty = (): number[][] =>
+    Array(SIZE).fill(null).map(() => Array(SIZE).fill(0));
+
+  const addRandom = (grid: number[][]): number[][] => {
+    const empty: [number, number][] = [];
+    for (let r = 0; r < SIZE; r++) {
+      for (let c = 0; c < SIZE; c++) {
+        if (grid[r][c] === 0) empty.push([r, c]);
+      }
+    }
+    if (empty.length === 0) return grid;
+    const [r, c] = empty[Math.floor(Math.random() * empty.length)];
+    const newGrid = grid.map((row) => [...row]);
+    newGrid[r][c] = Math.random() < 0.9 ? 2 : 4;
+    return newGrid;
+  };
+
+  const initGrid = (): number[][] => {
+    let g = createEmpty();
+    g = addRandom(g);
+    g = addRandom(g);
+    return g;
+  };
+
+  const [grid, setGrid] = useState<number[][]>(() => initGrid());
+  const [score, setScore] = useState(0);
+  const [bestScore, setBestScore] = useState(0);
+  const [won, setWon] = useState(false);
+  const [gameOver, setGameOver] = useState(false);
+
+  const slide = (row: number[]): { newRow: number[]; gained: number } => {
+    let arr = row.filter((v) => v !== 0);
+    let gained = 0;
+    for (let i = 0; i < arr.length - 1; i++) {
+      if (arr[i] === arr[i + 1]) {
+        arr[i] *= 2;
+        gained += arr[i];
+        arr[i + 1] = 0;
+      }
+    }
+    arr = arr.filter((v) => v !== 0);
+    while (arr.length < SIZE) arr.push(0);
+    return { newRow: arr, gained };
+  };
+
+  const move = (direction: 'left' | 'right' | 'up' | 'down') => {
+    if (won || gameOver) return;
+
+    let newGrid = grid.map((row) => [...row]);
+    let totalGained = 0;
+    let moved = false;
+
+    if (direction === 'left' || direction === 'right') {
+      for (let r = 0; r < SIZE; r++) {
+        let row = [...newGrid[r]];
+        if (direction === 'right') row.reverse();
+        const { newRow, gained } = slide(row);
+        let finalRow = newRow;
+        if (direction === 'right') finalRow.reverse();
+        if (JSON.stringify(finalRow) !== JSON.stringify(newGrid[r])) moved = true;
+        newGrid[r] = finalRow;
+        totalGained += gained;
+      }
+    } else {
+      for (let c = 0; c < SIZE; c++) {
+        let col = [newGrid[0][c], newGrid[1][c], newGrid[2][c], newGrid[3][c]];
+        if (direction === 'down') col.reverse();
+        const { newRow, gained } = slide(col);
+        let finalCol = newRow;
+        if (direction === 'down') finalCol.reverse();
+        for (let r = 0; r < SIZE; r++) {
+          if (newGrid[r][c] !== finalCol[r]) moved = true;
+          newGrid[r][c] = finalCol[r];
+        }
+        totalGained += gained;
+      }
+    }
+
+    if (!moved) return;
+
+    newGrid = addRandom(newGrid);
+    setGrid(newGrid);
+    setScore((s) => {
+      const ns = s + totalGained;
+      if (ns > bestScore) setBestScore(ns);
+      return ns;
+    });
+
+    // Проверка победы (2048)
+    if (newGrid.some((row) => row.some((v) => v >= 2048))) {
+      setWon(true);
+      return;
+    }
+
+    // Проверка Game Over
+    if (isGameOver(newGrid)) {
+      setGameOver(true);
+    }
+  };
+
+  const isGameOver = (g: number[][]): boolean => {
+    // Есть пустые — не конец
+    for (let r = 0; r < SIZE; r++) {
+      for (let c = 0; c < SIZE; c++) {
+        if (g[r][c] === 0) return false;
+      }
+    }
+    // Есть соседние равные — не конец
+    for (let r = 0; r < SIZE; r++) {
+      for (let c = 0; c < SIZE; c++) {
+        if (r < SIZE - 1 && g[r][c] === g[r + 1][c]) return false;
+        if (c < SIZE - 1 && g[r][c] === g[r][c + 1]) return false;
+      }
+    }
+    return true;
+  };
+
+  const restart = () => {
+    setGrid(initGrid());
+    setScore(0);
+    setWon(false);
+    setGameOver(false);
+  };
+
+  // Управление свайпами
+  useEffect(() => {
+    let touchStartX = 0;
+    let touchStartY = 0;
+
+    const handleTouchStart = (e: TouchEvent) => {
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+    };
+
+    const handleTouchEnd = (e: TouchEvent) => {
+      const dx = e.changedTouches[0].clientX - touchStartX;
+      const dy = e.changedTouches[0].clientY - touchStartY;
+      const absDx = Math.abs(dx);
+      const absDy = Math.abs(dy);
+
+      if (Math.max(absDx, absDy) < 30) return;
+
+      if (absDx > absDy) {
+        move(dx > 0 ? 'right' : 'left');
+      } else {
+        move(dy > 0 ? 'down' : 'up');
+      }
+    };
+
+    window.addEventListener('touchstart', handleTouchStart);
+    window.addEventListener('touchend', handleTouchEnd);
+    return () => {
+      window.removeEventListener('touchstart', handleTouchStart);
+      window.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, [grid, won, gameOver]);
+
+  const getTileStyle = (value: number) => {
+    const styles: { [key: number]: string } = {
+      0: 'bg-stone-200 text-transparent',
+      2: 'bg-stone-100 text-stone-700',
+      4: 'bg-amber-100 text-stone-700',
+      8: 'bg-orange-300 text-white',
+      16: 'bg-orange-400 text-white',
+      32: 'bg-orange-500 text-white',
+      64: 'bg-red-500 text-white',
+      128: 'bg-yellow-400 text-white',
+      256: 'bg-yellow-500 text-white',
+      512: 'bg-yellow-600 text-white',
+      1024: 'bg-amber-500 text-white',
+      2048: 'bg-linear-to-br from-yellow-400 to-orange-600 text-white',
+    };
+    return styles[value] || 'bg-purple-600 text-white';
+  };
+
+  const getFontSize = (value: number) => {
+    if (value >= 1024) return 'text-xl';
+    if (value >= 128) return 'text-2xl';
+    return 'text-3xl';
+  };
+
+  return (
+    <div className="min-h-screen bg-linear-to-b from-stone-50 to-stone-100">
+      <div className={`bg-linear-to-br ${game?.gradient} text-white sticky top-0 z-20 shadow-md`}>
+        <div className="max-w-2xl mx-auto px-4 py-4 flex items-center space-x-3">
+          <button
+            onClick={onClose}
+            className="w-11 h-11 rounded-2xl bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"
+          >
+            <ArrowLeft className="w-6 h-6 text-white" />
+          </button>
+          <h1 className="font-bold text-xl text-white">🎲 2048</h1>
+        </div>
+      </div>
+
+      <div className="max-w-2xl mx-auto px-4 py-6 space-y-5">
+        {/* Счёт */}
+        <div className="grid grid-cols-2 gap-3">
+          <div className="bg-white rounded-2xl p-4 shadow-lg border border-stone-100 text-center">
+            <div className="text-[10px] font-bold text-stone-500 uppercase">Ball</div>
+            <div className="text-2xl font-bold text-amber-600">{score}</div>
+          </div>
+          <div className="bg-white rounded-2xl p-4 shadow-lg border border-stone-100 text-center">
+            <div className="text-[10px] font-bold text-stone-500 uppercase">Rekord</div>
+            <div className="text-2xl font-bold text-purple-600">{bestScore}</div>
+          </div>
+        </div>
+
+        {/* Игровое поле */}
+        <div className="bg-white rounded-3xl p-3 shadow-lg border border-stone-100 touch-none">
+          <div className="grid grid-cols-4 gap-2">
+            {grid.map((row, r) =>
+              row.map((value, c) => (
+                <div
+                  key={`${r}-${c}`}
+                  className={`aspect-square rounded-2xl flex items-center justify-center font-bold transition-all duration-200 ${getTileStyle(value)} ${getFontSize(value)}`}
+                >
+                  {value !== 0 ? value : ''}
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* Кнопка */}
+        <button
+          onClick={restart}
+          className="w-full py-5 bg-linear-to-br from-yellow-500 to-orange-600 text-white rounded-2xl font-bold text-lg shadow-lg active:scale-95 transition"
+        >
+          🔄 Yangi o'yin
+        </button>
+
+        {/* Инфо */}
+        <div className="text-center text-xs text-stone-500">
+          Birlashtirish uchun ekranni suring yoki strelkalardan foydalaning
+        </div>
+
+        {/* Победа */}
+        {won && (
+          <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl text-center space-y-4">
+              <div className="text-6xl">🎉</div>
+              <div className="text-2xl font-bold text-amber-600">Siz yutdingiz!</div>
+              <div className="text-sm text-stone-600">
+                Siz <b>2048</b> ga erishdingiz!
+              </div>
+              <button
+                onClick={restart}
+                className="w-full py-3 bg-linear-to-br from-yellow-500 to-orange-600 text-white rounded-2xl font-bold shadow-lg active:scale-95 transition"
+              >
+                🔄 Yana o'ynash
+              </button>
+              <button
+                onClick={onClose}
+                className="w-full py-3 bg-stone-100 text-stone-700 rounded-2xl font-bold active:scale-95 transition"
+              >
+                Yopish
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Конец игры */}
+        {gameOver && !won && (
+          <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl text-center space-y-4">
+              <div className="text-6xl">😢</div>
+              <div className="text-2xl font-bold text-rose-600">O'yin tugadi!</div>
+              <div className="text-sm text-stone-600">
+                Sizning natijangiz: <b>{score}</b>
+              </div>
+              <button
+                onClick={restart}
+                className="w-full py-3 bg-linear-to-br from-yellow-500 to-orange-600 text-white rounded-2xl font-bold shadow-lg active:scale-95 transition"
+              >
+                🔄 Yana o'ynash
+              </button>
+              <button
+                onClick={onClose}
+                className="w-full py-3 bg-stone-100 text-stone-700 rounded-2xl font-bold active:scale-95 transition"
+              >
+                Yopish
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+// ============ /2048 ============

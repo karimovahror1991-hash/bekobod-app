@@ -352,7 +352,21 @@ app.post('/api/telegram-webhook', async (req, res) => {
       return res.sendStatus(403);
     }
     const { message } = req.body;
-
+    // Команда /start — инструкция
+    if (message?.text === '/start') {
+      await sendTelegramMessage(
+        message.from.id,
+        `Assalomu alaykum! 👋\n\n` +
+        `🏙️ <b>Bekobod Shahar Portali</b> ilovasiga xush kelibsiz!\n\n` +
+        `👇 Ilovani ochish uchun pastdagi\n` +
+        `   ko'k <b>OPEN</b> tugmasini bosing:\n\n` +
+        `      ⬇️\n` +
+        `   🟦 <b>OPEN</b> 🟦\n` +
+        `      ⬆️\n\n` +
+        `Agar tugma ko'rinmasa, ekranni pastga torting yoki Telegramni qayta ishga tushiring.`
+      );
+      return res.sendStatus(200);
+    }
     if (!message?.from) {
       return res.sendStatus(200);
     }

@@ -359,9 +359,9 @@ app.post('/api/telegram-webhook', async (req, res) => {
         `Assalomu alaykum! 👋\n\n` +
         `🏙️ <b>Bekobod Shahar Portali</b> ilovasiga xush kelibsiz!\n\n` +
         `👇 Ilovani ochish uchun pastdagi\n` +
-        `   ko'k <b>OPEN</b> tugmasini bosing:\n\n` +
+        `   ko'k <b>Ochish</b> tugmasini bosing:\n\n` +
         `      ⬇️\n` +
-        `   🟦 <b>OPEN</b> 🟦\n` +
+        `   🟦 <b>Ochish</b> 🟦\n` +
         `      ⬆️\n\n` +
         `Agar tugma ko'rinmasa, ekranni pastga torting yoki Telegramni qayta ishga tushiring.`
       );

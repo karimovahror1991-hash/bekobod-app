@@ -20,6 +20,7 @@ const GAMES: Game[] = [
   { id: 'guess', title: 'Sonni top', icon: '🔢', gradient: 'from-emerald-500 to-teal-600', description: '1 dan 100 gacha' },
   { id: 'tictactoe', title: 'Krestik-nolik', icon: '✏️', gradient: 'from-cyan-500 to-blue-600', description: "Klassik o'yin" },
   { id: 'sudoku', title: 'Sudoku 4×4', icon: '📝', gradient: 'from-violet-500 to-purple-600', description: 'Mantiqiy jumboq' },
+    { id: 'puzzle15', title: '15-puzzle', icon: '🧩', gradient: 'from-cyan-500 to-teal-600', description: 'Raqamlarni tartibga soling' },
 ];
 
 // ============ RANDOMIZER ============
@@ -144,6 +145,9 @@ export const MiniOyinlarView: React.FC<MiniOyinlarViewProps> = ({ onClose }) => 
     }
         if (selectedGame === 'sudoku') {
       return <SudokuGame onClose={() => setSelectedGame(null)} game={game} />;
+    }
+        if (selectedGame === 'puzzle15') {
+      return <Puzzle15Game onClose={() => setSelectedGame(null)} game={game} />;
     }
     return (
       <div className="min-h-screen bg-linear-to-b from-stone-50 to-stone-100">
@@ -1067,3 +1071,128 @@ const SudokuGame: React.FC<{ onClose: () => void; game?: Game }> = ({ onClose, g
   );
 };
 // ============ /SUDOKU ============
+// ============ 15-PUZZLE ============
+const Puzzle15Game: React.FC<{ onClose: () => void; game?: Game }> = ({ onClose, game }) => {
+  const SIZE = 4;
+  const TOTAL = SIZE * SIZE;
+
+  const createSolved = (): number[] => {
+    const arr: number[] = [];
+    for (let i = 1; i < TOTAL; i++) arr.push(i);
+    arr.push(0); // 0 = пустая плитка
+    return arr;
+  };
+
+  const shuffle = (arr: number[]): number[] => {
+    const a = [...arr];
+    // Делаем много случайных ходов из решённого состояния (чтобы пазл был решаемым)
+    let emptyIdx = a.indexOf(0);
+    for (let i = 0; i < 200; i++) {
+      const neighbors: number[] = [];
+      const row = Math.floor(emptyIdx / SIZE);
+      const col = emptyIdx % SIZE;
+      if (row > 0) neighbors.push(emptyIdx - SIZE);
+      if (row < SIZE - 1) neighbors.push(emptyIdx + SIZE);
+      if (col > 0) neighbors.push(emptyIdx - 1);
+      if (col < SIZE - 1) neighbors.push(emptyIdx + 1);
+      const randomNeighbor = neighbors[Math.floor(Math.random() * neighbors.length)];
+      [a[emptyIdx], a[randomNeighbor]] = [a[randomNeighbor], a[emptyIdx]];
+      emptyIdx = randomNeighbor;
+    }
+    return a;
+  };
+
+  const [board, setBoard] = useState<number[]>(() => shuffle(createSolved()));
+  const [moves, setMoves] = useState(0);
+  const [won, setWon] = useState(false);
+
+  const handleClick = (idx: number) => {
+    if (won) return;
+    const emptyIdx = board.indexOf(0);
+    const row = Math.floor(idx / SIZE);
+    const col = idx % SIZE;
+    const emptyRow = Math.floor(emptyIdx / SIZE);
+    const emptyCol = emptyIdx % SIZE;
+
+    // Можно двигать только соседние плитки
+    const isNeighbor =
+      (Math.abs(row - emptyRow) === 1 && col === emptyCol) ||
+      (Math.abs(col - emptyCol) === 1 && row === emptyRow);
+
+    if (!isNeighbor) return;
+
+    const newBoard = [...board];
+    [newBoard[idx], newBoard[emptyIdx]] = [newBoard[emptyIdx], newBoard[idx]];
+    setBoard(newBoard);
+    setMoves((m) => m + 1);
+
+    // Проверка победы
+    const isSolved = newBoard.every((v, i) => (i === TOTAL - 1 ? v === 0 : v === i + 1));
+    if (isSolved) setWon(true);
+  };
+
+  const restart = () => {
+    setBoard(shuffle(createSolved()));
+    setMoves(0);
+    setWon(false);
+  };
+
+  return (
+    <div className="min-h-screen bg-linear-to-b from-stone-50 to-stone-100">
+      <div className={`bg-linear-to-br ${game?.gradient} text-white sticky top-0 z-20 shadow-md`}>
+        <div className="max-w-2xl mx-auto px-4 py-4 flex items-center space-x-3">
+          <button
+            onClick={onClose}
+            className="w-11 h-11 rounded-2xl bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"
+          >
+            <ArrowLeft className="w-6 h-6 text-white" />
+          </button>
+          <h1 className="font-bold text-xl text-white">🧩 15-puzzle</h1>
+        </div>
+      </div>
+
+      <div className="max-w-2xl mx-auto px-4 py-6 space-y-5">
+        {/* Статистика */}
+        <div className="bg-white rounded-3xl p-4 shadow-lg border border-stone-100 text-center">
+          {won ? (
+            <div className="text-xl font-bold text-emerald-600">
+              🎉 Tabriklaymiz! {moves} ta harakatda yechdingiz!
+            </div>
+          ) : (
+            <div className="text-sm font-bold text-stone-600">
+              Harakatlar: <span className="text-cyan-600">{moves}</span>
+            </div>
+          )}
+        </div>
+
+        {/* Игровое поле */}
+        <div className="bg-white rounded-3xl p-4 shadow-lg border border-stone-100">
+          <div className="grid grid-cols-4 gap-2 w-full mx-auto">
+            {board.map((value, idx) => (
+              <button
+                key={idx}
+                onClick={() => handleClick(idx)}
+                className={`aspect-square rounded-2xl flex items-center justify-center font-bold transition-all duration-200 active:scale-95 ${
+                  value === 0
+                    ? 'bg-transparent'
+                    : 'bg-linear-to-br from-cyan-500 to-teal-600 text-white text-3xl shadow-lg hover:shadow-xl'
+                }`}
+              >
+                {value !== 0 ? value : ''}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Кнопки */}
+        <button
+          onClick={restart}
+          className="w-full py-5 bg-linear-to-br from-cyan-500 to-teal-600 text-white rounded-2xl font-bold text-lg shadow-lg active:scale-95 transition"
+        >
+          🔄 Yangi o'yin
+        </button>
+      </div>
+    </div>
+  );
+};
+// ============ /15-PUZZLE ============

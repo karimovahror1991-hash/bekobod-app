@@ -20,8 +20,9 @@ const GAMES: Game[] = [
   { id: 'guess', title: 'Sonni top', icon: '🔢', gradient: 'from-emerald-500 to-teal-600', description: '1 dan 100 gacha' },
   { id: 'tictactoe', title: 'Krestik-nolik', icon: '✏️', gradient: 'from-cyan-500 to-blue-600', description: "Klassik o'yin" },
   { id: 'sudoku', title: 'Sudoku 4×4', icon: '📝', gradient: 'from-violet-500 to-purple-600', description: 'Mantiqiy jumboq' },
-    { id: 'puzzle15', title: '15-puzzle', icon: '🧩', gradient: 'from-cyan-500 to-teal-600', description: 'Raqamlarni tartibga soling' },
-];
+  { id: 'puzzle15', title: '15-puzzle', icon: '🧩', gradient: 'from-cyan-500 to-teal-600', description: 'Raqamlarni tartibga soling' },
+  { id: 'math', title: 'Tez hisoblash', icon: '➕', gradient: 'from-orange-500 to-red-600', description: 'Tez hisoblash musobaqasi' },
+  ];
 
 // ============ RANDOMIZER ============
 const RandomizerGame: React.FC<{ onClose: () => void; game?: Game }> = ({ onClose, game }) => {
@@ -148,6 +149,9 @@ export const MiniOyinlarView: React.FC<MiniOyinlarViewProps> = ({ onClose }) => 
     }
         if (selectedGame === 'puzzle15') {
       return <Puzzle15Game onClose={() => setSelectedGame(null)} game={game} />;
+    }
+        if (selectedGame === 'math') {
+      return <MathGame onClose={() => setSelectedGame(null)} game={game} />;
     }
     return (
       <div className="min-h-screen bg-linear-to-b from-stone-50 to-stone-100">
@@ -1196,3 +1200,228 @@ const Puzzle15Game: React.FC<{ onClose: () => void; game?: Game }> = ({ onClose,
   );
 };
 // ============ /15-PUZZLE ============
+// ============ TEZ HISOBLASH (Быстрый счёт) ============
+const MathGame: React.FC<{ onClose: () => void; game?: Game }> = ({ onClose, game }) => {
+  const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard'>('easy');
+  const [question, setQuestion] = useState({ a: 0, b: 0, op: '+', answer: 0 });
+  const [userAnswer, setUserAnswer] = useState('');
+  const [score, setScore] = useState(0);
+  const [streak, setStreak] = useState(0);
+  const [bestScore, setBestScore] = useState(0);
+  const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null);
+  const [timeLeft, setTimeLeft] = useState(60);
+  const [gameActive, setGameActive] = useState(false);
+  const [timeOut, setTimeOut] = useState(false);
+
+  const generateQuestion = () => {
+    let a = 0, b = 0, op = '+', answer = 0;
+
+    if (difficulty === 'easy') {
+      a = Math.floor(Math.random() * 10) + 1;
+      b = Math.floor(Math.random() * 10) + 1;
+      op = Math.random() < 0.5 ? '+' : '-';
+      if (op === '-' && b > a) [a, b] = [b, a];
+      answer = op === '+' ? a + b : a - b;
+    } else if (difficulty === 'medium') {
+      a = Math.floor(Math.random() * 20) + 1;
+      b = Math.floor(Math.random() * 20) + 1;
+      const ops = ['+', '-', '×'];
+      op = ops[Math.floor(Math.random() * ops.length)];
+      if (op === '-' && b > a) [a, b] = [b, a];
+      if (op === '+') answer = a + b;
+      else if (op === '-') answer = a - b;
+      else {
+        a = Math.floor(Math.random() * 10) + 1;
+        b = Math.floor(Math.random() * 10) + 1;
+        answer = a * b;
+      }
+    } else {
+      a = Math.floor(Math.random() * 50) + 1;
+      b = Math.floor(Math.random() * 20) + 1;
+      const ops = ['+', '-', '×'];
+      op = ops[Math.floor(Math.random() * ops.length)];
+      if (op === '-' && b > a) [a, b] = [b, a];
+      if (op === '+') answer = a + b;
+      else if (op === '-') answer = a - b;
+      else {
+        a = Math.floor(Math.random() * 15) + 1;
+        b = Math.floor(Math.random() * 15) + 1;
+        answer = a * b;
+      }
+    }
+
+    setQuestion({ a, b, op, answer });
+    setUserAnswer('');
+    setFeedback(null);
+  };
+
+  const startGame = () => {
+    setScore(0);
+    setStreak(0);
+    setTimeLeft(60);
+    setGameActive(true);
+    setTimeOut(false);
+    generateQuestion();
+  };
+
+  useEffect(() => {
+    if (!gameActive) return;
+    if (timeLeft <= 0) {
+      setGameActive(false);
+      setTimeOut(true);
+      if (score > bestScore) setBestScore(score);
+      return;
+    }
+    const timer = setTimeout(() => setTimeLeft((t) => t - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [timeLeft, gameActive]);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!gameActive || !userAnswer) return;
+
+    const num = Number(userAnswer);
+    if (num === question.answer) {
+      setScore((s) => s + 1);
+      setStreak((s) => s + 1);
+      setFeedback('correct');
+      setTimeout(() => generateQuestion(), 300);
+    } else {
+      setStreak(0);
+      setFeedback('wrong');
+      setTimeout(() => generateQuestion(), 500);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-linear-to-b from-stone-50 to-stone-100">
+      <div className={`bg-linear-to-br ${game?.gradient} text-white sticky top-0 z-20 shadow-md`}>
+        <div className="max-w-2xl mx-auto px-4 py-4 flex items-center space-x-3">
+          <button
+            onClick={onClose}
+            className="w-11 h-11 rounded-2xl bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"
+          >
+            <ArrowLeft className="w-6 h-6 text-white" />
+          </button>
+          <h1 className="font-bold text-xl text-white">➕ Tez hisoblash</h1>
+        </div>
+      </div>
+
+      <div className="max-w-2xl mx-auto px-4 py-6 space-y-5">
+        {/* Выбор сложности */}
+        {!gameActive && !timeOut && (
+          <div className="bg-white rounded-3xl p-6 shadow-lg border border-stone-100 space-y-4">
+            <div className="text-center text-base font-bold text-stone-800">
+              Qiyinlikni tanlang
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                { id: 'easy', label: 'Oson', icon: '🟢' },
+                { id: 'medium', label: "O'rta", icon: '🟡' },
+                { id: 'hard', label: 'Qiyin', icon: '🔴' },
+              ].map((d) => (
+                <button
+                  key={d.id}
+                  onClick={() => setDifficulty(d.id as any)}
+                  className={`py-4 rounded-2xl font-bold text-sm transition-all ${
+                    difficulty === d.id
+                      ? 'bg-linear-to-br from-orange-500 to-red-600 text-white shadow-lg scale-105'
+                      : 'bg-stone-100 text-stone-600'
+                  }`}
+                >
+                  <div className="text-2xl mb-1">{d.icon}</div>
+                  {d.label}
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={startGame}
+              className="w-full py-5 bg-linear-to-br from-orange-500 to-red-600 text-white rounded-2xl font-bold text-lg shadow-lg active:scale-95 transition"
+            >
+              🚀 Boshlash
+            </button>
+            {bestScore > 0 && (
+              <div className="text-center text-xs text-stone-500">
+                🏆 Eng yaxshi natija: <b>{bestScore}</b>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Игра */}
+        {gameActive && (
+          <>
+            {/* Таймер + счёт */}
+            <div className="bg-white rounded-3xl p-4 shadow-lg border border-stone-100">
+              <div className="grid grid-cols-3 gap-3 text-center">
+                <div>
+                  <div className="text-2xl font-bold text-orange-600">{timeLeft}</div>
+                  <div className="text-[10px] text-stone-500 font-semibold">⏱ VAQT</div>
+                </div>
+                <div>
+                  <div className="text-2xl font-bold text-emerald-600">{score}</div>
+                  <div className="text-[10px] text-stone-500 font-semibold">✅ BALL</div>
+                </div>
+                <div>
+                  <div className="text-2xl font-bold text-purple-600">{streak}</div>
+                  <div className="text-[10px] text-stone-500 font-semibold">🔥 SERIYA</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Пример */}
+            <div className={`bg-white rounded-3xl p-8 shadow-lg border-2 transition-all ${
+              feedback === 'correct' ? 'border-emerald-400 bg-emerald-50' :
+              feedback === 'wrong' ? 'border-rose-400 bg-rose-50' :
+              'border-stone-100'
+            }`}>
+              <div className="text-center text-5xl font-bold text-stone-900">
+                {question.a} {question.op} {question.b} = ?
+              </div>
+            </div>
+
+            {/* Ввод */}
+            <form onSubmit={handleSubmit} className="bg-white rounded-3xl p-6 shadow-lg border border-stone-100 space-y-3">
+              <input
+                type="number"
+                value={userAnswer}
+                onChange={(e) => setUserAnswer(e.target.value)}
+                autoFocus
+                placeholder="Javob..."
+                className="w-full px-4 py-5 rounded-2xl border-2 border-stone-200 text-center text-3xl font-bold focus:outline-none focus:border-orange-500"
+              />
+              <button
+                type="submit"
+                disabled={!userAnswer}
+                className="w-full py-4 bg-linear-to-br from-orange-500 to-red-600 text-white rounded-2xl font-bold text-lg shadow-lg active:scale-95 transition disabled:opacity-50"
+              >
+                Javob berish
+              </button>
+            </form>
+          </>
+        )}
+
+        {/* Итог */}
+        {timeOut && (
+          <div className="bg-linear-to-br from-orange-500 to-red-600 rounded-3xl p-8 shadow-lg text-white text-center space-y-4">
+            <div className="text-6xl">⏰</div>
+            <div className="text-2xl font-bold">Vaqt tugadi!</div>
+            <div className="text-lg">
+              Sizning natijangiz: <b>{score}</b> ball
+            </div>
+            {score > bestScore && (
+              <div className="text-yellow-300 font-bold">🏆 Yangi rekord!</div>
+            )}
+            <button
+              onClick={() => setTimeOut(false)}
+              className="w-full py-4 bg-white text-orange-700 rounded-2xl font-bold shadow-lg active:scale-95 transition"
+            >
+              🔄 Yana o'ynash
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+// ============ /TEZ HISOBLASH ============

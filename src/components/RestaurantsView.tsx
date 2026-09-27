@@ -153,7 +153,12 @@ export const RestaurantsView: React.FC<RestaurantsViewProps> = ({ onClose }) => 
                         <span>{restaurant.address}</span>
                       </div>
                     )}
-
+                    {restaurant.phone && (
+                      <div className="flex items-center space-x-2 text-sm text-stone-700">
+                        <Phone className="w-4 h-4 text-emerald-500 shrink-0" />
+                        <span className="font-semibold">{restaurant.phone}</span>
+                      </div>
+                    )}
                     {restaurant.description && (
                       <p className="text-sm text-stone-600 leading-relaxed">
                         {restaurant.description}

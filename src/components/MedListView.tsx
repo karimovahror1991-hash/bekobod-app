@@ -101,7 +101,12 @@ export const MedListView: React.FC<MedListViewProps> = ({ onClose, type }) => {
                     <span>{item.address}</span>
                   </div>
                 )}
-
+                {item.phone && (
+                  <div className="flex items-center space-x-2 text-sm text-stone-700">
+                    <Phone className="w-4 h-4 shrink-0 text-emerald-500" />
+                    <span className="font-semibold">{item.phone}</span>
+                  </div>
+                )}
                 {item.phone && (
                   <a
                     href={`tel:${item.phone.replace(/\s/g, '')}`}

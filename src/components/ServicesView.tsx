@@ -153,6 +153,12 @@ export const ServicesView: React.FC<ServicesViewProps> = ({ onClose }) => {
                 {provider.description && (
                   <p className="text-sm text-stone-600">{provider.description}</p>
                 )}
+                                {provider.phone && (
+                  <div className="flex items-center space-x-2 text-sm text-stone-700">
+                    <Phone className="w-4 h-4 shrink-0 text-emerald-500" />
+                    <span className="font-semibold">{provider.phone}</span>
+                  </div>
+                )}
                 <a
                   href={`tel:${provider.phone}`}
                   className="w-full py-3 bg-linear-to-br from-emerald-500 to-green-600 text-white rounded-2xl font-bold flex items-center justify-center space-x-2 transition shadow-lg active:scale-95"

@@ -1,3 +1,4 @@
+import { PullToRefresh } from './PullToRefresh';
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Phone, Briefcase, Plus, Loader2, Building2, Wallet, Trash2 } from 'lucide-react';
 
@@ -154,8 +155,9 @@ export const JobsView: React.FC<JobsViewProps> = ({ onClose, userId }) => {
   };
 
   return (
-    <div className="min-h-screen bg-linear-to-b from-stone-50 to-stone-100">
-      <div className="bg-white/95 backdrop-blur-lg border-b border-stone-200 sticky top-0 z-20 shadow-sm">
+        <PullToRefresh onRefresh={loadJobs}>
+      <div className="min-h-screen bg-linear-to-b from-stone-50 to-stone-100">
+        <div className="bg-white/95 backdrop-blur-lg border-b border-stone-200 sticky top-0 z-20 shadow-sm">
         <div className="max-w-2xl mx-auto px-4 pt-6 pb-4 flex items-center space-x-3">
           <button
             onClick={onClose}
@@ -410,7 +412,8 @@ export const JobsView: React.FC<JobsViewProps> = ({ onClose, userId }) => {
             </button>
           </form>
         )}
+         </div>
       </div>
-    </div>
+    </PullToRefresh>
   );
 };

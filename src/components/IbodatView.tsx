@@ -1,6 +1,5 @@
 import { SuralarView } from './SuralarView';
 import { DuolarView } from './DuolarView';
-import { QiblaView } from './QiblaView';
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Loader2, ChevronRight, Clock } from 'lucide-react';
 
@@ -10,7 +9,6 @@ interface IbodatViewProps {
 
 const CATEGORIES = [
   { id: 'namoz', label: 'Namoz vaqtlari', icon: '🕌', gradient: 'from-emerald-500 to-teal-600' },
-  { id: 'qibla', label: 'Qibla', icon: '🧭', gradient: 'from-blue-500 to-indigo-600' },
   { id: 'duolar', label: 'Duolar', icon: '📿', gradient: 'from-purple-500 to-violet-600' },
   { id: 'suralar', label: 'Suralar', icon: '📖', gradient: 'from-amber-500 to-orange-600' },
 ];
@@ -33,11 +31,7 @@ export const IbodatView: React.FC<IbodatViewProps> = ({ onClose }) => {
     }
   }, [selectedCategory]);
 
-    // Экран «Qibla»
-  if (selectedCategory === 'qibla') {
-    return <QiblaView onClose={() => setSelectedCategory(null)} />;
-  }
-  // Экран «Duolar»
+    // Экран «Duolar»
   if (selectedCategory === 'duolar') {
     return <DuolarView onClose={() => setSelectedCategory(null)} />;
   }

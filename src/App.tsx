@@ -167,14 +167,14 @@ function App() {
     return () => clearInterval(interval);
   }, [ads.length]);
 
-  const getWeatherIcon = (code: number) => {
-    if (code === 0) return <Sun className="w-8 h-8 text-yellow-500" />;
-    if (code >= 1 && code <= 3) return <Cloud className="w-8 h-8 text-gray-400" />;
-    if (code >= 45 && code <= 48) return <Cloud className="w-8 h-8 text-gray-500" />;
-    if (code >= 51 && code <= 67) return <CloudRain className="w-8 h-8 text-blue-500" />;
-    if (code >= 71 && code <= 77) return <Snowflake className="w-8 h-8 text-blue-300" />;
-    if (code >= 80 && code <= 82) return <CloudRain className="w-8 h-8 text-blue-600" />;
-    return <Sun className="w-8 h-8 text-yellow-500" />;
+    const getWeatherIcon = (code: number) => {
+    if (code === 0) return <Sun className="w-8 h-8 text-yellow-300 drop-shadow-lg" />;
+    if (code >= 1 && code <= 3) return <Cloud className="w-8 h-8 text-white drop-shadow-lg" />;
+    if (code >= 45 && code <= 48) return <Cloud className="w-8 h-8 text-stone-100 drop-shadow-lg" />;
+    if (code >= 51 && code <= 67) return <CloudRain className="w-8 h-8 text-white drop-shadow-lg" />;
+    if (code >= 71 && code <= 77) return <Snowflake className="w-8 h-8 text-white drop-shadow-lg" />;
+    if (code >= 80 && code <= 82) return <CloudRain className="w-8 h-8 text-white drop-shadow-lg" />;
+    return <Sun className="w-8 h-8 text-yellow-300 drop-shadow-lg" />;
   };
 
   const getThreeHourForecast = (weather: any) => {

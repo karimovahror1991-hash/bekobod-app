@@ -18,7 +18,6 @@ import {
   UtensilsCrossed,
   Phone,
   Mail,
-  Moon,
   Heart,
   Languages,
   ShoppingBag,
@@ -436,7 +435,7 @@ function App() {
               <button
                 key={section.id}
                 onClick={() => setActiveSection(section.id)}
-                className="group relative bg-white rounded-3xl p-5 flex flex-col items-center justify-center space-y-3 shadow-sm hover:shadow-xl transition-all duration-300 active:scale-95 border border-stone-100"
+                                className="group relative bg-white/60 backdrop-blur-sm rounded-3xl p-5 flex flex-col items-center justify-center space-y-3 border border-white/40 shadow-sm hover:bg-white/80 hover:shadow-lg transition-all duration-300 active:scale-95"
               >
                 <div className="relative">
                   <div className={`w-16 h-16 rounded-2xl bg-linear-to-br ${section.gradient} flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform duration-300`}>

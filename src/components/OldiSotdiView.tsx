@@ -1,3 +1,4 @@
+import { PullToRefresh } from './PullToRefresh';
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Loader2, Plus, Phone, Trash2, X, Image as ImageIcon, Check } from 'lucide-react';
 
@@ -583,8 +584,9 @@ export const OldiSotdiView: React.FC<OldiSotdiViewProps> = ({ onClose, userId })
     );
   }
 
-  // Главный экран Oldi sotdi
+   // Главный экран Oldi sotdi
   return (
+    <PullToRefresh onRefresh={loadListings}>
     <div className="min-h-screen bg-linear-to-b from-stone-50 to-stone-100">
       <div className="bg-white/95 backdrop-blur-lg border-b border-stone-200 sticky top-0 z-20 shadow-sm">
         <div className="max-w-2xl mx-auto px-4 pt-6 pb-4 flex items-center space-x-3">
@@ -645,7 +647,8 @@ export const OldiSotdiView: React.FC<OldiSotdiViewProps> = ({ onClose, userId })
             );
           })}
         </div>
-      </div>
+         </div>
     </div>
+    </PullToRefresh>
   );
 };

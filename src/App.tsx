@@ -8,7 +8,7 @@ import { NewsView } from './components/NewsView';
 import { RestaurantsView } from './components/RestaurantsView';
 import { JobsView } from './components/JobsView';
 import React, { useEffect, useState } from 'react';
-import { Cloud, Sun, CloudRain, Snowflake, Wind, Droplets } from 'lucide-react';
+import { Cloud, Sun, CloudRain, Snowflake, Wind, Droplets, Moon } from 'lucide-react';
 import {
   Newspaper,
   PartyPopper,
@@ -167,14 +167,23 @@ function App() {
     return () => clearInterval(interval);
   }, [ads.length]);
 
-    const getWeatherIcon = (code: number) => {
-    if (code === 0) return <Sun className="w-8 h-8 text-yellow-300 drop-shadow-lg" />;
-    if (code >= 1 && code <= 3) return <Cloud className="w-8 h-8 text-white drop-shadow-lg" />;
+    const getWeatherIcon = (code: number, hour?: number) => {
+    // Проверка: ночь или день (21:00 - 05:59 = ночь)
+    const isNight = hour !== undefined && (hour >= 21 || hour < 6);
+
+    if (code === 0 || code === 1) {
+      return isNight
+        ? <Moon className="w-8 h-8 text-blue-200 drop-shadow-lg" />
+        : <Sun className="w-8 h-8 text-yellow-300 drop-shadow-lg" />;
+    }
+    if (code >= 2 && code <= 3) return <Cloud className="w-8 h-8 text-white drop-shadow-lg" />;
     if (code >= 45 && code <= 48) return <Cloud className="w-8 h-8 text-stone-100 drop-shadow-lg" />;
     if (code >= 51 && code <= 67) return <CloudRain className="w-8 h-8 text-white drop-shadow-lg" />;
     if (code >= 71 && code <= 77) return <Snowflake className="w-8 h-8 text-white drop-shadow-lg" />;
     if (code >= 80 && code <= 82) return <CloudRain className="w-8 h-8 text-white drop-shadow-lg" />;
-    return <Sun className="w-8 h-8 text-yellow-300 drop-shadow-lg" />;
+    return isNight
+      ? <Moon className="w-8 h-8 text-blue-200 drop-shadow-lg" />
+      : <Sun className="w-8 h-8 text-yellow-300 drop-shadow-lg" />;
   };
 
   const getThreeHourForecast = (weather: any) => {
@@ -306,7 +315,7 @@ function App() {
                     <div key={i} className="flex flex-col items-center flex-1">
                       <span className="text-xs font-bold text-white drop-shadow-md">{time}</span>
                       <div className="scale-[0.6] my-0.5">
-                        {getWeatherIcon(slot.code)}
+                       {getWeatherIcon(slot.code, new Date(slot.time).getHours())}
                       </div>
                       <span className="text-sm font-bold text-white drop-shadow-md">{slot.temp}°</span>
                     </div>

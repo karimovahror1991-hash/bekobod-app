@@ -1663,7 +1663,51 @@ app.get('/api/prayer-times', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+// ============ HADISLAR ============
 
+// Список категорий хадисов
+app.get('/api/hadith/categories', async (req, res) => {
+  try {
+    const response = await fetch('https://hadeethenc.com/api/v1/categories/list/?language=uz');
+    const data = await response.json();
+    // Только корневые категории (parent_id === null)
+    const rootCategories = data.filter((c: any) => c.parent_id === null);
+    res.json({ categories: rootCategories });
+  } catch (error: any) {
+    console.error('Hadith categories error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Список хадисов в категории
+app.get('/api/hadith/list', async (req, res) => {
+  try {
+    const { category } = req.query;
+    if (!category) return res.status(400).json({ error: 'category required' });
+
+    const response = await fetch(`https://hadeethenc.com/api/v1/hadeeths/list/?language=uz&category_id=${category}`);
+    const data = await response.json();
+    res.json({ hadiths: data.data || [], meta: data.meta || {} });
+  } catch (error: any) {
+    console.error('Hadith list error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Полный хадис по ID
+app.get('/api/hadith/one', async (req, res) => {
+  try {
+    const { id } = req.query;
+    if (!id) return res.status(400).json({ error: 'id required' });
+
+    const response = await fetch(`https://hadeethenc.com/api/v1/hadeeths/one/?language=uz&id=${id}`);
+    const data = await response.json();
+    res.json(data);
+  } catch (error: any) {
+    console.error('Hadith one error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
 // ============ KURS VALYUT ============
 app.get('/api/exchange-rates', async (req, res) => {
   try {

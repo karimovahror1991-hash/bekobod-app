@@ -1,3 +1,4 @@
+import { PullToRefresh } from './PullToRefresh';
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Phone, User, Plus, Loader2, Star, Search, Car } from 'lucide-react';
 
@@ -223,9 +224,9 @@ export const TaxiView: React.FC<TaxiViewProps> = ({ onClose }) => {
     }
   };
 
-  return (
-    <div className="min-h-screen bg-linear-to-b from-stone-50 to-stone-100">
-      {/* Заголовок */}
+   return (
+    <PullToRefresh onRefresh={loadRides}>
+        <div className="min-h-screen bg-linear-to-b from-stone-50 to-stone-100">
       <div className="bg-linear-to-br from-amber-500 to-orange-600 text-white sticky top-0 z-20 shadow-lg">
         <div className="max-w-2xl mx-auto px-4 py-5 flex items-center space-x-3">
           <button
@@ -576,8 +577,9 @@ export const TaxiView: React.FC<TaxiViewProps> = ({ onClose }) => {
               </button>
             </div>
           </div>
-        </div>
+           </div>
       )}
     </div>
+    </PullToRefresh>
   );
 };

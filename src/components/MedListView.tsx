@@ -1,3 +1,4 @@
+import { PullToRefresh } from './PullToRefresh';
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Loader2, Phone, MapPin, Clock } from 'lucide-react';
 
@@ -30,24 +31,25 @@ export const MedListView: React.FC<MedListViewProps> = ({ onClose, type }) => {
   const API_URL = 'https://bekobod-app-1.onrender.com';
   const info = TYPE_INFO[type];
 
-  useEffect(() => {
     const loadItems = async () => {
-      try {
-        setLoading(true);
-        const res = await fetch(`${API_URL}/api/med/list?type=${type}`);
-        const data = await res.json();
-        setItems(data.med || []);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
+    try {
+      setLoading(true);
+      const res = await fetch(`${API_URL}/api/med/list?type=${type}`);
+      const data = await res.json();
+      setItems(data.med || []);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     loadItems();
   }, [type]);
 
-  return (
+   return (
+    <PullToRefresh onRefresh={loadItems}>
     <div className="min-h-screen bg-linear-to-b from-stone-50 to-stone-100">
       <div className={`bg-linear-to-br ${info.gradient} text-white sticky top-0 z-20 shadow-md`}>
         <div className="max-w-2xl mx-auto px-4 pt-6 pb-4 flex items-center space-x-3">
@@ -128,7 +130,8 @@ export const MedListView: React.FC<MedListViewProps> = ({ onClose, type }) => {
             ))}
           </div>
         )}
-      </div>
+        </div>
     </div>
+    </PullToRefresh>
   );
 };

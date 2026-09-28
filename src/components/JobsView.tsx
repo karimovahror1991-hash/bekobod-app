@@ -206,9 +206,7 @@ export const JobsView: React.FC<JobsViewProps> = ({ onClose, userId }) => {
                   <button
                     key={cat.id}
                     onClick={() => setSelectedCategory(cat.id)}
-                    className={`relative bg-linear-to-br ${cat.gradient} text-white rounded-3xl p-5 flex flex-col items-center justify-center shadow-lg hover:shadow-xl transition-all duration-300 active:scale-95 min-h-32 ${
-                      isActive ? 'ring-4 ring-amber-400 scale-105' : 'opacity-90'
-                    }`}
+                                        className={`relative bg-linear-to-br ${cat.gradient} text-white rounded-3xl p-5 flex flex-col items-center justify-center shadow-lg hover:shadow-xl transition-all duration-300 active:scale-95 min-h-32`}
                   >
                     <div className="text-5xl mb-2">{cat.icon}</div>
                     <div className="font-bold text-sm text-white text-center leading-tight">
@@ -217,11 +215,7 @@ export const JobsView: React.FC<JobsViewProps> = ({ onClose, userId }) => {
                     <div className="text-[10px] text-white/80 mt-1">
                       {count} ta
                     </div>
-                    {isActive && (
-                      <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-white text-amber-600 flex items-center justify-center text-sm font-bold">
-                        ✓
-                      </div>
-                    )}
+                    
                   </button>
                 );
               })}

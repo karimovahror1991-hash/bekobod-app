@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Loader2, Phone, MapPin } from 'lucide-react';
+import { ArrowLeft, Loader2, Phone, MapPin, Clock } from 'lucide-react';
 
 interface MedListViewProps {
   onClose: () => void;
@@ -15,6 +15,7 @@ interface MedItem {
   address: string | null;
   description: string | null;
   image_url: string | null;
+  hours: string | null;
 }
 
 const TYPE_INFO = {
@@ -105,6 +106,12 @@ export const MedListView: React.FC<MedListViewProps> = ({ onClose, type }) => {
                   <div className="flex items-center space-x-2 text-sm text-stone-700">
                     <Phone className="w-4 h-4 shrink-0 text-emerald-500" />
                     <span className="font-semibold">{item.phone}</span>
+                  </div>
+                )}
+                                {item.hours && (
+                  <div className="flex items-center space-x-2 text-sm text-stone-700">
+                    <Clock className="w-4 h-4 shrink-0 text-amber-500" />
+                    <span className="font-semibold">{item.hours}</span>
                   </div>
                 )}
                 {item.phone && (

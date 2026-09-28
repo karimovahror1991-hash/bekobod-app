@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Phone, MapPin, Loader2, Star } from 'lucide-react';
+import { ArrowLeft, Phone, MapPin, Loader2, Star, Clock } from 'lucide-react';
 
 interface RestaurantsViewProps {
   onClose: () => void;
@@ -13,6 +13,7 @@ interface Restaurant {
   phone: string | null;
   description: string | null;
   image_url: string | null;
+  hours: string | null;
   created_at: string;
 }
 
@@ -167,6 +168,12 @@ export const RestaurantsView: React.FC<RestaurantsViewProps> = ({ onClose }) => 
                       <div className="flex items-center space-x-2 text-sm text-stone-700">
                         <Phone className="w-4 h-4 text-emerald-500 shrink-0" />
                         <span className="font-semibold">{restaurant.phone}</span>
+                      </div>
+                    )}
+                                        {restaurant.hours && (
+                      <div className="flex items-center space-x-2 text-sm text-stone-700">
+                        <Clock className="w-4 h-4 text-amber-500 shrink-0" />
+                        <span className="font-semibold">{restaurant.hours}</span>
                       </div>
                     )}
                     {restaurant.description && (

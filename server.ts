@@ -373,7 +373,8 @@ app.post('/api/telegram-webhook', async (req, res) => {
       );
       return res.sendStatus(200);
     }
-     // Команда /add_place (с фото или без)
+         // Команда /add_place (с фото или без)
+    // Формат: /add_place kategoriya | nomi | manzil | telefon | ish_vaqti | tavsif
     if ((message?.text?.startsWith('/add_place') || message?.caption?.startsWith('/add_place')) && ADMINS.includes(message.from.id)) {
       const rawText = message.text || message.caption || '';
       const parts = rawText.split('|').map((s: string) => s.trim());
@@ -381,9 +382,9 @@ app.post('/api/telegram-webhook', async (req, res) => {
       if (parts.length < 3) {
         await sendTelegramMessage(
           message.from.id,
-          `❌ <b>Format:</b>\n<code>/add_place kategoriya | nomi | manzil | telefon | tavsif</code>\n\n` +
+          `❌ <b>Format:</b>\n<code>/add_place kategoriya | nomi | manzil | telefon | ish_vaqti | tavsif</code>\n\n` +
           `<b>Kategoriyalar:</b> fastfood, milliy, kafe, restoran, chayxana, shirinlik, yarim_tayyor\n\n` +
-          `<b>Misol:</b>\n<code>/add_place fastfood | AGASI FOOD | Bunyodkor 55 | +998903277714 | Mazali taomlar</code>\n\n` +
+          `<b>Misol:</b>\n<code>/add_place fastfood | AGASI FOOD | Bunyodkor 55 | +998903277714 | 11:00-23:00 | Mazali taomlar</code>\n\n` +
           `<b>Rasm bilan:</b> rasm yuborib, izohga shu formatni yozing`
         );
       } else {
@@ -391,9 +392,10 @@ app.post('/api/telegram-webhook', async (req, res) => {
         const name = parts[1];
         const address = parts[2] || null;
         const phone = parts[3] || null;
-        const description = parts[4] || null;
+        const hours = parts[4] || null;
+        const description = parts[5] || null;
 
-        // Картинка (если есть)
+        // Картинка
         let imageUrl: string | null = null;
         if (message.photo && message.photo.length > 0) {
           const fileId = message.photo[message.photo.length - 1].file_id;
@@ -412,13 +414,13 @@ app.post('/api/telegram-webhook', async (req, res) => {
         }
 
         const result = await pool.query(
-          'INSERT INTO restaurants (name, category, address, phone, description, image_url) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
-          [name, category, address, phone, description, imageUrl]
+          'INSERT INTO restaurants (name, category, address, phone, description, image_url, hours) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
+          [name, category, address, phone, description, imageUrl, hours]
         );
 
         await sendTelegramMessage(
           message.from.id,
-          `✅ <b>Qo'shildi!</b>\n\n📌 ${name}\n📍 ${address || "yo'q"}\n📞 ${phone || "yo'q"}\n🖼 ${imageUrl ? 'Ha' : "yo'q"}\nID: <code>${result.rows[0].id}</code>`
+          `✅ <b>Qo'shildi!</b>\n\n📌 ${name}\n📍 ${address || "yo'q"}\n📞 ${phone || "yo'q"}\n🕐 ${hours || "yo'q"}\n📝 ${description || "yo'q"}\n🖼 ${imageUrl ? 'Ha' : "yo'q"}\nID: <code>${result.rows[0].id}</code>`
         );
       }
     }
@@ -562,7 +564,8 @@ app.post('/api/telegram-webhook', async (req, res) => {
         }
       }
     }
-       // Команда /add_med (с фото или без)
+           // Команда /add_med (с фото или без)
+    // Формат: /add_med tur | nomi | manzil | telefon | ish_vaqti | tavsif
     if ((message?.text?.startsWith('/add_med') || message?.caption?.startsWith('/add_med')) && ADMINS.includes(message.from.id)) {
       const rawText = message.text || message.caption || '';
       const parts = rawText.split('|').map((s: string) => s.trim());
@@ -570,9 +573,9 @@ app.post('/api/telegram-webhook', async (req, res) => {
       if (parts.length < 3) {
         await sendTelegramMessage(
           message.from.id,
-          `❌ <b>Format:</b>\n<code>/add_med tur | nomi | manzil | telefon | tavsif</code>\n\n` +
+          `❌ <b>Format:</b>\n<code>/add_med tur | nomi | manzil | telefon | ish_vaqti | tavsif</code>\n\n` +
           `<b>Turlar:</b> dorixona, kasalxona\n\n` +
-          `<b>Misol:</b>\n<code>/add_med dorixona | Dori-Darmon | Navoiy 10 | +998901234567 | 24/7 ishlaydi</code>\n\n` +
+          `<b>Misol:</b>\n<code>/add_med dorixona | Dori-Darmon | Navoiy 10 | +998901234567 | 24/7 | Zamonaviy dorixona</code>\n\n` +
           `<b>Rasm bilan:</b> rasm yuborib, izohga shu formatni yozing`
         );
       } else {
@@ -580,7 +583,8 @@ app.post('/api/telegram-webhook', async (req, res) => {
         const name = parts[1];
         const address = parts[2] || null;
         const phone = parts[3] || null;
-        const description = parts[4] || null;
+        const hours = parts[4] || null;
+        const description = parts[5] || null;
 
         // Картинка
         let imageUrl: string | null = null;
@@ -601,13 +605,13 @@ app.post('/api/telegram-webhook', async (req, res) => {
         }
 
         const result = await pool.query(
-          'INSERT INTO doctors (type, name, specialty, phone, address, description, image_url) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
-          [type, name, description || type, phone, address, null, imageUrl]
+          'INSERT INTO doctors (type, name, specialty, phone, address, description, image_url, hours) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *',
+          [type, name, description || type, phone, address, null, imageUrl, hours]
         );
 
         await sendTelegramMessage(
           message.from.id,
-          `✅ <b>${type} qo'shildi!</b>\n\n📌 ${name}\n🖼 ${imageUrl ? 'Ha' : "yo'q"}\nID: <code>${result.rows[0].id}</code>`
+          `✅ <b>${type} qo'shildi!</b>\n\n📌 ${name}\n📍 ${address || "yo'q"}\n📞 ${phone || "yo'q"}\n🕐 ${hours || "yo'q"}\n📝 ${description || "yo'q"}\n🖼 ${imageUrl ? 'Ha' : "yo'q"}\nID: <code>${result.rows[0].id}</code>`
         );
       }
     }

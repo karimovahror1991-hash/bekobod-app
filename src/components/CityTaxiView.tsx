@@ -1,3 +1,4 @@
+import { PullToRefresh } from './PullToRefresh';
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Loader2, Phone } from 'lucide-react';
 
@@ -19,23 +20,25 @@ export const CityTaxiView: React.FC<CityTaxiViewProps> = ({ onClose }) => {
 
   const API_URL = 'https://bekobod-app-1.onrender.com';
 
-  useEffect(() => {
     const loadTaxis = async () => {
-      try {
-        setLoading(true);
-        const res = await fetch(`${API_URL}/api/city-taxi/list`);
-        const data = await res.json();
-        setTaxis(data.taxis || []);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
+    try {
+      setLoading(true);
+      const res = await fetch(`${API_URL}/api/city-taxi/list`);
+      const data = await res.json();
+      setTaxis(data.taxis || []);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     loadTaxis();
   }, []);
 
-  return (
+   return (
+    <PullToRefresh onRefresh={loadTaxis}>
     <div className="min-h-screen bg-linear-to-b from-stone-50 to-stone-100">
       <div className="bg-linear-to-br from-amber-500 to-orange-600 text-white sticky top-0 z-20 shadow-md">
         <div className="max-w-2xl mx-auto px-4 pt-6 pb-4 flex items-center space-x-3">
@@ -96,7 +99,8 @@ export const CityTaxiView: React.FC<CityTaxiViewProps> = ({ onClose }) => {
             </div>
           ))
         )}
-      </div>
+       </div>
     </div>
+    </PullToRefresh>
   );
 };

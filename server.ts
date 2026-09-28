@@ -1337,15 +1337,37 @@ app.post('/api/contacts/create', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
-   // ============ JOBS (VAKANSIYA) ============
+  // ============ JOBS (VAKANSIYA) ============
 app.post('/api/jobs/create', async (req, res) => {
   try {
-    const { companyName, position, salary, description, phone, category } = req.body;
+    const { companyName, position, salary, description, phone, category, userId } = req.body;
     if (!companyName || !position || !phone) return res.status(400).json({ error: 'Заполните компанию, должность и телефон' });
-    const result = await pool.query('INSERT INTO jobs (company_name, position, salary, description, phone, category) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *', [companyName, position, salary || null, description || null, phone, category || 'boshqa']);
+    const result = await pool.query(
+      'INSERT INTO jobs (company_name, position, salary, description, phone, category, user_id) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
+      [companyName, position, salary || null, description || null, phone, category || 'boshqa', userId || null]
+    );
     res.json({ job: result.rows[0] });
   } catch (error: any) {
     console.error('Job create error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Удалить вакансию (только своё)
+app.post('/api/jobs/delete', async (req, res) => {
+  try {
+    const { jobId, userId } = req.body;
+    if (!jobId || !userId) return res.status(400).json({ error: 'ID kerak' });
+    const result = await pool.query(
+      'DELETE FROM jobs WHERE id = $1 AND user_id = $2 RETURNING position',
+      [jobId, userId]
+    );
+    if (result.rows.length === 0) {
+      return res.status(403).json({ error: "Bu vakansiya sizga tegishli emas" });
+    }
+    res.json({ ok: true, position: result.rows[0].position });
+  } catch (error: any) {
+    console.error('Job delete error:', error);
     res.status(500).json({ error: error.message });
   }
 });

@@ -221,9 +221,10 @@ function App() {
   if (activeSection === 'admin') {
     return <AdminView onClose={() => setActiveSection(null)} userId={userId} />;
   }
-  if (activeSection === 'jobs') {
-    return <JobsView onClose={() => setActiveSection(null)} />;
+    if (activeSection === 'jobs') {
+    return <JobsView onClose={() => setActiveSection(null)} userId={userId} />;
   }
+  
   if (activeSection === 'restaurants') {
     return <RestaurantsView onClose={() => setActiveSection(null)} />;
   }

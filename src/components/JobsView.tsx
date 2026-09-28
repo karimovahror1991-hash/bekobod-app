@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Phone, Briefcase, Plus, Loader2, Building2, Wallet } from 'lucide-react';
+import { ArrowLeft, Phone, Briefcase, Plus, Loader2, Building2, Wallet, Trash2 } from 'lucide-react';
 
 interface JobsViewProps {
   onClose: () => void;
+  userId: number | null;
 }
 
 interface Job {
@@ -14,6 +15,7 @@ interface Job {
   phone: string;
   category: string;
   status: string;
+  user_id: number | null;
   created_at: string;
 }
 
@@ -27,7 +29,7 @@ const CATEGORIES = [
   { id: 'boshqa', label: 'Boshqa', icon: '💼', gradient: 'from-violet-500 to-purple-600' },
 ];
 
-export const JobsView: React.FC<JobsViewProps> = ({ onClose }) => {
+export const JobsView: React.FC<JobsViewProps> = ({ onClose, userId }) => {
   const [tab, setTab] = useState<'list' | 'create'>('list');
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
@@ -78,13 +80,14 @@ export const JobsView: React.FC<JobsViewProps> = ({ onClose }) => {
       const res = await fetch(`${API_URL}/api/jobs/create`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+                body: JSON.stringify({
           companyName: companyName.trim(),
           position: position.trim(),
           salary: salary.trim() || null,
           description: description.trim() || null,
           phone: normalizedPhone,
           category,
+          userId,
         }),
       });
       const data = await res.json();
@@ -104,6 +107,26 @@ export const JobsView: React.FC<JobsViewProps> = ({ onClose }) => {
       alert('Xatolik yuz berdi');
     } finally {
       setCreating(false);
+    }
+  };
+  const handleDelete = async (jobId: number) => {
+    if (!userId) return;
+    if (!confirm("Vakansiyani o'chirishni tasdiqlaysizmi?")) return;
+
+    try {
+      const res = await fetch(`${API_URL}/api/jobs/delete`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ jobId, userId }),
+      });
+      const data = await res.json();
+      if (data.error) {
+        alert(data.error);
+        return;
+      }
+      loadJobs();
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -259,14 +282,24 @@ export const JobsView: React.FC<JobsViewProps> = ({ onClose }) => {
                       </p>
                     )}
 
-                    <a
+                                     <a
                       href={`tel:${job.phone}`}
                       className="w-full py-3 bg-linear-to-br from-emerald-500 to-green-600 text-white rounded-2xl font-bold flex items-center justify-center space-x-2 transition shadow-lg active:scale-95"
                     >
                       <Phone className="w-5 h-5" />
                       <span>Qo'ng'iroq qilish</span>
                     </a>
-                  </div>
+
+                                    {userId && job.user_id === userId && (
+                      <button
+                        onClick={() => handleDelete(job.id)}
+                        className="w-full py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-2xl text-xs font-semibold transition border border-rose-200 flex items-center justify-center space-x-1.5"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        <span>Vakansiyani o'chirish</span>
+                      </button>
+                    )}
+                               </div>
                 ))}
               </div>
             )}

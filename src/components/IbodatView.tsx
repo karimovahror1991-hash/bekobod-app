@@ -1,4 +1,3 @@
-import { HadislarView } from './HadislarView';
 import { SuralarView } from './SuralarView';
 import { DuolarView } from './DuolarView';
 import React, { useState, useEffect } from 'react';
@@ -12,8 +11,7 @@ const CATEGORIES = [
   { id: 'namoz', label: 'Namoz vaqtlari', icon: '🕌', gradient: 'from-emerald-500 to-teal-600' },
   { id: 'duolar', label: 'Duolar', icon: '📿', gradient: 'from-purple-500 to-violet-600' },
   { id: 'suralar', label: 'Suralar', icon: '📖', gradient: 'from-amber-500 to-orange-600' },
-  { id: 'hadislar', label: 'Hadislar', icon: '📚', gradient: 'from-emerald-600 to-green-700' },
-];
+ ];
 
 export const IbodatView: React.FC<IbodatViewProps> = ({ onClose }) => {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -41,9 +39,7 @@ export const IbodatView: React.FC<IbodatViewProps> = ({ onClose }) => {
   if (selectedCategory === 'suralar') {
     return <SuralarView onClose={() => setSelectedCategory(null)} />;
   }
-    if (selectedCategory === 'hadislar') {
-    return <HadislarView onClose={() => setSelectedCategory(null)} />;
-  }
+ 
     // Экран «Namoz vaqtlari»
   if (selectedCategory === 'namoz') {
     const catInfo = CATEGORIES.find(c => c.id === 'namoz');

@@ -246,23 +246,7 @@ function App() {
 
   return (
     <div className="min-h-screen bg-linear-to-b from-stone-50 to-stone-100 text-stone-900 flex flex-col">
-      {/* Верхняя панель */}
-      <div className="bg-white/80 backdrop-blur-lg border-b border-stone-200 sticky top-0 z-20">
-        <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <div className="w-10 h-10 rounded-xl bg-linear-to-br from-amber-500 to-orange-600 flex items-center justify-center text-white font-bold text-lg shadow-lg">
-              B
-            </div>
-            <div>
-              <h1 className="font-bold text-base leading-tight">Bekobod</h1>
-              <p className="text-[10px] text-stone-500 leading-tight">Shahar portali</p>
-            </div>
-          </div>
-          <div className="text-[10px] text-stone-400 font-medium">
-            🇺🇿 UZ
-          </div>
-        </div>
-      </div>
+     
 
            {/* Погода */}
       <div className="max-w-2xl w-full mx-auto px-4 pt-4">

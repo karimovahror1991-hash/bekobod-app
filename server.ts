@@ -1079,9 +1079,26 @@ app.post('/api/taxi/delete', async (req, res) => {
 
 app.post('/api/taxi/rate', async (req, res) => {
   try {
-    const { rideId, rating } = req.body;
-    if (!rideId || !rating || rating < 1 || rating > 5) return res.status(400).json({ error: 'Неверная оценка' });
-    await pool.query('INSERT INTO taxi_ratings (ride_id, rating) VALUES ($1, $2)', [rideId, rating]);
+    const { rideId, rating, userId } = req.body;
+    if (!rideId || !rating || rating < 1 || rating > 5) {
+      return res.status(400).json({ error: 'Неверная оценка' });
+    }
+    if (!userId) {
+      return res.status(400).json({ error: 'Avval Telegram orqali kiring' });
+    }
+
+    const existing = await pool.query(
+      'SELECT id FROM taxi_ratings WHERE ride_id = $1 AND user_id = $2',
+      [rideId, userId]
+    );
+    if (existing.rows.length > 0) {
+      return res.status(400).json({ error: 'Siz allaqachon baholagansiz' });
+    }
+
+    await pool.query(
+      'INSERT INTO taxi_ratings (ride_id, rating, user_id) VALUES ($1, $2, $3)',
+      [rideId, rating, userId]
+    );
     res.json({ ok: true });
   } catch (error: any) {
     console.error('Taxi rate error:', error);
@@ -1229,9 +1246,26 @@ app.get('/api/services/list', async (req, res) => {
 
 app.post('/api/services/rate', async (req, res) => {
   try {
-    const { providerId, rating } = req.body;
-    if (!providerId || !rating || rating < 1 || rating > 5) return res.status(400).json({ error: 'Неверная оценка' });
-    await pool.query('INSERT INTO service_ratings (provider_id, rating) VALUES ($1, $2)', [providerId, rating]);
+    const { providerId, rating, userId } = req.body;
+    if (!providerId || !rating || rating < 1 || rating > 5) {
+      return res.status(400).json({ error: 'Неверная оценка' });
+    }
+    if (!userId) {
+      return res.status(400).json({ error: 'Avval Telegram orqali kiring' });
+    }
+
+    const existing = await pool.query(
+      'SELECT id FROM service_ratings WHERE provider_id = $1 AND user_id = $2',
+      [providerId, userId]
+    );
+    if (existing.rows.length > 0) {
+      return res.status(400).json({ error: 'Siz allaqachon baholagansiz' });
+    }
+
+    await pool.query(
+      'INSERT INTO service_ratings (provider_id, rating, user_id) VALUES ($1, $2, $3)',
+      [providerId, rating, userId]
+    );
     res.json({ ok: true });
   } catch (error: any) {
     console.error('Service rate error:', error);
@@ -1405,16 +1439,29 @@ app.post('/api/restaurants/create', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
-// Оценить ресторан
+// Оценить ресторан (только один раз)
 app.post('/api/restaurants/rate', async (req, res) => {
   try {
     const { restaurantId, rating, userId } = req.body;
     if (!restaurantId || !rating || rating < 1 || rating > 5) {
       return res.status(400).json({ error: 'Неверная оценка' });
     }
+    if (!userId) {
+      return res.status(400).json({ error: 'Avval Telegram orqali kiring' });
+    }
+
+    // Проверка: уже оценивал?
+    const existing = await pool.query(
+      'SELECT id FROM restaurant_ratings WHERE restaurant_id = $1 AND user_id = $2',
+      [restaurantId, userId]
+    );
+    if (existing.rows.length > 0) {
+      return res.status(400).json({ error: 'Siz allaqachon baholagansiz' });
+    }
+
     await pool.query(
       'INSERT INTO restaurant_ratings (restaurant_id, rating, user_id) VALUES ($1, $2, $3)',
-      [restaurantId, rating, userId || null]
+      [restaurantId, rating, userId]
     );
     res.json({ ok: true });
   } catch (error: any) {
@@ -1436,6 +1483,23 @@ app.get('/api/restaurants/rating/:restaurantId', async (req, res) => {
     res.json({ avgRating: Math.round(avg * 10) / 10, count });
   } catch (error: any) {
     console.error('Restaurant rating error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+// Моя оценка ресторана
+app.get('/api/restaurants/my-rating/:restaurantId', async (req, res) => {
+  try {
+    const { restaurantId } = req.params;
+    const { userId } = req.query;
+    if (!userId) return res.json({ rating: null });
+
+    const result = await pool.query(
+      'SELECT rating FROM restaurant_ratings WHERE restaurant_id = $1 AND user_id = $2',
+      [restaurantId, userId]
+    );
+    res.json({ rating: result.rows.length > 0 ? result.rows[0].rating : null });
+  } catch (error: any) {
+    console.error('My rating error:', error);
     res.status(500).json({ error: error.message });
   }
 });

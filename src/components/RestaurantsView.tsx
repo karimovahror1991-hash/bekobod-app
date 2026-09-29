@@ -34,6 +34,7 @@ export const RestaurantsView: React.FC<RestaurantsViewProps> = ({ onClose }) => 
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [ratings, setRatings] = useState<{[key: number]: {avg: number, count: number}}>({});
+  const [myRatings, setMyRatings] = useState<{[key: number]: number}>({});
   const [showRatingModal, setShowRatingModal] = useState<Restaurant | null>(null);
   const [selectedRating, setSelectedRating] = useState(0);
   const [userId, setUserId] = useState<number | null>(null);
@@ -67,7 +68,7 @@ export const RestaurantsView: React.FC<RestaurantsViewProps> = ({ onClose }) => 
     }
   };
 
-  useEffect(() => {
+    useEffect(() => {
     loadRestaurants();
     const tg = (window as any).Telegram?.WebApp;
     if (tg?.initDataUnsafe?.user?.id) {
@@ -75,14 +76,36 @@ export const RestaurantsView: React.FC<RestaurantsViewProps> = ({ onClose }) => 
     }
   }, []);
 
-  const handleRate = async (rating: number) => {
+  // Загрузка моих оценок
+  useEffect(() => {
+    if (!userId || restaurants.length === 0) return;
+    const loadMyRatings = async () => {
+      const my: {[key: number]: number} = {};
+      for (const r of restaurants) {
+        try {
+          const res = await fetch(`${API_URL}/api/restaurants/my-rating/${r.id}?userId=${userId}`);
+          const data = await res.json();
+          if (data.rating) my[r.id] = data.rating;
+        } catch {}
+      }
+      setMyRatings(my);
+    };
+    loadMyRatings();
+  }, [userId, restaurants.length]);
+
+    const handleRate = async (rating: number) => {
     if (!showRatingModal) return;
     try {
-      await fetch(`${API_URL}/api/restaurants/rate`, {
+      const res = await fetch(`${API_URL}/api/restaurants/rate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ restaurantId: showRatingModal.id, rating, userId }),
       });
+      const data = await res.json();
+      if (data.error) {
+        alert(data.error);
+        return;
+      }
       setShowRatingModal(null);
       setSelectedRating(0);
       loadRestaurants();
@@ -193,11 +216,19 @@ export const RestaurantsView: React.FC<RestaurantsViewProps> = ({ onClose }) => 
                           <span>Qo'ng'iroq</span>
                         </a>
                       )}
-                      <button
-                        onClick={() => setShowRatingModal(restaurant)}
-                                                className="flex-1 py-3 bg-amber-100 hover:bg-amber-200 text-amber-800 rounded-2xl font-bold text-sm transition active:scale-95 flex items-center justify-center space-x-2"
+                                          <button
+                        onClick={() => {
+                          if (myRatings[restaurant.id]) return;
+                          setShowRatingModal(restaurant);
+                        }}
+                        disabled={!!myRatings[restaurant.id]}
+                        className={`flex-1 py-3 rounded-2xl font-bold text-sm transition flex items-center justify-center space-x-2 ${
+                          myRatings[restaurant.id]
+                            ? 'bg-emerald-100 text-emerald-700 cursor-not-allowed'
+                            : 'bg-amber-100 hover:bg-amber-200 text-amber-800 active:scale-95'
+                        }`}
                       >
-                        ⭐ Baholash
+                        {myRatings[restaurant.id] ? '✅ Baholangan' : '⭐ Baholash'}
                       </button>
                                    </div>
                     </div>

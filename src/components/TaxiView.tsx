@@ -41,6 +41,7 @@ export const TaxiView: React.FC<TaxiViewProps> = ({ onClose }) => {
   const [ratings, setRatings] = useState<{[key: string]: {avg: number, count: number}}>({});
   const [showRatingModal, setShowRatingModal] = useState<string | null>(null);
   const [selectedRating, setSelectedRating] = useState(0);
+  const [myRatings, setMyRatings] = useState<{[key: number]: number}>({});
 
   const API_URL = 'https://bekobod-app-1.onrender.com';
 
@@ -97,7 +98,22 @@ export const TaxiView: React.FC<TaxiViewProps> = ({ onClose }) => {
   useEffect(() => {
     loadRides();
   }, [direction]);
-
+  // Загрузка моих оценок
+  useEffect(() => {
+    if (!userId || rides.length === 0) return;
+    const loadMyRatings = async () => {
+      const my: {[key: number]: number} = {};
+      for (const r of rides) {
+        try {
+          const res = await fetch(`${API_URL}/api/taxi/my-rating/${r.id}?userId=${userId}`);
+          const data = await res.json();
+          if (data.rating) my[r.id] = data.rating;
+        } catch {}
+      }
+      setMyRatings(my);
+    };
+    loadMyRatings();
+  }, [userId, rides.length]);
   useEffect(() => {
     loadDrivers();
   }, []);
@@ -207,15 +223,20 @@ export const TaxiView: React.FC<TaxiViewProps> = ({ onClose }) => {
     }
   };
 
-  const handleRate = async (rating: number) => {
+    const handleRate = async (rating: number) => {
     if (!showRatingModal) return;
     const rideId = Number(showRatingModal);
     try {
-      await fetch(`${API_URL}/api/taxi/rate`, {
+      const res = await fetch(`${API_URL}/api/taxi/rate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ rideId, rating }),
+        body: JSON.stringify({ rideId, rating, userId }),
       });
+      const data = await res.json();
+      if (data.error) {
+        alert(data.error);
+        return;
+      }
       setShowRatingModal(null);
       setSelectedRating(0);
       loadRides();
@@ -358,11 +379,19 @@ export const TaxiView: React.FC<TaxiViewProps> = ({ onClose }) => {
                               )}
                             </div>
                           </div>
-                          <button
-                            onClick={() => setShowRatingModal(ride.id.toString())}
-                                                        className="flex-1 py-2.5 bg-amber-100 hover:bg-amber-200 text-amber-800 rounded-xl text-xs font-semibold transition flex items-center justify-center space-x-1.5"
+                                                    <button
+                            onClick={() => {
+                              if (myRatings[ride.id]) return;
+                              setShowRatingModal(ride.id.toString());
+                            }}
+                            disabled={!!myRatings[ride.id]}
+                            className={`flex-1 py-2.5 rounded-xl text-xs font-semibold transition flex items-center justify-center space-x-1.5 ${
+                              myRatings[ride.id]
+                                ? 'bg-emerald-100 text-emerald-700 cursor-not-allowed'
+                                : 'bg-amber-100 hover:bg-amber-200 text-amber-800'
+                            }`}
                           >
-                            ⭐ Baholash
+                            {myRatings[ride.id] ? '✅ Baholangan' : '⭐ Baholash'}
                           </button>
                         </div>
                         {ride.driver_phone && (

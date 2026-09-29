@@ -1160,6 +1160,23 @@ app.get('/api/taxi/driver-rating/:phone', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+// Моя оценка рейса
+app.get('/api/taxi/my-rating/:rideId', async (req, res) => {
+  try {
+    const { rideId } = req.params;
+    const { userId } = req.query;
+    if (!userId) return res.json({ rating: null });
+
+    const result = await pool.query(
+      'SELECT rating FROM taxi_ratings WHERE ride_id = $1 AND user_id = $2',
+      [rideId, userId]
+    );
+    res.json({ rating: result.rows.length > 0 ? result.rows[0].rating : null });
+  } catch (error: any) {
+    console.error('My taxi rating error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
 // ============ CITY TAXI (городское такси) ============
 
 // Список городских такси

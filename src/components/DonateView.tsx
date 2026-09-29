@@ -23,8 +23,8 @@ export const DonateView: React.FC<DonateViewProps> = ({ onClose }) => {
   };
 
   return (
-    <div className="min-h-screen bg-linear-to-b from-rose-50 to-pink-100">
-      <div className="bg-linear-to-br from-rose-500 to-pink-600 text-white sticky top-0 z-20 shadow-md">
+    <div className="min-h-screen bg-linear-to-b from-emerald-50 to-teal-100">
+  <div className="bg-linear-to-br from-emerald-500 to-teal-600 text-white sticky top-0 z-20 shadow-md">
         <div className="max-w-2xl mx-auto px-4 pt-6 pb-4 flex items-center space-x-3">
           <button
             onClick={onClose}
@@ -61,7 +61,7 @@ export const DonateView: React.FC<DonateViewProps> = ({ onClose }) => {
             sizning yordamingiz kerak. Har qanday hissa — katta yoki kichik — biz uchun juda qadrli!
           </p>
 
-          <div className="bg-rose-50 rounded-2xl p-4 text-xs text-rose-800 space-y-1">
+                    <div className="bg-emerald-50 rounded-2xl p-4 text-xs text-emerald-800 space-y-1">
             <div>✅ Ilova doim bepul qoladi</div>
             <div>✅ Reklama kamayadi</div>
             <div>✅ Yangi funksiyalar tezroq qo'shiladi</div>
@@ -75,7 +75,7 @@ export const DonateView: React.FC<DonateViewProps> = ({ onClose }) => {
         {!showCards ? (
           <button
             onClick={() => setShowCards(true)}
-            className="w-full py-5 bg-linear-to-br from-rose-500 to-pink-600 text-white rounded-3xl font-bold text-lg shadow-xl hover:shadow-2xl active:scale-95 transition-all flex items-center justify-center space-x-2"
+                       className="w-full py-5 bg-linear-to-br from-emerald-500 to-teal-600 text-white rounded-3xl font-bold text-lg shadow-xl hover:shadow-2xl active:scale-95 transition-all flex items-center justify-center space-x-2"
           >
             <Heart className="w-6 h-6 fill-white" />
             <span>Qo'llab-quvvatlash</span>
@@ -92,7 +92,7 @@ export const DonateView: React.FC<DonateViewProps> = ({ onClose }) => {
             {CARDS.map((card) => (
               <div
                 key={card.id}
-                className="bg-linear-to-br from-rose-500 to-pink-600 rounded-3xl p-6 shadow-xl text-white space-y-4"
+                                className="bg-linear-to-br from-emerald-500 to-teal-600 rounded-3xl p-6 shadow-xl text-white space-y-4"
               >
                 <div className="flex items-center justify-between">
                   <div className="text-sm font-bold opacity-90">{card.name}</div>

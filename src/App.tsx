@@ -22,7 +22,8 @@ import {
   Heart,
   Languages,
   ShoppingBag,
-  Gamepad2
+  Gamepad2,
+  Handshake
 } from 'lucide-react';
 import { EmergencyView } from './components/EmergencyView';
 import { TransportView } from './components/TransportView';
@@ -51,7 +52,7 @@ const sections: Section[] = [
   { id: 'tarjimon', titleUz: 'Tarjimon', titleRu: 'Переводчик', icon: Languages, gradient: 'from-cyan-500 to-blue-600' },
   { id: 'oldi_sotdi', titleUz: 'Oldi sotdi', titleRu: 'Купля-продажа', icon: ShoppingBag, gradient: 'from-amber-500 to-orange-600' },
   { id: 'mini_oyinlar', titleUz: "Mini o'yinlar", titleRu: 'Мини-игры', icon: Gamepad2, gradient: 'from-purple-500 to-indigo-600' },
-  { id: 'donate', titleUz: "Loyihani qo'llab-quvvatlash", titleRu: 'Поддержать проект', icon: Heart, gradient: 'from-rose-500 to-pink-600' },
+  { id: 'donate', titleUz: "Loyihani qo'llab-quvvatlash", titleRu: 'Поддержать проект', icon: Handshake, gradient: 'from-emerald-500 to-teal-600' },
 ];
 
 

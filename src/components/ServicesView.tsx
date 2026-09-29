@@ -22,6 +22,7 @@ const CATEGORIES = [
   { id: 'talim', label: "Ta'lim", icon: '📚', gradient: 'from-emerald-500 to-teal-600' },
   { id: 'uy', label: 'Uy xizmatlari', icon: '🏠', gradient: 'from-cyan-500 to-blue-600' },
   { id: 'komp', label: 'Kompyuter', icon: '💻', gradient: 'from-violet-500 to-purple-600' },
+    { id: 'telefon', label: 'Telefon ustalari', icon: '📱', gradient: 'from-teal-500 to-emerald-600' },
 ];
 
 export const ServicesView: React.FC<ServicesViewProps> = ({ onClose }) => {

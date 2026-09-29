@@ -1,3 +1,4 @@
+import { DonateView } from './components/DonateView';
 import { MiniOyinlarView } from './components/MiniOyinlarView';
 import { OldiSotdiView } from './components/OldiSotdiView';
 import { TarjimonView } from './components/TarjimonView';
@@ -50,6 +51,7 @@ const sections: Section[] = [
   { id: 'tarjimon', titleUz: 'Tarjimon', titleRu: 'Переводчик', icon: Languages, gradient: 'from-cyan-500 to-blue-600' },
   { id: 'oldi_sotdi', titleUz: 'Oldi sotdi', titleRu: 'Купля-продажа', icon: ShoppingBag, gradient: 'from-amber-500 to-orange-600' },
   { id: 'mini_oyinlar', titleUz: "Mini o'yinlar", titleRu: 'Мини-игры', icon: Gamepad2, gradient: 'from-purple-500 to-indigo-600' },
+  { id: 'donate', titleUz: "Loyihani qo'llab-quvvatlash", titleRu: 'Поддержать проект', icon: Heart, gradient: 'from-rose-500 to-pink-600' },
 ];
 
 
@@ -252,7 +254,9 @@ function App() {
   if (activeSection === 'mini_oyinlar') {
     return <MiniOyinlarView onClose={() => setActiveSection(null)} />;
   }
-
+  if (activeSection === 'donate') {
+    return <DonateView onClose={() => setActiveSection(null)} />;
+  }
   return (
     <div className="min-h-screen bg-linear-to-b from-stone-50 to-stone-100 text-stone-900 flex flex-col">
      

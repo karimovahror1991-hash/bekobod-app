@@ -360,7 +360,7 @@ export const TaxiView: React.FC<TaxiViewProps> = ({ onClose }) => {
                           </div>
                           <button
                             onClick={() => setShowRatingModal(ride.id.toString())}
-                            className="px-3 py-2 bg-amber-100 hover:bg-amber-200 text-amber-800 rounded-xl text-xs font-semibold transition"
+                                                        className="flex-1 py-2.5 bg-amber-100 hover:bg-amber-200 text-amber-800 rounded-xl text-xs font-semibold transition flex items-center justify-center space-x-1.5"
                           >
                             ⭐ Baholash
                           </button>

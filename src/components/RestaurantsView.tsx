@@ -195,7 +195,7 @@ export const RestaurantsView: React.FC<RestaurantsViewProps> = ({ onClose }) => 
                       )}
                       <button
                         onClick={() => setShowRatingModal(restaurant)}
-                        className="px-4 py-3 bg-amber-100 hover:bg-amber-200 text-amber-800 rounded-2xl font-bold text-sm transition active:scale-95 shrink-0"
+                                                className="flex-1 py-3 bg-amber-100 hover:bg-amber-200 text-amber-800 rounded-2xl font-bold text-sm transition active:scale-95 flex items-center justify-center space-x-2"
                       >
                         ⭐ Baholash
                       </button>

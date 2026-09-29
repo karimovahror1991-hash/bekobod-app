@@ -61,15 +61,7 @@ export const DonateView: React.FC<DonateViewProps> = ({ onClose }) => {
             sizning yordamingiz kerak. Har qanday hissa — katta yoki kichik — biz uchun juda qadrli!
           </p>
 
-                    <div className="bg-emerald-50 rounded-2xl p-4 text-xs text-emerald-800 space-y-1">
-            <div>✅ Ilova doim bepul qoladi</div>
-            <div>✅ Reklama kamayadi</div>
-            <div>✅ Yangi funksiyalar tezroq qo'shiladi</div>
-          </div>
-
-          <p className="text-xs text-stone-500 text-center italic">
-            Sizning har bir so'mingiz shahrimiz uchun xizmat qiladi! 🇺🇿
-          </p>
+           
         </div>
 
         {!showCards ? (
@@ -134,7 +126,7 @@ export const DonateView: React.FC<DonateViewProps> = ({ onClose }) => {
         )}
 
         <div className="text-center text-xs text-stone-400 pt-4">
-          ❤️ Sizning yordamingiz uchun tashakkur!
+          ❤️ Yordamingiz uchun tashakkur!
         </div>
       </div>
     </div>

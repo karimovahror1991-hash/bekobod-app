@@ -533,53 +533,36 @@ export const TaxiView: React.FC<TaxiViewProps> = ({ onClose }) => {
         )}
       </div>
 
-      {/* Модальное окно оценки */}
-      {showRatingModal && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl">
-            <h3 className="font-bold text-lg text-stone-900 text-center mb-2">
-              Haydovchini baholang
-            </h3>
-            <p className="text-xs text-stone-500 text-center mb-4">
-              Sizning bahoyingiz anonim saqlanadi
-            </p>
-            
-            <div className="flex justify-center space-x-2 mb-6">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <button
-                  key={star}
-                  onClick={() => setSelectedRating(star)}
-                  className="text-4xl transition-transform active:scale-110"
-                >
-                  <span className={star <= selectedRating ? 'text-amber-500' : 'text-stone-300'}>
-                    ★
-                  </span>
-                </button>
-              ))}
-            </div>
+              {/* Модальное окно оценки */}
+        {showRatingModal && (
+          <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl">
+              <h3 className="font-bold text-lg text-stone-900 text-center mb-2">
+                Haydovchini baholang
+              </h3>
+              <p className="text-xs text-stone-500 text-center mb-4">
+                Sizning bahoyingiz anonim saqlanadi
+              </p>
+              
+              <div className="flex justify-center space-x-2 mb-4">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    onClick={() => handleRate(star)}
+                    className="text-4xl transition-transform active:scale-110"
+                  >
+                    <span className="text-amber-500">★</span>
+                  </button>
+                ))}
+              </div>
 
-            <div className="flex space-x-2">
-              <button
-                onClick={() => handleRate(selectedRating)}
-                disabled={selectedRating === 0}
-                className="flex-1 py-3 bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-semibold disabled:opacity-50 transition"
-              >
-                Yuborish
-              </button>
-              <button
-                onClick={() => {
-                  setShowRatingModal(null);
-                  setSelectedRating(0);
-                }}
-                className="px-5 py-3 text-stone-500 hover:text-stone-700"
-              >
-                Yopish
-              </button>
+              <div className="text-center text-xs text-stone-400">
+                Yulduzni bosing va baho yuboriladi
+              </div>
             </div>
           </div>
-           </div>
-      )}
-    </div>
+        )}
+      </div>
     </PullToRefresh>
   );
 };

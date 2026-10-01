@@ -488,6 +488,69 @@ app.post('/api/telegram-webhook', async (req, res) => {
         }
       }
     }
+        // Команда /update_photo ID — обновить главное фото ресторана
+    if (message?.photo && message.caption?.startsWith('/update_photo') && ADMINS.includes(message.from.id)) {
+      const captionParts = message.caption.split('|').map((s: string) => s.trim());
+      const idPart = captionParts[0].replace('/update_photo', '').trim();
+      const restaurantId = Number(idPart);
+
+      if (!restaurantId) {
+        await sendTelegramMessage(
+          message.from.id,
+          `❌ <b>Format:</b>\nRasmga izoh yozing:\n<code>/update_photo ID</code>\n\n` +
+          `<b>Misol:</b> <code>/update_photo 5</code>`
+        );
+      } else {
+        const check = await pool.query('SELECT name FROM restaurants WHERE id = $1', [restaurantId]);
+        if (check.rows.length === 0) {
+          await sendTelegramMessage(message.from.id, `❌ Restoran topilmadi (ID: ${restaurantId})`);
+        } else {
+          const fileId = message.photo[message.photo.length - 1].file_id;
+          const botToken = process.env.TELEGRAM_BOT_TOKEN;
+          const imgbbKey = process.env.IMGBB_API_KEY;
+
+          if (!botToken || !imgbbKey) {
+            await sendTelegramMessage(message.from.id, `❌ Server sozlamalari to'liq emas`);
+          } else {
+            try {
+              const fileRes = await fetch(`https://api.telegram.org/bot${botToken}/getFile?file_id=${fileId}`);
+              const fileData: any = await fileRes.json();
+              if (!fileData.ok) throw new Error('Telegram file error');
+
+              const tempUrl = `https://api.telegram.org/file/bot${botToken}/${fileData.result.file_path}`;
+              const imageBuffer = await fetch(tempUrl).then(r => r.arrayBuffer());
+              const base64 = Buffer.from(imageBuffer).toString('base64');
+
+              const formData = new URLSearchParams();
+              formData.append('image', base64);
+
+              const imgbbRes = await fetch(`https://api.imgbb.com/1/upload?key=${imgbbKey}`, {
+                method: 'POST',
+                body: formData,
+              });
+              const imgbbData: any = await imgbbRes.json();
+
+              if (!imgbbData.success) throw new Error('ImgBB error');
+
+              const finalUrl = imgbbData.data.url;
+
+              await pool.query(
+                'UPDATE restaurants SET image_url = $1 WHERE id = $2',
+                [finalUrl, restaurantId]
+              );
+
+              await sendTelegramMessage(
+                message.from.id,
+                `✅ <b>Rasm yangilandi!</b>\n\n🏪 ${check.rows[0].name}\n📷 <a href="${finalUrl}">Yangi rasm</a>\nID: <code>${restaurantId}</code>`
+              );
+            } catch (err: any) {
+              console.error('Update photo error:', err);
+              await sendTelegramMessage(message.from.id, `❌ Xatolik: ${err.message}`);
+            }
+          }
+        }
+      }
+    }
     // Команда /delete_place ID
     if (message?.text?.startsWith('/delete_place') && ADMINS.includes(message.from.id)) {
       const placeId = Number(message.text.split(' ')[1]);

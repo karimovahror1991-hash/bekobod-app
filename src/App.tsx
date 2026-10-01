@@ -1,3 +1,4 @@
+import { ShopsView } from './components/ShopsView';
 import { DonateView } from './components/DonateView';
 import { MiniOyinlarView } from './components/MiniOyinlarView';
 import { OldiSotdiView } from './components/OldiSotdiView';
@@ -21,7 +22,8 @@ import {
   Heart,
    ShoppingBag,
   Gamepad2,
-  Handshake
+  Handshake,
+  Store
 } from 'lucide-react';
 import { EmergencyView } from './components/EmergencyView';
 import { TransportView } from './components/TransportView';
@@ -43,11 +45,12 @@ const sections: Section[] = [
   { id: 'transport', titleUz: 'Transport', titleRu: 'Транспорт', icon: Bus, gradient: 'from-emerald-500 to-green-600' },
   { id: 'admin', titleUz: 'Administrator', titleRu: 'Администратор', icon: Mail, gradient: 'from-indigo-500 to-violet-600' },
   { id: 'tibbiyot', titleUz: 'Tibbiyot', titleRu: 'Медицина', icon: Heart, gradient: 'from-rose-500 to-red-600' },
-    { id: 'services', titleUz: "Xizmat ko'rsatish", titleRu: 'Услуги', icon: Wrench, gradient: 'from-cyan-500 to-teal-600' },
+  { id: 'services', titleUz: "Xizmat ko'rsatish", titleRu: 'Услуги', icon: Wrench, gradient: 'from-cyan-500 to-teal-600' },
   { id: 'jobs', titleUz: 'Vakansiya', titleRu: 'Вакансии', icon: Briefcase, gradient: 'from-violet-500 to-purple-600' },
   { id: 'emergency', titleUz: 'Shahar telefonlari', titleRu: 'Справочная служба', icon: Phone, gradient: 'from-rose-500 to-red-600' },
   { id: 'restaurants', titleUz: 'Restoran va kafelar', titleRu: 'Рестораны и кафе', icon: UtensilsCrossed, gradient: 'from-red-500 to-pink-600' },
-    { id: 'oldi_sotdi', titleUz: 'Oldi sotdi', titleRu: 'Купля-продажа', icon: ShoppingBag, gradient: 'from-amber-500 to-orange-600' },
+  { id: 'oldi_sotdi', titleUz: 'Oldi sotdi', titleRu: 'Купля-продажа', icon: ShoppingBag, gradient: 'from-amber-500 to-orange-600' },
+  { id: 'shops', titleUz: "Do'konlar va xizmatlar", titleRu: 'Магазины и услуги', icon: Store, gradient: 'from-teal-500 to-emerald-600' },
   { id: 'mini_oyinlar', titleUz: "Mini o'yinlar", titleRu: 'Мини-игры', icon: Gamepad2, gradient: 'from-purple-500 to-indigo-600' },
   { id: 'donate', titleUz: "Loyihani qo'llab-quvvatlash", titleRu: 'Поддержать проект', icon: Handshake, gradient: 'from-emerald-500 to-teal-600' },
 ];
@@ -245,6 +248,9 @@ function App() {
   }
   if (activeSection === 'oldi_sotdi') {
     return <OldiSotdiView onClose={() => setActiveSection(null)} userId={userId} />;
+  }
+    if (activeSection === 'shops') {
+    return <ShopsView onClose={() => setActiveSection(null)} />;
   }
   if (activeSection === 'mini_oyinlar') {
     return <MiniOyinlarView onClose={() => setActiveSection(null)} />;

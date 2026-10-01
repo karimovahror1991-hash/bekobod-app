@@ -551,6 +551,92 @@ app.post('/api/telegram-webhook', async (req, res) => {
         }
       }
     }
+        // Команда /add_shop (с фото или без)
+    // Формат: /add_shop kategoriya | nomi | manzil | telefon | ish_vaqti | tavsif
+    if ((message?.text?.startsWith('/add_shop') || message?.caption?.startsWith('/add_shop')) && ADMINS.includes(message.from.id)) {
+      const rawText = message.text || message.caption || '';
+      const parts = rawText.split('|').map((s: string) => s.trim());
+
+      if (parts.length < 3) {
+        await sendTelegramMessage(
+          message.from.id,
+          `❌ <b>Format:</b>\n<code>/add_shop kategoriya | nomi | manzil | telefon | ish_vaqti | tavsif</code>\n\n` +
+          `<b>Kategoriyalar:</b>\n` +
+          `oziq-ovqat — Продукты\n` +
+          `kiyim — Одежда\n` +
+          `elektronika — Электроника\n` +
+          `gozallik — Красота\n` +
+          `avto — Авто\n` +
+          `usta — Мастера\n\n` +
+          `<b>Misol:</b>\n<code>/add_shop oziq-ovqat | Korzinka | Navoiy 15 | +998901234567 | 08:00-23:00 | Oziq-ovqat</code>`
+        );
+      } else {
+        const category = parts[0].replace('/add_shop', '').trim();
+        const name = parts[1];
+        const address = parts[2] || null;
+        const phone = parts[3] || null;
+        const hours = parts[4] || null;
+        const description = parts[5] || null;
+
+        // Фото → ImgBB
+        let imageUrl: string | null = null;
+        if (message.photo && message.photo.length > 0) {
+          const fileId = message.photo[message.photo.length - 1].file_id;
+          const botToken = process.env.TELEGRAM_BOT_TOKEN;
+          const imgbbKey = process.env.IMGBB_API_KEY;
+
+          if (botToken && imgbbKey) {
+            try {
+              const fileRes = await fetch(`https://api.telegram.org/bot${botToken}/getFile?file_id=${fileId}`);
+              const fileData: any = await fileRes.json();
+              if (!fileData.ok) throw new Error('Telegram error');
+
+              const tempUrl = `https://api.telegram.org/file/bot${botToken}/${fileData.result.file_path}`;
+              const imageBuffer = await fetch(tempUrl).then(r => r.arrayBuffer());
+              const base64 = Buffer.from(imageBuffer).toString('base64');
+
+              const formData = new URLSearchParams();
+              formData.append('image', base64);
+
+              const imgbbRes = await fetch(`https://api.imgbb.com/1/upload?key=${imgbbKey}`, {
+                method: 'POST',
+                body: formData,
+              });
+              const imgbbData: any = await imgbbRes.json();
+              if (imgbbData.success) imageUrl = imgbbData.data.url;
+            } catch (e) {
+              console.error('Shop photo error:', e);
+            }
+          }
+        }
+
+        const result = await pool.query(
+          `INSERT INTO shops (category, name, address, phone, hours, description, image_url)
+           VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+          [category, name, address, phone, hours, description, imageUrl]
+        );
+
+        await sendTelegramMessage(
+          message.from.id,
+          `✅ <b>Qo'shildi!</b>\n\n📌 ${name}\n📂 ${category}\n📍 ${address || "yo'q"}\n📞 ${phone || "yo'q"}\n🕐 ${hours || "yo'q"}\n🖼 ${imageUrl ? 'Ha' : "yo'q"}\nID: <code>${result.rows[0].id}</code>`
+        );
+      }
+    }
+
+    // Команда /delete_shop ID
+    if (message?.text?.startsWith('/delete_shop') && ADMINS.includes(message.from.id)) {
+      const shopId = Number(message.text.split(' ')[1]);
+      if (!shopId) {
+        await sendTelegramMessage(message.from.id, "❌ /delete_shop ID");
+      } else {
+        const result = await pool.query('DELETE FROM shops WHERE id = $1 RETURNING name', [shopId]);
+        if (result.rows.length === 0) {
+          await sendTelegramMessage(message.from.id, `❌ Topilmadi (ID: ${shopId})`);
+        } else {
+          await sendTelegramMessage(message.from.id, `✅ O'chirildi: <b>${result.rows[0].name}</b>`);
+        }
+      }
+    }
     // Команда /delete_place ID
     if (message?.text?.startsWith('/delete_place') && ADMINS.includes(message.from.id)) {
       const placeId = Number(message.text.split(' ')[1]);
@@ -1663,6 +1749,66 @@ app.get('/api/restaurants/my-rating/:restaurantId', async (req, res) => {
     res.json({ rating: result.rows.length > 0 ? result.rows[0].rating : null });
   } catch (error: any) {
     console.error('My rating error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+// ============ DO'KONLAR VA XIZMATLAR ============
+
+// Список магазинов/услуг
+app.get('/api/shops/list', async (req, res) => {
+  try {
+    const { category } = req.query;
+    let query = 'SELECT * FROM shops';
+    const params: any[] = [];
+    if (category && category !== 'all') {
+      query += ' WHERE category = $1';
+      params.push(category);
+    }
+    query += ' ORDER BY created_at DESC';
+    const result = await pool.query(query, params);
+    res.json({ shops: result.rows });
+  } catch (error: any) {
+    console.error('Shops list error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Создать магазин/услугу (только админ)
+app.post('/api/shops/create', async (req, res) => {
+  try {
+    const { adminId, category, name, address, phone, hours, description, imageUrl } = req.body;
+    if (Number(adminId) !== SUPER_ADMIN) {
+      return res.status(403).json({ error: 'Доступ запрещён' });
+    }
+    if (!category || !name) {
+      return res.status(400).json({ error: 'Kategoriya va nomi kerak' });
+    }
+    const result = await pool.query(
+      `INSERT INTO shops (category, name, address, phone, hours, description, image_url)
+       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+      [category, name, address || null, phone || null, hours || null, description || null, imageUrl || null]
+    );
+    res.json({ shop: result.rows[0] });
+  } catch (error: any) {
+    console.error('Shop create error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Удалить магазин/услугу
+app.post('/api/shops/delete', async (req, res) => {
+  try {
+    const { adminId, shopId } = req.body;
+    if (Number(adminId) !== SUPER_ADMIN) {
+      return res.status(403).json({ error: 'Доступ запрещён' });
+    }
+    const result = await pool.query('DELETE FROM shops WHERE id = $1 RETURNING name', [shopId]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Topilmadi' });
+    }
+    res.json({ ok: true, name: result.rows[0].name });
+  } catch (error: any) {
+    console.error('Shop delete error:', error);
     res.status(500).json({ error: error.message });
   }
 });

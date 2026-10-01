@@ -1,7 +1,6 @@
 import { DonateView } from './components/DonateView';
 import { MiniOyinlarView } from './components/MiniOyinlarView';
 import { OldiSotdiView } from './components/OldiSotdiView';
-import { TarjimonView } from './components/TarjimonView';
 import { TibbiyotView } from './components/TibbiyotView';
 import { IbodatView } from './components/IbodatView';
 import { EventsView } from './components/EventsView';
@@ -20,8 +19,7 @@ import {
   Phone,
   Mail,
   Heart,
-  Languages,
-  ShoppingBag,
+   ShoppingBag,
   Gamepad2,
   Handshake
 } from 'lucide-react';
@@ -49,8 +47,7 @@ const sections: Section[] = [
   { id: 'jobs', titleUz: 'Vakansiya', titleRu: 'Вакансии', icon: Briefcase, gradient: 'from-violet-500 to-purple-600' },
   { id: 'emergency', titleUz: 'Shahar telefonlari', titleRu: 'Справочная служба', icon: Phone, gradient: 'from-rose-500 to-red-600' },
   { id: 'restaurants', titleUz: 'Restoran va kafelar', titleRu: 'Рестораны и кафе', icon: UtensilsCrossed, gradient: 'from-red-500 to-pink-600' },
-  { id: 'tarjimon', titleUz: 'Tarjimon', titleRu: 'Переводчик', icon: Languages, gradient: 'from-cyan-500 to-blue-600' },
-  { id: 'oldi_sotdi', titleUz: 'Oldi sotdi', titleRu: 'Купля-продажа', icon: ShoppingBag, gradient: 'from-amber-500 to-orange-600' },
+    { id: 'oldi_sotdi', titleUz: 'Oldi sotdi', titleRu: 'Купля-продажа', icon: ShoppingBag, gradient: 'from-amber-500 to-orange-600' },
   { id: 'mini_oyinlar', titleUz: "Mini o'yinlar", titleRu: 'Мини-игры', icon: Gamepad2, gradient: 'from-purple-500 to-indigo-600' },
   { id: 'donate', titleUz: "Loyihani qo'llab-quvvatlash", titleRu: 'Поддержать проект', icon: Handshake, gradient: 'from-emerald-500 to-teal-600' },
 ];
@@ -245,9 +242,6 @@ function App() {
   }
   if (activeSection === 'services') {
     return <ServicesView onClose={() => setActiveSection(null)} />;
-  }
-  if (activeSection === 'tarjimon') {
-    return <TarjimonView onClose={() => setActiveSection(null)} />;
   }
   if (activeSection === 'oldi_sotdi') {
     return <OldiSotdiView onClose={() => setActiveSection(null)} userId={userId} />;

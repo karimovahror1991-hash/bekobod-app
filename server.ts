@@ -420,7 +420,7 @@ app.post('/api/telegram-webhook', async (req, res) => {
 
                            // Конвертируем в base64 data URL
               imageUrl = `data:image/jpeg;base64,${compressed.toString('base64')}`;
-            } catch (e) {
+                    } catch (e) {
               console.error('Photo upload error:', e);
             }
           }
@@ -840,6 +840,7 @@ app.post('/api/telegram-webhook', async (req, res) => {
               console.error('Photo upload error:', e);
             }
           }
+        }
 
         const result = await pool.query(
           'INSERT INTO doctors (type, name, specialty, phone, address, description, image_url, hours) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *',
@@ -1088,6 +1089,7 @@ if ((message?.caption?.startsWith('/add_news')) && ADMINS.includes(message.from.
               console.error('Photo upload error:', e);
             }
           }
+        }
 
         const result = await pool.query(
           `INSERT INTO ads (title, subtitle, phone, gradient, image_url, text_color, address, hours, cta)
@@ -1192,7 +1194,7 @@ if ((message?.caption?.startsWith('/add_news')) && ADMINS.includes(message.from.
         `📆 <b>Faol (30 kun):</b> ${month.rows[0].count}`
       );
     }
-    // Команда /delete_book ID
+       // Команда /delete_book ID
     if (message?.text?.startsWith('/delete_book') && ADMINS.includes(message.from.id)) {
       const bookId = Number(message.text.split(' ')[1]);
 
@@ -1202,7 +1204,7 @@ if ((message?.caption?.startsWith('/add_news')) && ADMINS.includes(message.from.
         const result = await pool.query('DELETE FROM books WHERE id = $1 RETURNING title', [bookId]);
         if (result.rows.length === 0) {
           await sendTelegramMessage(message.from.id, `❌ Topilmadi (ID: ${bookId})`);
-              } else {
+        } else {
           await sendTelegramMessage(message.from.id, `✅ O'chirildi: <b>${result.rows[0].title}</b>`);
         }
       }

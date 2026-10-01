@@ -650,17 +650,36 @@ app.post('/api/telegram-webhook', async (req, res) => {
         const hours = parts[4] || null;
         const description = parts[5] || null;
 
-        // Картинка
+              // Картинка — загружаем на ImgBB (постоянная ссылка)
         let imageUrl: string | null = null;
         if (message.photo && message.photo.length > 0) {
           const fileId = message.photo[message.photo.length - 1].file_id;
           const botToken = process.env.TELEGRAM_BOT_TOKEN;
-          if (botToken) {
+          const imgbbKey = process.env.IMGBB_API_KEY;
+
+          if (botToken && imgbbKey) {
             try {
+              // Скачиваем из Telegram
               const fileRes = await fetch(`https://api.telegram.org/bot${botToken}/getFile?file_id=${fileId}`);
               const fileData: any = await fileRes.json();
-              if (fileData.ok) {
-                imageUrl = `https://api.telegram.org/file/bot${botToken}/${fileData.result.file_path}`;
+              if (!fileData.ok) throw new Error('Telegram file error');
+
+              const tempUrl = `https://api.telegram.org/file/bot${botToken}/${fileData.result.file_path}`;
+              const imageBuffer = await fetch(tempUrl).then(r => r.arrayBuffer());
+              const base64 = Buffer.from(imageBuffer).toString('base64');
+
+              // Загружаем на ImgBB
+              const formData = new URLSearchParams();
+              formData.append('image', base64);
+
+              const imgbbRes = await fetch(`https://api.imgbb.com/1/upload?key=${imgbbKey}`, {
+                method: 'POST',
+                body: formData,
+              });
+              const imgbbData: any = await imgbbRes.json();
+
+              if (imgbbData.success) {
+                imageUrl = imgbbData.data.url;
               }
             } catch (e) {
               console.error('Photo upload error:', e);

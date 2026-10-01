@@ -1,3 +1,4 @@
+import sharp from 'sharp';
 import crypto from 'crypto';
 import express from 'express';
 import * as cheerio from 'cheerio';
@@ -85,7 +86,7 @@ async function sendTelegramMessage(chatId: number, text: string) {
   });
 }
 
-app.use(express.json({ limit: '100kb' }));
+app.use(express.json({ limit: '5mb' }));
 
 // Глобальный лимит: 100 запросов в минуту с одного IP
 const globalLimiter = rateLimit({
@@ -401,22 +402,24 @@ app.post('/api/telegram-webhook', async (req, res) => {
           const fileId = message.photo[message.photo.length - 1].file_id;
           const botToken = process.env.TELEGRAM_BOT_TOKEN;
           const imgbbKey = process.env.IMGBB_API_KEY;
-          if (botToken && imgbbKey) {
+                   if (botToken) {
             try {
               const fileRes = await fetch(`https://api.telegram.org/bot${botToken}/getFile?file_id=${fileId}`);
               const fileData: any = await fileRes.json();
               if (!fileData.ok) throw new Error('Telegram error');
-              const tempUrl = `https://api.telegram.org/file/bot${botToken}/${fileData.result.file_path}`;
-              const imageBuffer = await fetch(tempUrl).then(r => r.arrayBuffer());
-              const base64 = Buffer.from(imageBuffer).toString('base64');
-              const formData = new URLSearchParams();
-              formData.append('image', base64);
-              const imgbbRes = await fetch(`https://api.imgbb.com/1/upload?key=${imgbbKey}`, {
-                method: 'POST',
-                body: formData,
-              });
-              const imgbbData: any = await imgbbRes.json();
-              if (imgbbData.success) imageUrl = imgbbData.data.url;
+
+                          const tempUrl = `https://api.telegram.org/file/bot${botToken}/${fileData.result.file_path}`;
+              const arrayBuf = await fetch(tempUrl).then(r => r.arrayBuffer());
+              const imageBuffer = Buffer.from(arrayBuf);
+
+              // Сжимаем до 800px по ширине, качество 70%
+              const compressed = await sharp(imageBuffer)
+                .resize({ width: 800, withoutEnlargement: true })
+                .jpeg({ quality: 70 })
+                .toBuffer();
+
+                           // Конвертируем в base64 data URL
+              imageUrl = `data:image/jpeg;base64,${compressed.toString('base64')}`;
             } catch (e) {
               console.error('Photo upload error:', e);
             }
@@ -595,27 +598,26 @@ app.post('/api/telegram-webhook', async (req, res) => {
           const botToken = process.env.TELEGRAM_BOT_TOKEN;
           const imgbbKey = process.env.IMGBB_API_KEY;
 
-          if (botToken && imgbbKey) {
+                   if (botToken) {
             try {
               const fileRes = await fetch(`https://api.telegram.org/bot${botToken}/getFile?file_id=${fileId}`);
               const fileData: any = await fileRes.json();
               if (!fileData.ok) throw new Error('Telegram error');
 
-              const tempUrl = `https://api.telegram.org/file/bot${botToken}/${fileData.result.file_path}`;
-              const imageBuffer = await fetch(tempUrl).then(r => r.arrayBuffer());
-              const base64 = Buffer.from(imageBuffer).toString('base64');
+                           const tempUrl = `https://api.telegram.org/file/bot${botToken}/${fileData.result.file_path}`;
+              const arrayBuf = await fetch(tempUrl).then(r => r.arrayBuffer());
+              const imageBuffer = Buffer.from(arrayBuf);
 
-              const formData = new URLSearchParams();
-              formData.append('image', base64);
+              // Сжимаем до 800px по ширине, качество 70%
+              const compressed = await sharp(imageBuffer)
+                .resize({ width: 800, withoutEnlargement: true })
+                .jpeg({ quality: 70 })
+                .toBuffer();
 
-              const imgbbRes = await fetch(`https://api.imgbb.com/1/upload?key=${imgbbKey}`, {
-                method: 'POST',
-                body: formData,
-              });
-              const imgbbData: any = await imgbbRes.json();
-              if (imgbbData.success) imageUrl = imgbbData.data.url;
+                            // Конвертируем в base64 data URL
+              imageUrl = `data:image/jpeg;base64,${compressed.toString('base64')}`;
             } catch (e) {
-              console.error('Shop photo error:', e);
+              console.error('Photo upload error:', e);
             }
           }
         }
@@ -816,35 +818,28 @@ app.post('/api/telegram-webhook', async (req, res) => {
           const botToken = process.env.TELEGRAM_BOT_TOKEN;
           const imgbbKey = process.env.IMGBB_API_KEY;
 
-          if (botToken && imgbbKey) {
+                   if (botToken) {
             try {
-              // Скачиваем из Telegram
               const fileRes = await fetch(`https://api.telegram.org/bot${botToken}/getFile?file_id=${fileId}`);
               const fileData: any = await fileRes.json();
-              if (!fileData.ok) throw new Error('Telegram file error');
+              if (!fileData.ok) throw new Error('Telegram error');
 
-              const tempUrl = `https://api.telegram.org/file/bot${botToken}/${fileData.result.file_path}`;
-              const imageBuffer = await fetch(tempUrl).then(r => r.arrayBuffer());
-              const base64 = Buffer.from(imageBuffer).toString('base64');
+                            const tempUrl = `https://api.telegram.org/file/bot${botToken}/${fileData.result.file_path}`;
+              const arrayBuf = await fetch(tempUrl).then(r => r.arrayBuffer());
+              const imageBuffer = Buffer.from(arrayBuf);
 
-              // Загружаем на ImgBB
-              const formData = new URLSearchParams();
-              formData.append('image', base64);
+              // Сжимаем до 800px по ширине, качество 70%
+              const compressed = await sharp(imageBuffer)
+                .resize({ width: 800, withoutEnlargement: true })
+                .jpeg({ quality: 70 })
+                .toBuffer();
 
-              const imgbbRes = await fetch(`https://api.imgbb.com/1/upload?key=${imgbbKey}`, {
-                method: 'POST',
-                body: formData,
-              });
-              const imgbbData: any = await imgbbRes.json();
-
-              if (imgbbData.success) {
-                imageUrl = imgbbData.data.url;
-              }
+              // Конвертируем в base64 data URL
+              imageUrl = `data:image/jpeg;base64,${compressed.toString('base64')}`;
             } catch (e) {
               console.error('Photo upload error:', e);
             }
           }
-        }
 
         const result = await pool.query(
           'INSERT INTO doctors (type, name, specialty, phone, address, description, image_url, hours) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *',
@@ -1071,27 +1066,28 @@ if ((message?.caption?.startsWith('/add_news')) && ADMINS.includes(message.from.
           const fileId = message.photo[message.photo.length - 1].file_id;
           const botToken = process.env.TELEGRAM_BOT_TOKEN;
           const imgbbKey = process.env.IMGBB_API_KEY;
-          if (botToken && imgbbKey) {
+                  if (botToken) {
             try {
               const fileRes = await fetch(`https://api.telegram.org/bot${botToken}/getFile?file_id=${fileId}`);
               const fileData: any = await fileRes.json();
               if (!fileData.ok) throw new Error('Telegram error');
-              const tempUrl = `https://api.telegram.org/file/bot${botToken}/${fileData.result.file_path}`;
-              const imageBuffer = await fetch(tempUrl).then(r => r.arrayBuffer());
-              const base64 = Buffer.from(imageBuffer).toString('base64');
-              const formData = new URLSearchParams();
-              formData.append('image', base64);
-              const imgbbRes = await fetch(`https://api.imgbb.com/1/upload?key=${imgbbKey}`, {
-                method: 'POST',
-                body: formData,
-              });
-              const imgbbData: any = await imgbbRes.json();
-              if (imgbbData.success) imageUrl = imgbbData.data.url;
+
+                            const tempUrl = `https://api.telegram.org/file/bot${botToken}/${fileData.result.file_path}`;
+              const arrayBuf = await fetch(tempUrl).then(r => r.arrayBuffer());
+              const imageBuffer = Buffer.from(arrayBuf);
+
+              // Сжимаем до 800px по ширине, качество 70%
+              const compressed = await sharp(imageBuffer)
+                .resize({ width: 800, withoutEnlargement: true })
+                .jpeg({ quality: 70 })
+                .toBuffer();
+
+              // Конвертируем в base64 data URL
+              imageUrl = `data:image/jpeg;base64,${compressed.toString('base64')}`;
             } catch (e) {
               console.error('Photo upload error:', e);
             }
           }
-        }
 
         const result = await pool.query(
           `INSERT INTO ads (title, subtitle, phone, gradient, image_url, text_color, address, hours, cta)
@@ -1206,11 +1202,12 @@ if ((message?.caption?.startsWith('/add_news')) && ADMINS.includes(message.from.
         const result = await pool.query('DELETE FROM books WHERE id = $1 RETURNING title', [bookId]);
         if (result.rows.length === 0) {
           await sendTelegramMessage(message.from.id, `❌ Topilmadi (ID: ${bookId})`);
-        } else {
+              } else {
           await sendTelegramMessage(message.from.id, `✅ O'chirildi: <b>${result.rows[0].title}</b>`);
         }
       }
     }
+
     res.sendStatus(200);
   } catch (error: any) {
     console.error('Webhook error:', error);

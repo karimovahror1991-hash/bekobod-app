@@ -39,6 +39,7 @@ export const RestaurantsView: React.FC<RestaurantsViewProps> = ({ onClose }) => 
   const [showRatingModal, setShowRatingModal] = useState<Restaurant | null>(null);
   const [selectedRating, setSelectedRating] = useState(0);
   const [userId, setUserId] = useState<number | null>(null);
+  const [fullscreenImage, setFullscreenImage] = useState<string | null>(null);
 
   const API_URL = 'https://bekobod-app-1.onrender.com';
 
@@ -69,7 +70,7 @@ export const RestaurantsView: React.FC<RestaurantsViewProps> = ({ onClose }) => 
     }
   };
 
-    useEffect(() => {
+  useEffect(() => {
     loadRestaurants();
     const tg = (window as any).Telegram?.WebApp;
     if (tg?.initDataUnsafe?.user?.id) {
@@ -94,7 +95,7 @@ export const RestaurantsView: React.FC<RestaurantsViewProps> = ({ onClose }) => 
     loadMyRatings();
   }, [userId, restaurants.length]);
 
-    const handleRate = async (rating: number) => {
+  const handleRate = async (rating: number) => {
     if (!showRatingModal) return;
     try {
       const res = await fetch(`${API_URL}/api/restaurants/rate`, {
@@ -158,11 +159,11 @@ export const RestaurantsView: React.FC<RestaurantsViewProps> = ({ onClose }) => 
               {filteredRestaurants.map((restaurant) => {
                 const rating = ratings[restaurant.id];
                 return (
-                                    <div
+                  <div
                     key={restaurant.id}
                     className="bg-white rounded-3xl overflow-hidden shadow-sm border border-stone-100 space-y-3"
                   >
-                                       {restaurant.image_url && (
+                    {restaurant.image_url && (
                       <img
                         src={restaurant.image_url}
                         alt={restaurant.name}
@@ -170,92 +171,91 @@ export const RestaurantsView: React.FC<RestaurantsViewProps> = ({ onClose }) => 
                       />
                     )}
                     <div className="p-5 space-y-3">
-                    <div className="flex items-start justify-between">
-                      <h3 className="font-bold text-lg text-stone-900 leading-tight flex-1">
-                        {restaurant.name}
-                      </h3>
-                      {rating && rating.count > 0 && (
-                        <div className="flex items-center space-x-1 text-xs bg-amber-50 px-2 py-1 rounded-lg shrink-0 ml-2">
-                          <Star className="w-3.5 h-3.5 fill-amber-500 text-amber-500" />
-                          <span className="font-bold text-stone-700">{rating.avg}</span>
-                          <span className="text-stone-400">({rating.count})</span>
+                      <div className="flex items-start justify-between">
+                        <h3 className="font-bold text-lg text-stone-900 leading-tight flex-1">
+                          {restaurant.name}
+                        </h3>
+                        {rating && rating.count > 0 && (
+                          <div className="flex items-center space-x-1 text-xs bg-amber-50 px-2 py-1 rounded-lg shrink-0 ml-2">
+                            <Star className="w-3.5 h-3.5 fill-amber-500 text-amber-500" />
+                            <span className="font-bold text-stone-700">{rating.avg}</span>
+                            <span className="text-stone-400">({rating.count})</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {restaurant.address && (
+                        <div className="flex items-start space-x-2 text-sm text-stone-600">
+                          <MapPin className="w-4 h-4 text-blue-500 mt-0.5 shrink-0" />
+                          <span>{restaurant.address}</span>
                         </div>
                       )}
-                    </div>
-
-                    {restaurant.address && (
-                      <div className="flex items-start space-x-2 text-sm text-stone-600">
-                        <MapPin className="w-4 h-4 text-blue-500 mt-0.5 shrink-0" />
-                        <span>{restaurant.address}</span>
-                      </div>
-                    )}
-                    {restaurant.phone && (
-                      <div className="flex items-center space-x-2 text-sm text-stone-700">
-                        <Phone className="w-4 h-4 text-emerald-500 shrink-0" />
-                        <span className="font-semibold">{restaurant.phone}</span>
-                      </div>
-                    )}
-                                        {restaurant.menu_images && restaurant.menu_images.length > 0 && (
-                      <div className="pt-3 border-t border-stone-100">
-                        <div className="text-xs font-bold text-stone-700 mb-2 uppercase tracking-wide">
-                          📋 Menyu
-                        </div>
-                        <div className="grid grid-cols-3 gap-2">
-                          {restaurant.menu_images.map((url, i) => (
-                            <a
-                              key={i}
-                              href={url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="block"
-                            >
-                              <img
-                                src={url}
-                                alt={`Menyu ${i + 1}`}
-                                className="w-full h-24 object-cover rounded-2xl shadow-sm hover:shadow-lg transition"
-                              />
-                            </a>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                                        {restaurant.hours && (
-                      <div className="flex items-center space-x-2 text-sm text-stone-700">
-                        <Clock className="w-4 h-4 text-amber-500 shrink-0" />
-                        <span className="font-semibold">{restaurant.hours}</span>
-                      </div>
-                    )}
-                    {restaurant.description && (
-                      <p className="text-sm text-stone-600 leading-relaxed">
-                        {restaurant.description}
-                      </p>
-                    )}
-
-                    <div className="flex space-x-2">
                       {restaurant.phone && (
-                        <a
-                          href={`tel:${restaurant.phone}`}
-                          className="flex-1 py-3 bg-linear-to-br from-emerald-500 to-green-600 text-white rounded-2xl font-bold flex items-center justify-center space-x-2 transition shadow-lg active:scale-95"
-                        >
-                          <Phone className="w-5 h-5" />
-                          <span>Qo'ng'iroq</span>
-                        </a>
+                        <div className="flex items-center space-x-2 text-sm text-stone-700">
+                          <Phone className="w-4 h-4 text-emerald-500 shrink-0" />
+                          <span className="font-semibold">{restaurant.phone}</span>
+                        </div>
                       )}
-                                          <button
-                        onClick={() => {
-                          if (myRatings[restaurant.id]) return;
-                          setShowRatingModal(restaurant);
-                        }}
-                        disabled={!!myRatings[restaurant.id]}
-                        className={`flex-1 py-3 rounded-2xl font-bold text-sm transition flex items-center justify-center space-x-2 ${
-                          myRatings[restaurant.id]
-                            ? 'bg-emerald-100 text-emerald-700 cursor-not-allowed'
-                            : 'bg-amber-100 hover:bg-amber-200 text-amber-800 active:scale-95'
-                        }`}
-                      >
-                        {myRatings[restaurant.id] ? '✅ Baholangan' : '⭐ Baholash'}
-                      </button>
-                                   </div>
+                      {restaurant.menu_images && restaurant.menu_images.length > 0 && (
+                        <div className="pt-3 border-t border-stone-100">
+                          <div className="text-xs font-bold text-stone-700 mb-2 uppercase tracking-wide">
+                            📋 Menyu
+                          </div>
+                          <div className="grid grid-cols-3 gap-2">
+                            {restaurant.menu_images.map((url, i) => (
+                              <button
+                                key={i}
+                                type="button"
+                                onClick={() => setFullscreenImage(url)}
+                                className="block w-full"
+                              >
+                                <img
+                                  src={url}
+                                  alt={`Menyu ${i + 1}`}
+                                  className="w-full h-24 object-cover rounded-2xl shadow-sm hover:shadow-lg transition"
+                                />
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {restaurant.hours && (
+                        <div className="flex items-center space-x-2 text-sm text-stone-700">
+                          <Clock className="w-4 h-4 text-amber-500 shrink-0" />
+                          <span className="font-semibold">{restaurant.hours}</span>
+                        </div>
+                      )}
+                      {restaurant.description && (
+                        <p className="text-sm text-stone-600 leading-relaxed">
+                          {restaurant.description}
+                        </p>
+                      )}
+
+                      <div className="flex space-x-2">
+                        {restaurant.phone && (
+                          <a
+                            href={`tel:${restaurant.phone}`}
+                            className="flex-1 py-3 bg-linear-to-br from-emerald-500 to-green-600 text-white rounded-2xl font-bold flex items-center justify-center space-x-2 transition shadow-lg active:scale-95"
+                          >
+                            <Phone className="w-5 h-5" />
+                            <span>Qo'ng'iroq</span>
+                          </a>
+                        )}
+                        <button
+                          onClick={() => {
+                            if (myRatings[restaurant.id]) return;
+                            setShowRatingModal(restaurant);
+                          }}
+                          disabled={!!myRatings[restaurant.id]}
+                          className={`flex-1 py-3 rounded-2xl font-bold text-sm transition flex items-center justify-center space-x-2 ${
+                            myRatings[restaurant.id]
+                              ? 'bg-emerald-100 text-emerald-700 cursor-not-allowed'
+                              : 'bg-amber-100 hover:bg-amber-200 text-amber-800 active:scale-95'
+                          }`}
+                        >
+                          {myRatings[restaurant.id] ? '✅ Baholangan' : '⭐ Baholash'}
+                        </button>
+                      </div>
                     </div>
                   </div>
                 );
@@ -264,7 +264,7 @@ export const RestaurantsView: React.FC<RestaurantsViewProps> = ({ onClose }) => 
           )}
         </div>
 
-                {/* Модальное окно оценки */}
+        {/* Модальное окно оценки */}
         {showRatingModal && (
           <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl">
@@ -274,8 +274,8 @@ export const RestaurantsView: React.FC<RestaurantsViewProps> = ({ onClose }) => 
               <p className="text-xs text-stone-500 text-center mb-4">
                 Bahoyingizni tanlang
               </p>
-              
-                            <div className="flex justify-center space-x-2 mb-4">
+
+              <div className="flex justify-center space-x-2 mb-4">
                 {[1, 2, 3, 4, 5].map((star) => (
                   <button
                     key={star}
@@ -298,49 +298,69 @@ export const RestaurantsView: React.FC<RestaurantsViewProps> = ({ onClose }) => 
             </div>
           </div>
         )}
+
+        {/* Модалка для просмотра фото во весь экран */}
+        {fullscreenImage && (
+          <div
+            className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4"
+            onClick={() => setFullscreenImage(null)}
+          >
+            <img
+              src={fullscreenImage}
+              alt="Fullscreen"
+              className="max-w-full max-h-full object-contain"
+            />
+            <button
+              onClick={() => setFullscreenImage(null)}
+              className="absolute top-4 right-4 w-12 h-12 rounded-full bg-white/20 text-white text-2xl flex items-center justify-center"
+            >
+              ✕
+            </button>
+          </div>
+        )}
       </div>
     );
   }
 
-   // Экран категорий
+  // Экран категорий
   return (
     <PullToRefresh onRefresh={loadRestaurants}>
-    <div className="min-h-screen bg-linear-to-b from-stone-50 to-stone-100">
-      <div className="bg-white/95 backdrop-blur-lg border-b border-stone-200 sticky top-0 z-20 shadow-sm">
-        <div className="max-w-2xl mx-auto px-4 pt-6 pb-4 flex items-center space-x-3">
-          <button
-            onClick={onClose}
-            className="w-11 h-11 rounded-2xl bg-stone-100 hover:bg-amber-100 flex items-center justify-center transition-colors"
-          >
-            <ArrowLeft className="w-6 h-6 text-stone-700" />
-          </button>
-          <h1 className="font-bold text-2xl text-stone-900">🍽️ Restoran va kafelar</h1>
+      <div className="min-h-screen bg-linear-to-b from-stone-50 to-stone-100">
+        <div className="bg-white/95 backdrop-blur-lg border-b border-stone-200 sticky top-0 z-20 shadow-sm">
+          <div className="max-w-2xl mx-auto px-4 pt-6 pb-4 flex items-center space-x-3">
+            <button
+              onClick={onClose}
+              className="w-11 h-11 rounded-2xl bg-stone-100 hover:bg-amber-100 flex items-center justify-center transition-colors"
+            >
+              <ArrowLeft className="w-6 h-6 text-stone-700" />
+            </button>
+            <h1 className="font-bold text-2xl text-stone-900">🍽️ Restoran va kafelar</h1>
+          </div>
+        </div>
+
+        <div className="max-w-2xl mx-auto px-4 py-6">
+          <div className="space-y-4">
+            {CATEGORIES.map((cat) => {
+              const count = restaurants.filter(r => r.category === cat.id).length;
+              return (
+                <button
+                  key={cat.id}
+                  onClick={() => setSelectedCategory(cat.id)}
+                  className={`w-full bg-linear-to-br ${cat.gradient} text-white rounded-3xl p-8 flex flex-col items-center justify-center shadow-xl hover:shadow-2xl transition-all duration-300 active:scale-95 min-h-50`}
+                >
+                  <div className="text-7xl mb-4">{cat.icon}</div>
+                  <div className="font-bold text-xl text-white text-center leading-tight">
+                    {cat.label}
+                  </div>
+                  <div className="text-sm text-white/80 mt-2">
+                    {count} ta joy
+                  </div>
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
-
-      <div className="max-w-2xl mx-auto px-4 py-6">
-        <div className="space-y-4">
-          {CATEGORIES.map((cat) => {
-            const count = restaurants.filter(r => r.category === cat.id).length;
-            return (
-              <button
-                key={cat.id}
-                onClick={() => setSelectedCategory(cat.id)}
-                className={`w-full bg-linear-to-br ${cat.gradient} text-white rounded-3xl p-8 flex flex-col items-center justify-center shadow-xl hover:shadow-2xl transition-all duration-300 active:scale-95 min-h-50`}
-              >
-                <div className="text-7xl mb-4">{cat.icon}</div>
-                <div className="font-bold text-xl text-white text-center leading-tight">
-                  {cat.label}
-                </div>
-                <div className="text-sm text-white/80 mt-2">
-                  {count} ta joy
-                </div>
-              </button>
-            );
-          })}
-        </div>
-        </div>
-    </div>
     </PullToRefresh>
   );
 };

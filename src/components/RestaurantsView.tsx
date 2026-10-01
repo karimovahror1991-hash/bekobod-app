@@ -250,14 +250,19 @@ export const RestaurantsView: React.FC<RestaurantsViewProps> = ({ onClose }) => 
                 Bahoyingizni tanlang
               </p>
               
-              <div className="flex justify-center space-x-2 mb-4">
+                            <div className="flex justify-center space-x-2 mb-4">
                 {[1, 2, 3, 4, 5].map((star) => (
                   <button
                     key={star}
-                    onClick={() => handleRate(star)}
+                    onClick={() => {
+                      setSelectedRating(star);
+                      setTimeout(() => handleRate(star), 300);
+                    }}
                     className="text-4xl transition-transform active:scale-110"
                   >
-                    <span className="text-amber-500">★</span>
+                    <span className={star <= selectedRating ? 'text-amber-500' : 'text-stone-300'}>
+                      ★
+                    </span>
                   </button>
                 ))}
               </div>

@@ -373,7 +373,7 @@ app.post('/api/telegram-webhook', async (req, res) => {
       );
       return res.sendStatus(200);
     }
-         // Команда /add_place (с фото или без)
+           // Команда /add_place (с фото или без)
     // Формат: /add_place kategoriya | nomi | manzil | telefon | ish_vaqti | tavsif
     if ((message?.text?.startsWith('/add_place') || message?.caption?.startsWith('/add_place')) && ADMINS.includes(message.from.id)) {
       const rawText = message.text || message.caption || '';
@@ -412,26 +412,36 @@ app.post('/api/telegram-webhook', async (req, res) => {
             }
           }
         }
-    // Команда /add_menu ID | прикрепи фото меню
+
+        const result = await pool.query(
+          'INSERT INTO restaurants (name, category, address, phone, description, image_url, hours) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
+          [name, category, address, phone, description, imageUrl, hours]
+        );
+
+        await sendTelegramMessage(
+          message.from.id,
+          `✅ <b>Qo'shildi!</b>\n\n📌 ${name}\n📍 ${address || "yo'q"}\n📞 ${phone || "yo'q"}\n🕐 ${hours || "yo'q"}\n📝 ${description || "yo'q"}\n🖼 ${imageUrl ? 'Ha' : "yo'q"}\nID: <code>${result.rows[0].id}</code>`
+        );
+      }
+    }
+
+    // Команда /add_menu ID — прикрепи фото меню к ресторану
     if (message?.photo && message.caption?.startsWith('/add_menu') && ADMINS.includes(message.from.id)) {
-      const parts = message.caption.split('|').map((s: string) => s.trim());
-      const idPart = parts[0].replace('/add_menu', '').trim();
+      const captionParts = message.caption.split('|').map((s: string) => s.trim());
+      const idPart = captionParts[0].replace('/add_menu', '').trim();
       const restaurantId = Number(idPart);
 
       if (!restaurantId) {
         await sendTelegramMessage(
           message.from.id,
           `❌ <b>Format:</b>\nRasmga izoh yozing:\n<code>/add_menu ID</code>\n\n` +
-          `<b>Misol:</b> <code>/add_menu 5</code>\n\n` +
-          `Restoran ID sini bilish uchun: restoran ma'lumotini yuborganingizda ID ko'rsatilgan edi.`
+          `<b>Misol:</b> <code>/add_menu 5</code>`
         );
       } else {
-        // Проверяем, существует ли ресторан
         const check = await pool.query('SELECT name FROM restaurants WHERE id = $1', [restaurantId]);
         if (check.rows.length === 0) {
           await sendTelegramMessage(message.from.id, `❌ Restoran topilmadi (ID: ${restaurantId})`);
         } else {
-          // Загружаем фото на ImgBB
           const fileId = message.photo[message.photo.length - 1].file_id;
           const botToken = process.env.TELEGRAM_BOT_TOKEN;
           const imgbbKey = process.env.IMGBB_API_KEY;
@@ -440,7 +450,6 @@ app.post('/api/telegram-webhook', async (req, res) => {
             await sendTelegramMessage(message.from.id, `❌ Server sozlamalari to'liq emas`);
           } else {
             try {
-              // Скачиваем файл из Telegram
               const fileRes = await fetch(`https://api.telegram.org/bot${botToken}/getFile?file_id=${fileId}`);
               const fileData: any = await fileRes.json();
               if (!fileData.ok) throw new Error('Telegram file error');
@@ -449,7 +458,6 @@ app.post('/api/telegram-webhook', async (req, res) => {
               const imageBuffer = await fetch(imageUrl).then(r => r.arrayBuffer());
               const base64 = Buffer.from(imageBuffer).toString('base64');
 
-              // Загружаем на ImgBB
               const formData = new URLSearchParams();
               formData.append('image', base64);
 
@@ -463,7 +471,6 @@ app.post('/api/telegram-webhook', async (req, res) => {
 
               const finalUrl = imgbbData.data.url;
 
-              // Добавляем в массив menu_images
               await pool.query(
                 `UPDATE restaurants SET menu_images = array_append(COALESCE(menu_images, '{}'), $1) WHERE id = $2`,
                 [finalUrl, restaurantId]
@@ -479,17 +486,6 @@ app.post('/api/telegram-webhook', async (req, res) => {
             }
           }
         }
-      }
-    }
-        const result = await pool.query(
-          'INSERT INTO restaurants (name, category, address, phone, description, image_url, hours) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
-          [name, category, address, phone, description, imageUrl, hours]
-        );
-
-        await sendTelegramMessage(
-          message.from.id,
-          `✅ <b>Qo'shildi!</b>\n\n📌 ${name}\n📍 ${address || "yo'q"}\n📞 ${phone || "yo'q"}\n🕐 ${hours || "yo'q"}\n📝 ${description || "yo'q"}\n🖼 ${imageUrl ? 'Ha' : "yo'q"}\nID: <code>${result.rows[0].id}</code>`
-        );
       }
     }
     // Команда /delete_place ID

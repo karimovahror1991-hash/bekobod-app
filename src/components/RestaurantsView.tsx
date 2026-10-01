@@ -15,6 +15,7 @@ interface Restaurant {
   description: string | null;
   image_url: string | null;
   hours: string | null;
+  menu_images: string[] | null;
   created_at: string;
 }
 
@@ -192,6 +193,30 @@ export const RestaurantsView: React.FC<RestaurantsViewProps> = ({ onClose }) => 
                       <div className="flex items-center space-x-2 text-sm text-stone-700">
                         <Phone className="w-4 h-4 text-emerald-500 shrink-0" />
                         <span className="font-semibold">{restaurant.phone}</span>
+                      </div>
+                    )}
+                                        {restaurant.menu_images && restaurant.menu_images.length > 0 && (
+                      <div className="pt-3 border-t border-stone-100">
+                        <div className="text-xs font-bold text-stone-700 mb-2 uppercase tracking-wide">
+                          📋 Menyu
+                        </div>
+                        <div className="grid grid-cols-3 gap-2">
+                          {restaurant.menu_images.map((url, i) => (
+                            <a
+                              key={i}
+                              href={url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="block"
+                            >
+                              <img
+                                src={url}
+                                alt={`Menyu ${i + 1}`}
+                                className="w-full h-24 object-cover rounded-2xl shadow-sm hover:shadow-lg transition"
+                              />
+                            </a>
+                          ))}
+                        </div>
                       </div>
                     )}
                                         {restaurant.hours && (

@@ -477,7 +477,7 @@ app.post('/api/telegram-webhook', async (req, res) => {
               });
               const imgbbData: any = await imgbbRes.json();
 
-              if (!imgbbData.success) throw new Error('ImgBB error');
+                            if (!imgbbData.success) throw new Error(imgbbData.error?.message || 'ImgBB error');
 
               const finalUrl = imgbbData.data.url;
 

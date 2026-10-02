@@ -266,13 +266,13 @@ function App() {
                   </div>
                 </div>
 
-                {/* Центр: дата */}
+                               {/* Центр: дата */}
                 <div className="text-center text-sm text-white font-bold leading-tight px-2 drop-shadow-md">
                   <div>
-                    {new Date().toLocaleDateString('uz-UZ', { day: 'numeric', month: 'short' })}
+                    {new Date().toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' })}
                   </div>
                   <div className="text-xs text-white/90 mt-0.5">
-                    {new Date().toLocaleDateString('uz-UZ', { weekday: 'short' })}
+                    {['Yak', 'Dush', 'Sesh', 'Chor', 'Pay', 'Jum', 'Shan'][new Date().getDay()]}
                   </div>
                 </div>
 

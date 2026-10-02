@@ -88,6 +88,7 @@ function App() {
 
     if (tg?.disableVerticalSwipes) tg.disableVerticalSwipes();
     if (tg?.expand) tg.expand();
+      if (tg?.enableClosingConfirmation) tg.enableClosingConfirmation();
   }, []);
 
   // Погода

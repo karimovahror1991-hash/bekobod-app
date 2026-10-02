@@ -291,9 +291,10 @@ function App() {
 
                            {/* Прогноз на 7 дней — горизонтально */}
               <div className="flex justify-between gap-0.5 pt-3 border-t border-white/30">
-                {weather.daily?.time?.slice(0, 7).map((dateStr: string, i: number) => {
+                               {weather.daily?.time?.slice(0, 7).map((dateStr: string, i: number) => {
                   const date = new Date(dateStr);
-                  const dayName = date.toLocaleDateString('uz-UZ', { weekday: 'short' });
+                  const UZ_DAYS = ['Yak', 'Dush', 'Sesh', 'Chor', 'Pay', 'Jum', 'Shan'];
+                  const dayName = UZ_DAYS[date.getDay()];
                   const dayNum = String(date.getDate()).padStart(2, '0');
                   const monthNum = String(date.getMonth() + 1).padStart(2, '0');
                   const maxTemp = Math.round(weather.daily.temperature_2m_max[i]);

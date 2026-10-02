@@ -91,12 +91,13 @@ function App() {
       if (tg?.enableClosingConfirmation) tg.enableClosingConfirmation();
   }, []);
 
-  // Погода
+   // Погода
   useEffect(() => {
     const lat = 40.22;
     const lon = 69.22;
 
-        fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min,weather_code&timezone=auto&forecast_days=7`)
+    fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min,weather_code&timezone=auto&forecast_days=7`)
+      .then((res) => res.json())         // ⬅️ ЭТА СТРОКА БЫЛА ПОТЕРЯНА!
       .then((data) => {
         setWeather(data);
         setWeatherLoading(false);
@@ -192,32 +193,7 @@ function App() {
       : <Sun className="w-8 h-8 text-yellow-300 drop-shadow-lg" />;
   };
 
-  const getThreeHourForecast = (weather: any) => {
-    if (!weather?.hourly?.time || !weather?.hourly?.temperature_2m) return [];
-
-    const now = new Date();
-    const today = now.toISOString().split('T')[0];
-    const currentHour = now.getHours();
-
-    const slots: { time: string; temp: number; code: number }[] = [];
-
-    weather.hourly.time.forEach((t: string, i: number) => {
-      const date = new Date(t);
-      const dateStr = t.split('T')[0];
-      const hour = date.getHours();
-
-      if (dateStr === today && hour % 3 === 0 && hour >= currentHour - 1) {
-        slots.push({
-          time: t,
-          temp: Math.round(weather.hourly.temperature_2m[i]),
-          code: weather.hourly.weather_code[i],
-        });
-      }
-    });
-
-    return slots;
-  };
-
+  
   // Экран разделов
   if (activeSection === 'emergency') {
     return <EmergencyView onClose={() => setActiveSection(null)} />;

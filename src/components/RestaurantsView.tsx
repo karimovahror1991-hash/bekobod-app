@@ -39,7 +39,9 @@ export const RestaurantsView: React.FC<RestaurantsViewProps> = ({ onClose }) => 
   const [showRatingModal, setShowRatingModal] = useState<Restaurant | null>(null);
   const [selectedRating, setSelectedRating] = useState(0);
   const [userId, setUserId] = useState<number | null>(null);
-  const [fullscreenImage, setFullscreenImage] = useState<string | null>(null);
+   const [fullscreenImage, setFullscreenImage] = useState<string | null>(null);
+  const [fullscreenPhotos, setFullscreenPhotos] = useState<string[]>([]);
+  const [fullscreenIndex, setFullscreenIndex] = useState(0);
 
   const API_URL = 'https://bekobod-app-1.onrender.com';
 
@@ -163,13 +165,38 @@ export const RestaurantsView: React.FC<RestaurantsViewProps> = ({ onClose }) => 
                     key={restaurant.id}
                     className="bg-white rounded-3xl overflow-hidden shadow-sm border border-stone-100 space-y-3"
                   >
-                    {restaurant.image_url && (
-                      <img
-                        src={restaurant.image_url}
-                        alt={restaurant.name}
-                        className="w-full max-h-64 object-contain bg-stone-100"
-                      />
-                    )}
+                                      {/* Галерея всех фото (главное + меню) */}
+                    {(() => {
+                      const allPhotos = [
+                        ...(restaurant.image_url ? [restaurant.image_url] : []),
+                        ...(restaurant.menu_images || []),
+                      ];
+                      if (allPhotos.length === 0) return null;
+
+                      return (
+                        <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-hide">
+                          {allPhotos.map((url, idx) => (
+                            <button
+                              key={idx}
+                              type="button"
+                              onClick={() => {
+                                setFullscreenImage(url);
+                                setFullscreenPhotos(allPhotos);
+                                setFullscreenIndex(idx);
+                              }}
+                              className="shrink-0"
+                            >
+                              <img
+                                src={url}
+                                alt={`Photo ${idx + 1}`}
+                                className="w-32 h-32 object-cover rounded-2xl shadow-sm hover:shadow-lg transition"
+                              />
+                            </button>
+                          ))}
+                        </div>
+                      );
+                    })()}
+
                     <div className="p-5 space-y-3">
                       <div className="flex items-start justify-between">
                         <h3 className="font-bold text-lg text-stone-900 leading-tight flex-1">
@@ -196,29 +223,7 @@ export const RestaurantsView: React.FC<RestaurantsViewProps> = ({ onClose }) => 
                           <span className="font-semibold">{restaurant.phone}</span>
                         </div>
                       )}
-                      {restaurant.menu_images && restaurant.menu_images.length > 0 && (
-                        <div className="pt-3 border-t border-stone-100">
-                          <div className="text-xs font-bold text-stone-700 mb-2 uppercase tracking-wide">
-                            📋 Menyu
-                          </div>
-                          <div className="grid grid-cols-3 gap-2">
-                            {restaurant.menu_images.map((url, i) => (
-                              <button
-                                key={i}
-                                type="button"
-                                onClick={() => setFullscreenImage(url)}
-                                className="block w-full"
-                              >
-                                <img
-                                  src={url}
-                                  alt={`Menyu ${i + 1}`}
-                                  className="w-full h-24 object-cover rounded-2xl shadow-sm hover:shadow-lg transition"
-                                />
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      )}
+                   
                       {restaurant.hours && (
                         <div className="flex items-center space-x-2 text-sm text-stone-700">
                           <Clock className="w-4 h-4 text-amber-500 shrink-0" />
@@ -264,7 +269,7 @@ export const RestaurantsView: React.FC<RestaurantsViewProps> = ({ onClose }) => 
           )}
         </div>
 
-        {/* Модальное окно оценки */}
+               {/* Модальное окно оценки */}
         {showRatingModal && (
           <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl">
@@ -299,23 +304,74 @@ export const RestaurantsView: React.FC<RestaurantsViewProps> = ({ onClose }) => 
           </div>
         )}
 
-        {/* Модалка для просмотра фото во весь экран */}
+        {/* Модалка для просмотра фото — с листанием и зумом */}
         {fullscreenImage && (
           <div
-            className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4"
-            onClick={() => setFullscreenImage(null)}
+            className="fixed inset-0 bg-black/95 z-50 flex items-center justify-center"
+            onClick={() => {
+              setFullscreenImage(null);
+              setFullscreenPhotos([]);
+              setFullscreenIndex(0);
+            }}
           >
-            <img
-              src={fullscreenImage}
-              alt="Fullscreen"
-              className="max-w-full max-h-full object-contain"
-            />
+            {/* Счётчик */}
+            {fullscreenPhotos.length > 1 && (
+              <div className="absolute top-4 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-white/20 text-white text-xs font-bold z-10">
+                {fullscreenIndex + 1} / {fullscreenPhotos.length}
+              </div>
+            )}
+
+            {/* Кнопка закрыть */}
             <button
-              onClick={() => setFullscreenImage(null)}
-              className="absolute top-4 right-4 w-12 h-12 rounded-full bg-white/20 text-white text-2xl flex items-center justify-center"
+              onClick={(e) => {
+                e.stopPropagation();
+                setFullscreenImage(null);
+                setFullscreenPhotos([]);
+                setFullscreenIndex(0);
+              }}
+              className="absolute top-4 right-4 w-12 h-12 rounded-full bg-white/20 text-white text-2xl flex items-center justify-center z-10"
             >
               ✕
             </button>
+
+            {/* Стрелка влево */}
+            {fullscreenPhotos.length > 1 && fullscreenIndex > 0 && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const newIndex = fullscreenIndex - 1;
+                  setFullscreenIndex(newIndex);
+                  setFullscreenImage(fullscreenPhotos[newIndex]);
+                }}
+                className="absolute left-2 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/20 text-white text-2xl flex items-center justify-center z-10"
+              >
+                ‹
+              </button>
+            )}
+
+            {/* Стрелка вправо */}
+            {fullscreenPhotos.length > 1 && fullscreenIndex < fullscreenPhotos.length - 1 && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const newIndex = fullscreenIndex + 1;
+                  setFullscreenIndex(newIndex);
+                  setFullscreenImage(fullscreenPhotos[newIndex]);
+                }}
+                className="absolute right-2 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/20 text-white text-2xl flex items-center justify-center z-10"
+              >
+                ›
+              </button>
+            )}
+
+            {/* Само фото — с зумом через pinch */}
+            <img
+              src={fullscreenImage}
+              alt="Fullscreen"
+              onClick={(e) => e.stopPropagation()}
+              className="max-w-full max-h-full object-contain"
+              style={{ touchAction: 'pinch-zoom' }}
+            />
           </div>
         )}
       </div>

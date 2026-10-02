@@ -55,6 +55,9 @@ const sections: Section[] = [
   { id: 'donate', titleUz: "Loyihani qo'llab-quvvatlash", titleRu: 'Поддержать проект', icon: Handshake, gradient: 'from-emerald-500 to-teal-600' },
 ];
 
+// ⚙️ ФЛАГ: показывать ли блок рекламы на главном экране
+// false = реклама скрыта, true = реклама видна
+const SHOW_ADS = false;
 
 function App() {
   const [currentAd, setCurrentAd] = useState(0);
@@ -152,8 +155,9 @@ function App() {
       .catch(() => {});
   }, [activeSection, userId]);
 
-    // Загрузка рекламы из БД
+     // Загрузка рекламы из БД (только если SHOW_ADS = true)
   useEffect(() => {
+    if (!SHOW_ADS) return;
     fetch('https://bekobod-app-1.onrender.com/api/ads/list')
       .then((res) => res.json())
       .then((data) => setAds(data.ads || []))
@@ -162,7 +166,7 @@ function App() {
 
   // Авто-переключение рекламы
   useEffect(() => {
-    if (ads.length === 0) return;
+    if (!SHOW_ADS || ads.length === 0) return;
     const interval = setInterval(() => {
       setCurrentAd((prev) => (prev + 1) % ads.length);
     }, 5000);
@@ -333,7 +337,8 @@ function App() {
           )}
         </div>
       </div>
-           {/* Карусель рекламы */}
+            {/* Карусель рекламы (временно отключена флагом SHOW_ADS) */}
+           {SHOW_ADS && (
       <div className="max-w-2xl w-full mx-auto px-4 pt-4">
         <div className="relative rounded-3xl overflow-hidden shadow-xl h-48">
           {ads.length === 0 ? (
@@ -425,7 +430,7 @@ function App() {
           📢 Reklama: {ads.length} / 4
         </div>
       </div>
-
+   )}
       {/* Разделы */}
       <div className="flex-1 max-w-2xl w-full mx-auto px-4 py-6">
         <h2 className="font-bold text-lg mb-4 flex items-center space-x-2">

@@ -289,38 +289,39 @@ function App() {
                 </div>
               </div>
 
-                           {/* Прогноз на 7 дней */}
-              <div className="pt-3 border-t border-white/30 space-y-1.5">
+                           {/* Прогноз на 7 дней — горизонтально */}
+              <div className="flex justify-between gap-0.5 pt-3 border-t border-white/30">
                 {weather.daily?.time?.slice(0, 7).map((dateStr: string, i: number) => {
                   const date = new Date(dateStr);
                   const dayName = date.toLocaleDateString('uz-UZ', { weekday: 'short' });
-                  const dayMonth = date.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' });
+                  const dayNum = String(date.getDate()).padStart(2, '0');
+                  const monthNum = String(date.getMonth() + 1).padStart(2, '0');
                   const maxTemp = Math.round(weather.daily.temperature_2m_max[i]);
                   const minTemp = Math.round(weather.daily.temperature_2m_min[i]);
                   const code = weather.daily.weather_code[i];
 
                   return (
-                    <div key={i} className="flex items-center justify-between text-white">
-                      {/* День + дата */}
-                      <div className="flex items-center space-x-2 w-24 shrink-0">
-                        <span className="text-xs font-bold uppercase drop-shadow-md w-8">
-                          {dayName}
-                        </span>
-                        <span className="text-[11px] text-white/85 drop-shadow-md">
-                          {dayMonth}
-                        </span>
-                      </div>
-
+                    <div key={i} className="flex flex-col items-center flex-1 text-white">
+                      {/* День недели */}
+                      <span className="text-[10px] font-bold uppercase drop-shadow-md">
+                        {dayName}
+                      </span>
+                      {/* Дата */}
+                      <span className="text-[9px] text-white/80 drop-shadow-md">
+                        {dayNum}.{monthNum}
+                      </span>
                       {/* Иконка */}
-                      <div className="scale-[0.55] shrink-0">
+                      <div className="scale-[0.5] my-0.5">
                         {getWeatherIcon(code, 12)}
                       </div>
-
-                      {/* Температуры */}
-                      <div className="flex items-center space-x-1 text-sm font-bold drop-shadow-md shrink-0 w-20 justify-end">
-                        <span>{maxTemp}°</span>
-                        <span className="text-white/60 text-xs">/ {minTemp}°</span>
-                      </div>
+                      {/* Макс температура */}
+                      <span className="text-xs font-bold drop-shadow-md">
+                        {maxTemp}°
+                      </span>
+                      {/* Мин температура */}
+                      <span className="text-[10px] text-white/70 drop-shadow-md">
+                        {minTemp}°
+                      </span>
                     </div>
                   );
                 })}

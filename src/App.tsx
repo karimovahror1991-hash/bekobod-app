@@ -96,8 +96,7 @@ function App() {
     const lat = 40.22;
     const lon = 69.22;
 
-    fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&hourly=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min,weather_code&timezone=auto&forecast_days=2`)
-      .then((res) => res.json())
+        fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min,weather_code&timezone=auto&forecast_days=7`)
       .then((data) => {
         setWeather(data);
         setWeatherLoading(false);
@@ -314,20 +313,38 @@ function App() {
                 </div>
               </div>
 
-              {/* Прогноз по 3 часа */}
-              <div className="flex justify-between gap-1 pt-3 border-t border-white/30">
-                {getThreeHourForecast(weather).map((slot, i) => {
-                  const time = new Date(slot.time).toLocaleTimeString('ru-RU', {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  });
+                           {/* Прогноз на 7 дней */}
+              <div className="pt-3 border-t border-white/30 space-y-1.5">
+                {weather.daily?.time?.slice(0, 7).map((dateStr: string, i: number) => {
+                  const date = new Date(dateStr);
+                  const dayName = date.toLocaleDateString('uz-UZ', { weekday: 'short' });
+                  const dayMonth = date.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' });
+                  const maxTemp = Math.round(weather.daily.temperature_2m_max[i]);
+                  const minTemp = Math.round(weather.daily.temperature_2m_min[i]);
+                  const code = weather.daily.weather_code[i];
+
                   return (
-                    <div key={i} className="flex flex-col items-center flex-1">
-                      <span className="text-xs font-bold text-white drop-shadow-md">{time}</span>
-                      <div className="scale-[0.6] my-0.5">
-                       {getWeatherIcon(slot.code, new Date(slot.time).getHours())}
+                    <div key={i} className="flex items-center justify-between text-white">
+                      {/* День + дата */}
+                      <div className="flex items-center space-x-2 w-24 shrink-0">
+                        <span className="text-xs font-bold uppercase drop-shadow-md w-8">
+                          {dayName}
+                        </span>
+                        <span className="text-[11px] text-white/85 drop-shadow-md">
+                          {dayMonth}
+                        </span>
                       </div>
-                      <span className="text-sm font-bold text-white drop-shadow-md">{slot.temp}°</span>
+
+                      {/* Иконка */}
+                      <div className="scale-[0.55] shrink-0">
+                        {getWeatherIcon(code, 12)}
+                      </div>
+
+                      {/* Температуры */}
+                      <div className="flex items-center space-x-1 text-sm font-bold drop-shadow-md shrink-0 w-20 justify-end">
+                        <span>{maxTemp}°</span>
+                        <span className="text-white/60 text-xs">/ {minTemp}°</span>
+                      </div>
                     </div>
                   );
                 })}

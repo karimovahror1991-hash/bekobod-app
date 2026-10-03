@@ -167,10 +167,10 @@ export const RestaurantsView: React.FC<RestaurantsViewProps> = ({ onClose }) => 
                   >
                                       {/* Галерея всех фото (главное + меню) */}
                     {(() => {
-                      const allPhotos = [
-                        ...(restaurant.image_url ? [restaurant.image_url] : []),
-                        ...(restaurant.menu_images || []),
-                      ];
+                     const allPhotos = [
+  ...(restaurant.image_url && restaurant.image_url.trim() ? [restaurant.image_url] : []),
+  ...(restaurant.menu_images || []).filter(url => url && url.trim() && url.startsWith('data:image/')),
+];
                       if (allPhotos.length === 0) return null;
 
                       return (

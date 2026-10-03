@@ -418,7 +418,7 @@ app.post('/api/telegram-webhook', async (req, res) => {
               const arrayBuf = await fetch(tempUrl).then(r => r.arrayBuffer());
               const imageBuffer = Buffer.from(arrayBuf);
 
-              // Сжимаем до 800px по ширине, качество 70%
+                // Сжимаем до 500px по ширине, качество 55%
               const compressed = await sharp(imageBuffer)
                 .resize({ width: 500, withoutEnlargement: true })
 .jpeg({ quality: 55 })
@@ -476,7 +476,7 @@ app.post('/api/telegram-webhook', async (req, res) => {
               const arrayBuf = await fetch(tempUrl).then(r => r.arrayBuffer());
               const imageBuffer = Buffer.from(arrayBuf);
 
-              // Сжимаем до 800px по ширине, качество 70%
+                // Сжимаем до 500px по ширине, качество 55%
               const compressed = await sharp(imageBuffer)
                 .resize({ width: 500, withoutEnlargement: true })
 .jpeg({ quality: 55 })
@@ -534,7 +534,7 @@ app.post('/api/telegram-webhook', async (req, res) => {
               const arrayBuf = await fetch(tempUrl).then(r => r.arrayBuffer());
               const imageBuffer = Buffer.from(arrayBuf);
 
-              // Сжимаем до 800px по ширине, качество 70%
+              // Сжимаем до 500px по ширине, качество 55%
               const compressed = await sharp(imageBuffer)
                 .resize({ width: 500, withoutEnlargement: true })
 .jpeg({ quality: 55 })
@@ -604,7 +604,7 @@ app.post('/api/telegram-webhook', async (req, res) => {
               const arrayBuf = await fetch(tempUrl).then(r => r.arrayBuffer());
               const imageBuffer = Buffer.from(arrayBuf);
 
-              // Сжимаем до 800px по ширине, качество 70%
+              // Сжимаем до 500px по ширине, качество 55%
               const compressed = await sharp(imageBuffer)
                 .resize({ width: 500, withoutEnlargement: true })
 .jpeg({ quality: 55 })
@@ -824,7 +824,7 @@ app.post('/api/telegram-webhook', async (req, res) => {
               const arrayBuf = await fetch(tempUrl).then(r => r.arrayBuffer());
               const imageBuffer = Buffer.from(arrayBuf);
 
-              // Сжимаем до 800px по ширине, качество 70%
+              // Сжимаем до 500px по ширине, качество 55%
               const compressed = await sharp(imageBuffer)
                .resize({ width: 500, withoutEnlargement: true })
 .jpeg({ quality: 55 })
@@ -1073,7 +1073,7 @@ if ((message?.caption?.startsWith('/add_news')) && ADMINS.includes(message.from.
               const arrayBuf = await fetch(tempUrl).then(r => r.arrayBuffer());
               const imageBuffer = Buffer.from(arrayBuf);
 
-              // Сжимаем до 800px по ширине, качество 70%
+              // Сжимаем до 500px по ширине, качество 55%
               const compressed = await sharp(imageBuffer)
                 .resize({ width: 500, withoutEnlargement: true })
 .jpeg({ quality: 55 })
@@ -2397,7 +2397,7 @@ app.post('/api/upload-image', strictLimiter, async (req, res) => {
     const base64Data = image.replace(/^data:image\/\w+;base64,/, '');
     const imageBuffer = Buffer.from(base64Data, 'base64');
 
-    // Сжимаем до 800px по ширине, качество 70%
+    // Сжимаем до 500px по ширине, качество 55%
     const compressed = await sharp(imageBuffer)
       .resize({ width: 500, withoutEnlargement: true })
 .jpeg({ quality: 55 })

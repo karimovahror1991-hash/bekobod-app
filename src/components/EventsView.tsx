@@ -136,6 +136,7 @@ export const EventsView: React.FC<EventsViewProps> = ({ onClose, userId }) => {
                       src={event.image_url}
                       alt={event.title}
                       className="max-w-full max-h-full object-contain"
+                      onError={(e) => (e.currentTarget.style.display = 'none')}
                     />
                   </div>
                 )}
@@ -178,61 +179,61 @@ export const EventsView: React.FC<EventsViewProps> = ({ onClose, userId }) => {
     );
   }
 
-   // Экран категорий
+  // Экран категорий
   return (
     <PullToRefresh onRefresh={loadEvents}>
-    <div className="min-h-screen bg-linear-to-b from-stone-50 to-stone-100">
-      <div className="bg-white/95 backdrop-blur-lg border-b border-stone-200 sticky top-0 z-20 shadow-sm">
-        <div className="max-w-2xl mx-auto px-4 pt-6 pb-4 flex items-center space-x-3">
-          <button
-            onClick={onClose}
-            className="w-11 h-11 rounded-2xl bg-stone-100 hover:bg-amber-100 flex items-center justify-center transition-colors"
-          >
-            <ArrowLeft className="w-6 h-6 text-stone-700" />
-          </button>
-          <h1 className="font-bold text-2xl text-stone-900">🎭 Tadbirlar</h1>
+      <div className="min-h-screen bg-linear-to-b from-stone-50 to-stone-100">
+        <div className="bg-white/95 backdrop-blur-lg border-b border-stone-200 sticky top-0 z-20 shadow-sm">
+          <div className="max-w-2xl mx-auto px-4 pt-6 pb-4 flex items-center space-x-3">
+            <button
+              onClick={onClose}
+              className="w-11 h-11 rounded-2xl bg-stone-100 hover:bg-amber-100 flex items-center justify-center transition-colors"
+            >
+              <ArrowLeft className="w-6 h-6 text-stone-700" />
+            </button>
+            <h1 className="font-bold text-2xl text-stone-900">🎭 Tadbirlar</h1>
+          </div>
+        </div>
+
+        <div className="max-w-2xl mx-auto px-4 py-6">
+          <div className="space-y-4">
+            {CATEGORIES.map((cat) => {
+              const count = events.filter(e => e.category === cat.id).length;
+              const badge = subBadges[cat.id] || 0;
+              return (
+                <button
+                  key={cat.id}
+                  onClick={() => {
+                    setSelectedCategory(cat.id);
+                    if (userId) {
+                      fetch(`${API_URL}/api/badge-sub/events/${cat.id}/seen`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ userId }),
+                      }).catch(() => {});
+                      setSubBadges(prev => ({ ...prev, [cat.id]: 0 }));
+                    }
+                  }}
+                  className={`relative w-full bg-linear-to-br ${cat.gradient} text-white rounded-3xl p-8 flex flex-col items-center justify-center shadow-xl hover:shadow-2xl transition-all duration-300 active:scale-95 min-h-50`}
+                >
+                  {badge > 0 && (
+                    <div className="absolute top-4 right-4 min-w-7 h-7 px-2 bg-rose-500 text-white text-sm font-bold rounded-full flex items-center justify-center shadow-lg border-2 border-white">
+                      {badge > 99 ? '99+' : badge}
+                    </div>
+                  )}
+                  <div className="text-7xl mb-4">{cat.icon}</div>
+                  <div className="font-bold text-xl text-white text-center leading-tight">
+                    {cat.label}
+                  </div>
+                  <div className="text-sm text-white/80 mt-2">
+                    {count} ta tadbir
+                  </div>
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
-
-      <div className="max-w-2xl mx-auto px-4 py-6">
-        <div className="space-y-4">
-          {CATEGORIES.map((cat) => {
-            const count = events.filter(e => e.category === cat.id).length;
-            const badge = subBadges[cat.id] || 0;
-            return (
-              <button
-                key={cat.id}
-                onClick={() => {
-                  setSelectedCategory(cat.id);
-                  if (userId) {
-                    fetch(`${API_URL}/api/badge-sub/events/${cat.id}/seen`, {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ userId }),
-                    }).catch(() => {});
-                    setSubBadges(prev => ({ ...prev, [cat.id]: 0 }));
-                  }
-                }}
-                className={`relative w-full bg-linear-to-br ${cat.gradient} text-white rounded-3xl p-8 flex flex-col items-center justify-center shadow-xl hover:shadow-2xl transition-all duration-300 active:scale-95 min-h-50`}
-              >
-                {badge > 0 && (
-                  <div className="absolute top-4 right-4 min-w-7 h-7 px-2 bg-rose-500 text-white text-sm font-bold rounded-full flex items-center justify-center shadow-lg border-2 border-white">
-                    {badge > 99 ? '99+' : badge}
-                  </div>
-                )}
-                <div className="text-7xl mb-4">{cat.icon}</div>
-                <div className="font-bold text-xl text-white text-center leading-tight">
-                  {cat.label}
-                </div>
-                <div className="text-sm text-white/80 mt-2">
-                  {count} ta tadbir
-                </div>
-              </button>
-            );
-          })}
-        </div>
-        </div>
-    </div>
     </PullToRefresh>
   );
 };

@@ -45,32 +45,33 @@ export const RestaurantsView: React.FC<RestaurantsViewProps> = ({ onClose }) => 
 
   const API_URL = 'https://bekobod-app-1.onrender.com';
 
-  const loadRestaurants = async () => {
-    try {
-      setLoading(true);
-      const res = await fetch(`${API_URL}/api/restaurants/list`);
-      const data = await res.json();
-      const list = data.restaurants || [];
-      setRestaurants(list);
+ const loadRestaurants = async () => {
+  try {
+    setLoading(true);
 
-      // Загружаем рейтинги
-      const ratingsData: {[key: number]: {avg: number, count: number}} = {};
-      for (const r of list) {
-        try {
-          const rr = await fetch(`${API_URL}/api/restaurants/rating/${r.id}`);
-          const rd = await rr.json();
-          ratingsData[r.id] = { avg: rd.avgRating || 0, count: rd.count || 0 };
-        } catch (e) {
-          ratingsData[r.id] = { avg: 0, count: 0 };
-        }
-      }
-      setRatings(ratingsData);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
+    // Один запрос — рестораны + рейтинги + мои оценки
+    const res = await fetch(`${API_URL}/api/restaurants/list-full?userId=${userId || ''}`);
+    const data = await res.json();
+    const list = data.restaurants || [];
+
+    // Отделяем рейтинги от ресторанов
+    const ratingsData: {[key: number]: {avg: number, count: number}} = {};
+    const myRatingsData: {[key: number]: number} = {};
+
+    list.forEach((r: any) => {
+      ratingsData[r.id] = { avg: r.avgRating || 0, count: r.ratingCount || 0 };
+      if (r.myRating) myRatingsData[r.id] = r.myRating;
+    });
+
+    setRestaurants(list);
+    setRatings(ratingsData);
+    setMyRatings(myRatingsData);
+  } catch (err) {
+    console.error(err);
+  } finally {
+    setLoading(false);
+  }
+};
 
   useEffect(() => {
     loadRestaurants();

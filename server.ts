@@ -414,8 +414,8 @@ app.post('/api/telegram-webhook', async (req, res) => {
 
               // Сжимаем до 800px по ширине, качество 70%
               const compressed = await sharp(imageBuffer)
-                .resize({ width: 800, withoutEnlargement: true })
-                .jpeg({ quality: 70 })
+                .resize({ width: 500, withoutEnlargement: true })
+.jpeg({ quality: 55 })
                 .toBuffer();
 
                            // Конвертируем в base64 data URL
@@ -472,8 +472,8 @@ app.post('/api/telegram-webhook', async (req, res) => {
 
               // Сжимаем до 800px по ширине, качество 70%
               const compressed = await sharp(imageBuffer)
-                .resize({ width: 800, withoutEnlargement: true })
-                .jpeg({ quality: 70 })
+                .resize({ width: 500, withoutEnlargement: true })
+.jpeg({ quality: 55 })
                 .toBuffer();
 
               // Конвертируем в base64 data URL
@@ -530,8 +530,8 @@ app.post('/api/telegram-webhook', async (req, res) => {
 
               // Сжимаем до 800px по ширине, качество 70%
               const compressed = await sharp(imageBuffer)
-                .resize({ width: 800, withoutEnlargement: true })
-                .jpeg({ quality: 70 })
+                .resize({ width: 500, withoutEnlargement: true })
+.jpeg({ quality: 55 })
                 .toBuffer();
 
               // Конвертируем в base64 data URL
@@ -600,8 +600,8 @@ app.post('/api/telegram-webhook', async (req, res) => {
 
               // Сжимаем до 800px по ширине, качество 70%
               const compressed = await sharp(imageBuffer)
-                .resize({ width: 800, withoutEnlargement: true })
-                .jpeg({ quality: 70 })
+                .resize({ width: 500, withoutEnlargement: true })
+.jpeg({ quality: 55 })
                 .toBuffer();
 
                             // Конвертируем в base64 data URL
@@ -820,8 +820,8 @@ app.post('/api/telegram-webhook', async (req, res) => {
 
               // Сжимаем до 800px по ширине, качество 70%
               const compressed = await sharp(imageBuffer)
-                .resize({ width: 800, withoutEnlargement: true })
-                .jpeg({ quality: 70 })
+               .resize({ width: 500, withoutEnlargement: true })
+.jpeg({ quality: 55 })
                 .toBuffer();
 
               // Конвертируем в base64 data URL
@@ -1069,8 +1069,8 @@ if ((message?.caption?.startsWith('/add_news')) && ADMINS.includes(message.from.
 
               // Сжимаем до 800px по ширине, качество 70%
               const compressed = await sharp(imageBuffer)
-                .resize({ width: 800, withoutEnlargement: true })
-                .jpeg({ quality: 70 })
+                .resize({ width: 500, withoutEnlargement: true })
+.jpeg({ quality: 55 })
                 .toBuffer();
 
               // Конвертируем в base64 data URL
@@ -2348,8 +2348,8 @@ app.post('/api/upload-image', strictLimiter, async (req, res) => {
 
     // Сжимаем до 800px по ширине, качество 70%
     const compressed = await sharp(imageBuffer)
-      .resize({ width: 800, withoutEnlargement: true })
-      .jpeg({ quality: 70 })
+      .resize({ width: 500, withoutEnlargement: true })
+.jpeg({ quality: 55 })
       .toBuffer();
 
     // Возвращаем как data URL

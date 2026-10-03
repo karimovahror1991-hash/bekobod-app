@@ -1692,22 +1692,30 @@ app.get('/api/restaurants/list', async (req, res) => {
 });
 // Полный список ресторанов + рейтинги + мои оценки ОДНИМ запросом
 app.get('/api/restaurants/list-full', async (req, res) => {
+  const startTime = Date.now();
   try {
     const { userId } = req.query;
+    console.log('⏱ list-full START, userId:', userId);
 
-    const restaurants = await pool.query('SELECT * FROM restaurants ORDER BY created_at DESC');
+    const t1 = Date.now();
+    const restaurants = await pool.query('SELECT id, name, category, address, phone, hours, description, created_at FROM restaurants ORDER BY created_at DESC');
+    console.log(`⏱ restaurants: ${Date.now() - t1}ms, rows: ${restaurants.rows.length}`);
 
+    const t2 = Date.now();
     const ratings = await pool.query(
       'SELECT restaurant_id, AVG(rating) as avg, COUNT(*) as count FROM restaurant_ratings GROUP BY restaurant_id'
     );
+    console.log(`⏱ ratings: ${Date.now() - t2}ms, rows: ${ratings.rows.length}`);
 
     let myRatings: any[] = [];
     if (userId) {
+      const t3 = Date.now();
       const r = await pool.query(
         'SELECT restaurant_id, rating FROM restaurant_ratings WHERE user_id = $1',
         [userId]
       );
       myRatings = r.rows;
+      console.log(`⏱ myRatings: ${Date.now() - t3}ms, rows: ${r.rows.length}`);
     }
 
     const ratingsMap: any = {};
@@ -1731,6 +1739,7 @@ app.get('/api/restaurants/list-full', async (req, res) => {
     }));
 
     res.json({ restaurants: result });
+    console.log(`⏱ list-full END: ${Date.now() - startTime}ms total`);
   } catch (error: any) {
     console.error('List-full error:', error);
     res.status(500).json({ error: error.message });

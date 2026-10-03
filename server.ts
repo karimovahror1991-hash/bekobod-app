@@ -1684,7 +1684,52 @@ app.get('/api/restaurants/list', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+// Полный список ресторанов + рейтинги + мои оценки ОДНИМ запросом
+app.get('/api/restaurants/list-full', async (req, res) => {
+  try {
+    const { userId } = req.query;
 
+    const restaurants = await pool.query('SELECT * FROM restaurants ORDER BY created_at DESC');
+
+    const ratings = await pool.query(
+      'SELECT restaurant_id, AVG(rating) as avg, COUNT(*) as count FROM restaurant_ratings GROUP BY restaurant_id'
+    );
+
+    let myRatings: any[] = [];
+    if (userId) {
+      const r = await pool.query(
+        'SELECT restaurant_id, rating FROM restaurant_ratings WHERE user_id = $1',
+        [userId]
+      );
+      myRatings = r.rows;
+    }
+
+    const ratingsMap: any = {};
+    ratings.rows.forEach(r => {
+      ratingsMap[r.restaurant_id] = {
+        avg: Number(r.avg),
+        count: Number(r.count),
+      };
+    });
+
+    const myMap: any = {};
+    myRatings.forEach(r => {
+      myMap[r.restaurant_id] = r.rating;
+    });
+
+    const result = restaurants.rows.map(r => ({
+      ...r,
+      avgRating: ratingsMap[r.id]?.avg || 0,
+      ratingCount: ratingsMap[r.id]?.count || 0,
+      myRating: myMap[r.id] || null,
+    }));
+
+    res.json({ restaurants: result });
+  } catch (error: any) {
+    console.error('List-full error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
 app.post('/api/restaurants/create', async (req, res) => {
   try {
     const { adminId, name, category, address, phone, description } = req.body;

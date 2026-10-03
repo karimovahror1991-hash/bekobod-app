@@ -115,8 +115,14 @@ app.use((req, res, next) => {
   next();
 });
 
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok' });
+app.get('/api/health', async (req, res) => {
+  try {
+    // Пинг БД, чтобы Neon не засыпал
+    await pool.query('SELECT 1');
+    res.json({ status: 'ok', db: 'ok' });
+  } catch (e: any) {
+    res.json({ status: 'ok', db: 'error', error: e.message });
+  }
 });
 // Трекинг открытия приложения
 app.post('/api/track', strictLimiter, async (req, res) => {

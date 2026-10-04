@@ -2340,10 +2340,11 @@ app.get('/api/restaurants/list-full', async (req, res) => {
       myRatings = r.rows;
     }
 
-    const ratingsMap: any = {};
+        const ratingsMap: any = {};
     ratings.rows.forEach(r => {
+      const avgNum = Number(r.avg);
       ratingsMap[r.restaurant_id] = {
-        avg: Number(r.avg),
+        avg: Math.round(avgNum * 10) / 10,
         count: Number(r.count),
       };
     });

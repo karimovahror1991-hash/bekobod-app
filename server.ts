@@ -939,6 +939,77 @@ if (message?.text?.startsWith('/delete_comment') && message.from.id === SUPER_AD
 
   return res.sendStatus(200);
 }
+// Команда /delete_announcement ID — удалить объявление (только SUPER_ADMIN)
+if (message?.text?.startsWith('/delete_announcement') && message.from.id === SUPER_ADMIN) {
+  const announcementId = Number(message.text.split(' ')[1]);
+
+  if (!announcementId) {
+    await sendTelegramMessage(message.from.id, `❌ /delete_announcement ID`);
+    return res.sendStatus(200);
+  }
+
+  // Проверяем, что объявление существует
+  const check = await pool.query(
+    'SELECT text FROM announcements WHERE id = $1',
+    [announcementId]
+  );
+
+  if (check.rows.length === 0) {
+    await sendTelegramMessage(message.from.id, `❌ Ob'yavlenie topilmadi (ID: ${announcementId})`);
+    return res.sendStatus(200);
+  }
+
+  // Удаляем комментарии и связи с сообщениями
+  await pool.query('DELETE FROM announcement_comments WHERE announcement_id = $1', [announcementId]);
+  await pool.query('DELETE FROM announcement_messages WHERE announcement_id = $1', [announcementId]);
+
+  // Удаляем само объявление
+  await pool.query('DELETE FROM announcements WHERE id = $1', [announcementId]);
+
+  await sendTelegramMessage(
+    message.from.id,
+    `✅ <b>Ob'yavlenie o'chirildi!</b>\n\n` +
+    `🆔 <code>${announcementId}</code>\n\n` +
+    `<i>Barcha izohlar ham o'chirildi.</i>`
+  );
+
+  return res.sendStatus(200);
+}
+// Команда /list_announcements — список всех объявлений (только SUPER_ADMIN)
+if (message?.text === '/list_announcements' && message.from.id === SUPER_ADMIN) {
+  const result = await pool.query(
+    `SELECT a.id, a.text, a.created_at, a.sent_count, a.failed_count,
+       (SELECT COUNT(*) FROM announcement_comments WHERE announcement_id = a.id) as comments_count
+     FROM announcements a
+     ORDER BY a.created_at DESC
+     LIMIT 20`
+  );
+
+  if (result.rows.length === 0) {
+    await sendTelegramMessage(message.from.id, `📭 Ob'yavleniyalar yo'q`);
+    return res.sendStatus(200);
+  }
+
+  let text = `📋 <b>Ob'yavleniyalar (${result.rows.length}):</b>\n\n`;
+
+  result.rows.forEach((row, i) => {
+    const date = new Date(row.created_at).toLocaleString('uz-UZ', {
+      day: '2-digit', month: '2-digit', year: 'numeric',
+      hour: '2-digit', minute: '2-digit'
+    });
+    const shortText = row.text.length > 60 ? row.text.substring(0, 60) + '...' : row.text;
+
+    text += `<b>${i + 1}.</b> <code>ID: ${row.id}</code>\n`;
+    text += `📅 ${date}\n`;
+    text += `📝 ${shortText}\n`;
+    text += `📤 Yuborildi: ${row.sent_count} | ❌ Xato: ${row.failed_count}\n`;
+    text += `💬 Izohlar: ${row.comments_count}\n`;
+    text += `🗑 O'chirish: <code>/delete_announcement ${row.id}</code>\n\n`;
+  });
+
+  await sendTelegramMessage(message.from.id, text);
+  return res.sendStatus(200);
+}
            // Команда /add_place (с фото или без)
     // Формат: /add_place kategoriya | nomi | manzil | telefon | ish_vaqti | tavsif
     if ((message?.text?.startsWith('/add_place') || message?.caption?.startsWith('/add_place')) && ADMINS.includes(message.from.id)) {

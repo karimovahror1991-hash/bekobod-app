@@ -571,7 +571,7 @@ if (callback_query) {
       // Запускаем рассылку
       const result = await broadcastAnnouncement(announcementId, text);
 
-      // Уведомляем админа
+        // Уведомляем админа
       await sendTelegramMessage(
         chatId,
         `✅ <b>Объявление отправлено!</b>\n\n` +
@@ -744,12 +744,14 @@ if (pendingAnnouncementId) {
     ? `@${message.from.username}`
     : message.from.first_name || 'Foydalanuvchi';
 
-  // Сохраняем комментарий
-  await pool.query(
+  // Сохраняем комментарий + получаем ID
+  const insertedComment = await pool.query(
     `INSERT INTO announcement_comments (announcement_id, user_id, user_name, text)
-     VALUES ($1, $2, $3, $4)`,
+     VALUES ($1, $2, $3, $4) RETURNING id`,
     [pendingAnnouncementId, message.from.id, userName, commentText]
   );
+
+  const newCommentId = insertedComment.rows[0].id;
 
   // Сбрасываем состояние
   await pool.query(
@@ -764,12 +766,16 @@ if (pendingAnnouncementId) {
     `Ваш комментарий появится под объявлением.`
   );
 
-  // Уведомляем админа (тебя)
+  // Уведомляем админа (тебя) с ID
   await sendTelegramMessage(
     SUPER_ADMIN,
     `💬 <b>Новый комментарий к объявлению #${pendingAnnouncementId}</b>\n\n` +
     `👤 ${userName}\n` +
-    `💬 ${commentText}`
+    `💬 ${commentText}\n\n` +
+    `━━━━━━━━━━━━━━━━━━━━\n` +
+    `🆔 ID комментария: <code>${newCommentId}</code>\n\n` +
+    `✍️ Ответить: <code>/reply_comment ${newCommentId} Ваш ответ</code>\n` +
+    `🗑 Удалить: <code>/delete_comment ${newCommentId}</code>`
   );
 
   // Обновляем кнопку у ВСЕХ пользователей (в фоне)
@@ -845,6 +851,92 @@ if (message?.text?.startsWith('/broadcast') && message.from.id === SUPER_ADMIN) 
   ];
 
   await sendTelegramMessageWithButtons(message.from.id, previewText, buttons);
+  return res.sendStatus(200);
+}
+// Команда /reply_comment ID текст — ответ на комментарий (только SUPER_ADMIN)
+if (message?.text?.startsWith('/reply_comment') && message.from.id === SUPER_ADMIN) {
+  const parts = message.text.split(' ');
+  const commentId = Number(parts[1]);
+  const replyText = parts.slice(2).join(' ').trim();
+
+  if (!commentId || !replyText) {
+    await sendTelegramMessage(
+      message.from.id,
+      `❌ <b>Format:</b>\n<code>/reply_comment ID Text otveta</code>\n\n` +
+      `<b>Misol:</b>\n<code>/reply_comment 5 Rahmat!</code>`
+    );
+    return res.sendStatus(200);
+  }
+
+  // Проверяем, что комментарий существует
+  const check = await pool.query(
+    'SELECT announcement_id, user_id, text FROM announcement_comments WHERE id = $1',
+    [commentId]
+  );
+
+  if (check.rows.length === 0) {
+    await sendTelegramMessage(message.from.id, `❌ Kommentariy topilmadi (ID: ${commentId})`);
+    return res.sendStatus(200);
+  }
+
+  const { announcement_id, user_id, text: commentText } = check.rows[0];
+
+  // Сохраняем ответ
+  await pool.query(
+    'UPDATE announcement_comments SET admin_reply = $1, admin_replied_at = NOW() WHERE id = $2',
+    [replyText, commentId]
+  );
+
+  // Уведомляем автора комментария
+  await sendTelegramMessage(
+    user_id,
+    `📢 <b>Administrator javobi!</b>\n\n` +
+    `💬 Sizning izohingiz: ${commentText}\n\n` +
+    `📢 Javob: <b>${replyText}</b>`
+  );
+
+  await sendTelegramMessage(
+    message.from.id,
+    `✅ <b>Javob yuborildi!</b>\n\n` +
+    `🆔 Kommentariy: <code>${commentId}</code>\n` +
+    `💬 Javob: ${replyText}`
+  );
+
+  return res.sendStatus(200);
+}
+
+// Команда /delete_comment ID — удалить комментарий (только SUPER_ADMIN)
+if (message?.text?.startsWith('/delete_comment') && message.from.id === SUPER_ADMIN) {
+  const commentId = Number(message.text.split(' ')[1]);
+
+  if (!commentId) {
+    await sendTelegramMessage(message.from.id, `❌ /delete_comment ID`);
+    return res.sendStatus(200);
+  }
+
+  const check = await pool.query(
+    'SELECT announcement_id, user_name, text FROM announcement_comments WHERE id = $1',
+    [commentId]
+  );
+
+  if (check.rows.length === 0) {
+    await sendTelegramMessage(message.from.id, `❌ Kommentariy topilmadi (ID: ${commentId})`);
+    return res.sendStatus(200);
+  }
+
+  const { announcement_id } = check.rows[0];
+
+  await pool.query('DELETE FROM announcement_comments WHERE id = $1', [commentId]);
+
+  // Обновляем кнопку у всех
+  updateCommentsButton(announcement_id).catch(e => console.error('Update error:', e));
+
+  await sendTelegramMessage(
+    message.from.id,
+    `✅ <b>Kommentariy o'chirildi!</b>\n\n` +
+    `🆔 <code>${commentId}</code>`
+  );
+
   return res.sendStatus(200);
 }
            // Команда /add_place (с фото или без)
@@ -3011,7 +3103,7 @@ app.get('/api/announcements/:id/comments', async (req, res) => {
   try {
     const { id } = req.params;
     const result = await pool.query(
-      `SELECT id, user_id, user_name, text, created_at 
+      `SELECT id, user_id, user_name, text, created_at, admin_reply, admin_replied_at
        FROM announcement_comments 
        WHERE announcement_id = $1 
        ORDER BY created_at ASC 

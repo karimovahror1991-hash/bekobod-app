@@ -7,6 +7,8 @@ interface Comment {
   user_name: string | null;
   text: string;
   created_at: string;
+  admin_reply: string | null;
+  admin_replied_at: string | null;
 }
 
 interface Announcement {
@@ -172,7 +174,7 @@ export const CommentsView: React.FC<CommentsViewProps> = ({ announcementId }) =>
               <p className="text-sm">Пока комментариев нет. Будьте первым!</p>
             </div>
           ) : (
-            <div className="space-y-3">
+                        <div className="space-y-3">
               {comments.map((c) => (
                 <div key={c.id} className="bg-white rounded-2xl p-4 border border-stone-100 shadow-sm">
                   <div className="flex items-center space-x-2 mb-2">
@@ -191,6 +193,23 @@ export const CommentsView: React.FC<CommentsViewProps> = ({ announcementId }) =>
                   <p className="text-sm text-stone-700 whitespace-pre-wrap leading-relaxed pl-10">
                     {c.text}
                   </p>
+
+                  {/* Ответ админа */}
+                  {c.admin_reply && (
+                    <div className="mt-3 ml-10 bg-amber-50 border-l-4 border-amber-500 rounded-r-xl p-3">
+                      <div className="text-xs font-bold text-amber-700 mb-1">
+                        📢 Администратор
+                      </div>
+                      <p className="text-sm text-stone-800 whitespace-pre-wrap leading-relaxed">
+                        {c.admin_reply}
+                      </p>
+                      {c.admin_replied_at && (
+                        <div className="text-xs text-amber-600 mt-1">
+                          {formatTime(c.admin_replied_at)}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               ))}
               <div ref={messagesEndRef} />

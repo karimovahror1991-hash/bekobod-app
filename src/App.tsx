@@ -1,3 +1,4 @@
+import { CommentsView } from './components/CommentsView';
 import { ShopsView } from './components/ShopsView';
 import { DonateView } from './components/DonateView';
 import { MiniOyinlarView } from './components/MiniOyinlarView';
@@ -60,6 +61,15 @@ const sections: Section[] = [
 const SHOW_ADS = false;
 
 function App() {
+    // Проверка: открыт ли экран комментариев
+  const urlParams = new URLSearchParams(window.location.search);
+  const screen = urlParams.get('screen');
+  const announcementId = urlParams.get('announcement_id');
+
+  // Если открыт экран комментариев — показываем CommentsView
+  if (screen === 'comments' && announcementId) {
+    return <CommentsView announcementId={Number(announcementId)} />;
+  }
   const [currentAd, setCurrentAd] = useState(0);
   const [ads, setAds] = useState<any[]>([]);
   const [weather, setWeather] = useState<any>(null);

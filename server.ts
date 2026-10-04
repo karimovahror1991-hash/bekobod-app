@@ -85,7 +85,85 @@ async function sendTelegramMessage(chatId: number, text: string) {
     body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'HTML' })
   });
 }
+// Отправка сообщения с кнопками
+async function sendTelegramMessageWithButtons(
+  chatId: number,
+  text: string,
+  buttons: any[][]
+): Promise<{ ok: boolean; error?: string }> {
+  const botToken = process.env.TELEGRAM_BOT_TOKEN;
+  if (!botToken) return { ok: false, error: 'No token' };
 
+  try {
+    const res = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text,
+        parse_mode: 'HTML',
+        reply_markup: { inline_keyboard: buttons }
+      })
+    });
+    const data: any = await res.json();
+    return { ok: data.ok, error: data.description };
+  } catch (e: any) {
+    return { ok: false, error: e.message };
+  }
+}
+
+// Рассылка объявления всем пользователям
+async function broadcastAnnouncement(
+  announcementId: number,
+  text: string
+): Promise<{ sent: number; failed: number }> {
+  const botToken = process.env.TELEGRAM_BOT_TOKEN;
+  if (!botToken) return { sent: 0, failed: 0 };
+
+  // Получаем уникальных пользователей (объединение app_users и bot_users)
+  const usersResult = await pool.query(`
+    SELECT user_id FROM app_users
+    UNION
+    SELECT user_id FROM bot_users
+  `);
+
+  const users = usersResult.rows;
+  console.log(`📢 Рассылка объявления #${announcementId} на ${users.length} пользователей...`);
+
+  let sent = 0;
+  let failed = 0;
+
+  // Кнопки под сообщением
+  const buttons = [
+    [
+      { text: '💬 Комментарии', callback_data: `ann_comments_${announcementId}` },
+      { text: '✍️ Написать', callback_data: `ann_write_${announcementId}` }
+    ]
+  ];
+
+  const messageText = `📢 <b>Объявление от администрации</b>\n\n${text}`;
+
+  for (const user of users) {
+    const result = await sendTelegramMessageWithButtons(user.user_id, messageText, buttons);
+    if (result.ok) {
+      sent++;
+    } else {
+      failed++;
+      console.log(`  ❌ Ошибка для ${user.user_id}: ${result.error}`);
+    }
+    // Задержка 50мс (20 сообщений/сек — безопасно)
+    await new Promise(r => setTimeout(r, 50));
+  }
+
+  // Обновляем статистику в БД
+  await pool.query(
+    'UPDATE announcements SET sent_count = $1, failed_count = $2 WHERE id = $3',
+    [sent, failed, announcementId]
+  );
+
+  console.log(`✅ Рассылка завершена: ${sent} успешно, ${failed} ошибок`);
+  return { sent, failed };
+}
 app.use(express.json({ limit: '5mb' }));
 
 // Глобальный лимит: 100 запросов в минуту с одного IP
@@ -352,13 +430,207 @@ app.post('/api/badge-sub/:section/:sub/seen', async (req, res) => {
 // ============ TELEGRAM WEBHOOK ============
 app.post('/api/telegram-webhook', async (req, res) => {
   try {
+    
         // Проверка секрета от Telegram
     const secret = req.headers['x-telegram-bot-api-secret-token'];
     if (secret !== process.env.TELEGRAM_WEBHOOK_SECRET) {
       console.warn('❌ Webhook: неверный секрет');
       return res.sendStatus(403);
     }
-    const { message } = req.body;
+        const { message, callback_query } = req.body;
+        // ============ ОБРАБОТКА CALLBACK-КНОПОК ============
+if (callback_query) {
+  try {
+    const data = callback_query.data || '';
+    const userId = callback_query.from.id;
+    const userName = callback_query.from.username
+      ? `@${callback_query.from.username}`
+      : callback_query.from.first_name || 'Foydalanuvchi';
+    const chatId = callback_query.message?.chat?.id;
+    const messageId = callback_query.message?.message_id;
+    const botToken = process.env.TELEGRAM_BOT_TOKEN;
+
+    // === Подтверждение отправки объявления ===
+    if (data.startsWith('ann_send_') && userId === SUPER_ADMIN) {
+      const announcementId = Number(data.replace('ann_send_', ''));
+
+      // Меняем кнопку на "Отправка..."
+      if (botToken && chatId && messageId) {
+        await fetch(`https://api.telegram.org/bot${botToken}/editMessageReplyMarkup`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chat_id: chatId,
+            message_id: messageId,
+            reply_markup: { inline_keyboard: [[{ text: '⏳ Отправка...', callback_data: 'ignore' }]] }
+          })
+        });
+      }
+
+      // Получаем текст объявления
+      const annResult = await pool.query('SELECT text FROM announcements WHERE id = $1', [announcementId]);
+      if (annResult.rows.length === 0) {
+        await sendTelegramMessage(chatId, '❌ Объявление не найдено');
+        return res.sendStatus(200);
+      }
+
+      const text = annResult.rows[0].text;
+
+      // Запускаем рассылку
+      const result = await broadcastAnnouncement(announcementId, text);
+
+      // Уведомляем админа
+      await sendTelegramMessage(
+        chatId,
+        `✅ <b>Объявление отправлено!</b>\n\n` +
+        `📤 Успешно: ${result.sent}\n` +
+        `❌ Ошибок: ${result.failed}\n` +
+        `ID: <code>${announcementId}</code>`
+      );
+    }
+
+    // === Отмена отправки ===
+    if (data.startsWith('ann_cancel_') && userId === SUPER_ADMIN) {
+      const announcementId = Number(data.replace('ann_cancel_', ''));
+
+      // Удаляем из БД
+      await pool.query('DELETE FROM announcements WHERE id = $1', [announcementId]);
+
+      // Меняем сообщение
+      if (botToken && chatId && messageId) {
+        await fetch(`https://api.telegram.org/bot${botToken}/editMessageText`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chat_id: chatId,
+            message_id: messageId,
+            text: '❌ <b>Объявление отменено</b>',
+            parse_mode: 'HTML'
+          })
+        });
+      }
+    }
+
+    // === Показать комментарии ===
+    if (data.startsWith('ann_comments_')) {
+      const announcementId = Number(data.replace('ann_comments_', ''));
+
+      const comments = await pool.query(
+        'SELECT user_name, text, created_at FROM announcement_comments WHERE announcement_id = $1 ORDER BY created_at ASC LIMIT 20',
+        [announcementId]
+      );
+
+      let commentsText = `💬 <b>Комментарии (${comments.rows.length}):</b>\n\n`;
+
+      if (comments.rows.length === 0) {
+        commentsText += `<i>Пока комментариев нет. Будьте первым!</i>`;
+      } else {
+        comments.rows.forEach((c, i) => {
+          const time = new Date(c.created_at).toLocaleString('uz-UZ', {
+            day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
+          });
+          commentsText += `<b>${i + 1}.</b> ${c.user_name} <i>(${time})</i>\n${c.text}\n\n`;
+        });
+      }
+
+      // Кнопка "Написать"
+      const buttons = [[{ text: '✍️ Написать комментарий', callback_data: `ann_write_${announcementId}` }]];
+
+      await sendTelegramMessageWithButtons(chatId, commentsText, buttons);
+    }
+
+    // === Написать комментарий ===
+   if (data.startsWith('ann_write_')) {
+  const announcementId = Number(data.replace('ann_write_', ''));
+
+  // Сохраняем в БД, что этот пользователь пишет комментарий
+  await pool.query(
+    `INSERT INTO bot_users (user_id, username, first_name, last_interaction, pending_comment_announcement_id)
+     VALUES ($1, $2, $3, NOW(), $4)
+     ON CONFLICT (user_id) DO UPDATE 
+     SET pending_comment_announcement_id = $4, last_interaction = NOW()`,
+    [userId, callback_query.from.username || null, callback_query.from.first_name || null, announcementId]
+  );
+
+  await sendTelegramMessage(
+    chatId,
+    `✍️ <b>Напишите ваш комментарий:</b>\n\n` +
+    `Просто отправьте текст следующим сообщением.\n` +
+    `Для отмены: <code>/cancel</code>`
+  );
+}
+
+    // Отвечаем Telegram, что callback обработан (обязательно!)
+    if (botToken && callback_query.id) {
+      await fetch(`https://api.telegram.org/bot${botToken}/answerCallbackQuery`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ callback_query_id: callback_query.id })
+      });
+    }
+  } catch (e: any) {
+    console.error('Callback error:', e);
+  }
+  return res.sendStatus(200);
+}
+// ============ ОБРАБОТКА КОММЕНТАРИЕВ ============
+if (message?.text && !message.text.startsWith('/')) {
+  // Проверяем, пишет ли пользователь комментарий
+  const pendingResult = await pool.query(
+    'SELECT pending_comment_announcement_id FROM bot_users WHERE user_id = $1',
+    [message.from.id]
+  );
+
+  const pendingAnnouncementId = pendingResult.rows[0]?.pending_comment_announcement_id;
+
+  if (pendingAnnouncementId) {
+    // Это комментарий!
+    const commentText = message.text.trim();
+    const userName = message.from.username
+      ? `@${message.from.username}`
+      : message.from.first_name || 'Foydalanuvchi';
+
+    // Сохраняем комментарий
+    await pool.query(
+      `INSERT INTO announcement_comments (announcement_id, user_id, user_name, text)
+       VALUES ($1, $2, $3, $4)`,
+      [pendingAnnouncementId, message.from.id, userName, commentText]
+    );
+
+    // Сбрасываем состояние
+    await pool.query(
+      'UPDATE bot_users SET pending_comment_announcement_id = NULL WHERE user_id = $1',
+      [message.from.id]
+    );
+
+    // Уведомляем пользователя
+    await sendTelegramMessage(
+      message.from.id,
+      `✅ <b>Комментарий добавлен!</b>\n\n` +
+      `Ваш комментарий появится под объявлением.`
+    );
+
+    // Уведомляем админа (тебя)
+    await sendTelegramMessage(
+      SUPER_ADMIN,
+      `💬 <b>Новый комментарий к объявлению #${pendingAnnouncementId}</b>\n\n` +
+      `👤 ${userName}\n` +
+      `💬 ${commentText}`
+    );
+
+    return res.sendStatus(200);
+  }
+}
+
+// Команда /cancel — отмена комментария
+if (message?.text === '/cancel') {
+  await pool.query(
+    'UPDATE bot_users SET pending_comment_announcement_id = NULL WHERE user_id = $1',
+    [message.from.id]
+  );
+  await sendTelegramMessage(message.from.id, '❌ Отменено');
+  return res.sendStatus(200);
+}
         // Команда /start — инструкция
     if (message?.text === '/start') {
       await sendTelegramMessage(
@@ -380,6 +652,44 @@ app.post('/api/telegram-webhook', async (req, res) => {
       );
       return res.sendStatus(200);
     }
+    // Команда /broadcast — создать объявление (только SUPER_ADMIN)
+if (message?.text?.startsWith('/broadcast') && message.from.id === SUPER_ADMIN) {
+  const text = message.text.replace('/broadcast', '').trim();
+
+  if (!text) {
+    await sendTelegramMessage(
+      message.from.id,
+      `❌ <b>Format:</b>\n<code>/broadcast Text ob'yavleniya</code>\n\n` +
+      `<b>Misol:</b>\n<code>/broadcast 3-mikrorayonda suv 10:00 dan 14:00 gacha o'chiriladi</code>`
+    );
+    return res.sendStatus(200);
+  }
+
+  // Сохраняем в БД
+  const result = await pool.query(
+    'INSERT INTO announcements (text, created_by) VALUES ($1, $2) RETURNING *',
+    [text, message.from.id]
+  );
+
+  const announcementId = result.rows[0].id;
+
+  // Показываем превью с кнопками подтверждения
+  const previewText =
+    `📢 <b>Предпросмотр объявления</b>\n\n` +
+    `${text}\n\n` +
+    `━━━━━━━━━━━━━━━━━━━━\n` +
+    `ID: <code>${announcementId}</code>`;
+
+  const buttons = [
+    [
+      { text: '✅ Отправить', callback_data: `ann_send_${announcementId}` },
+      { text: '❌ Отмена', callback_data: `ann_cancel_${announcementId}` }
+    ]
+  ];
+
+  await sendTelegramMessageWithButtons(message.from.id, previewText, buttons);
+  return res.sendStatus(200);
+}
            // Команда /add_place (с фото или без)
     // Формат: /add_place kategoriya | nomi | manzil | telefon | ish_vaqti | tavsif
     if ((message?.text?.startsWith('/add_place') || message?.caption?.startsWith('/add_place')) && ADMINS.includes(message.from.id)) {

@@ -81,24 +81,7 @@ export const RestaurantsView: React.FC<RestaurantsViewProps> = ({ onClose }) => 
     }
   }, []);
 
-  // Загрузка моих оценок
-  useEffect(() => {
-    if (!userId || restaurants.length === 0) return;
-    const loadMyRatings = async () => {
-      const my: {[key: number]: number} = {};
-      for (const r of restaurants) {
-        try {
-          const res = await fetch(`${API_URL}/api/restaurants/my-rating/${r.id}?userId=${userId}`);
-          const data = await res.json();
-          if (data.rating) my[r.id] = data.rating;
-        } catch {}
-      }
-      setMyRatings(my);
-    };
-    loadMyRatings();
-  }, [userId, restaurants.length]);
-
-  const handleRate = async (rating: number) => {
+   const handleRate = async (rating: number) => {
     if (!showRatingModal) return;
     try {
       const res = await fetch(`${API_URL}/api/restaurants/rate`, {
@@ -344,7 +327,7 @@ export const RestaurantsView: React.FC<RestaurantsViewProps> = ({ onClose }) => 
                   setFullscreenIndex(newIndex);
                   setFullscreenImage(fullscreenPhotos[newIndex]);
                 }}
-                className="absolute left-2 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/20 text-white text-2xl flex items-center justify-center z-10"
+                className="absolute left-2 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-black/60 text-white text-2xl flex items-center justify-center z-10"
               >
                 ‹
               </button>
@@ -359,7 +342,7 @@ export const RestaurantsView: React.FC<RestaurantsViewProps> = ({ onClose }) => 
                   setFullscreenIndex(newIndex);
                   setFullscreenImage(fullscreenPhotos[newIndex]);
                 }}
-                className="absolute right-2 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/20 text-white text-2xl flex items-center justify-center z-10"
+                className="absolute right-2 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-black/60 text-white text-2xl flex items-center justify-center z-10"
               >
                 ›
               </button>

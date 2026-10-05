@@ -28,6 +28,7 @@ const CATEGORIES = [
   { id: 'avto', label: 'Avto xizmatlar', icon: '🔧', gradient: 'from-stone-500 to-stone-700' },
   { id: 'oquv_markazi', label: "O'quv markazi", icon: '🎓', gradient: 'from-teal-500 to-emerald-600' },
   { id: 'bolalar_oyingohi', label: "Bolalar o'yingohi", icon: '🎪', gradient: 'from-yellow-500 to-orange-600' },
+   { id: 'toyxonalar', label: "To'yxonalar va tantanalar", icon: '🏛️', gradient: 'from-rose-500 to-pink-600' },
 ];
 
 export const ShopsView: React.FC<ShopsViewProps> = ({ onClose }) => {

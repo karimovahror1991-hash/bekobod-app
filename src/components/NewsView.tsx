@@ -134,17 +134,23 @@ export const NewsView: React.FC<NewsViewProps> = ({ onClose }) => {
                 {selectedNews.content}
               </p>
             )}
-            {selectedNews.source && (
-              <a
-                href={selectedNews.source}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center space-x-1.5 text-xs text-amber-700 font-semibold pt-3 border-t border-stone-100"
-              >
-                <ExternalLink className="w-3.5 h-3.5" />
-                <span>Manbani ochish</span>
-              </a>
-            )}
+           {selectedNews.source && (
+  <button
+    onClick={() => {
+      const tg = (window as any).Telegram?.WebApp;
+      const url = selectedNews.source!;
+      if (tg?.openLink) {
+        tg.openLink(url);
+      } else {
+        window.open(url, '_blank');
+      }
+    }}
+    className="inline-flex items-center space-x-1.5 text-xs text-amber-700 font-semibold pt-3 border-t border-stone-100"
+  >
+    <ExternalLink className="w-3.5 h-3.5" />
+    <span>Manbani ochish</span>
+  </button>
+)}
           </div>
         </div>
       </div>

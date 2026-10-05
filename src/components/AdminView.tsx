@@ -133,7 +133,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ onClose, userId }) => {
   const chat = buildChat();
 
   return (
-    <div className="min-h-screen bg-linear-to-b from-stone-50 to-stone-100 flex flex-col">
+   <div className="min-h-screen bg-linear-to-b from-stone-50 to-stone-100 flex flex-col pt-14">
       {/* Заголовок с кнопкой назад */}
     <div className="bg-white shadow-md border-b border-stone-200 sticky top-0 z-20">
         <div className="px-4 py-4 flex items-center space-x-3">

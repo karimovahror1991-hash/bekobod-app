@@ -31,7 +31,19 @@ export const AdminView: React.FC<AdminViewProps> = ({ onClose, userId }) => {
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   const API_URL = 'https://bekobod-app-1.onrender.com';
+// Telegram BackButton — нативная кнопка «Назад»
+useEffect(() => {
+  const tg = (window as any).Telegram?.WebApp;
+  if (tg?.BackButton) {
+    tg.BackButton.show();
+    tg.BackButton.onClick(onClose);
 
+    return () => {
+      tg.BackButton.offClick(onClose);
+      tg.BackButton.hide();
+    };
+  }
+}, [onClose]);
   const getUserName = () => {
     const tg = (window as any).Telegram?.WebApp;
     const user = tg?.initDataUnsafe?.user;
@@ -133,23 +145,8 @@ export const AdminView: React.FC<AdminViewProps> = ({ onClose, userId }) => {
   const chat = buildChat();
 
   return (
-   <div className="min-h-screen bg-linear-to-b from-stone-50 to-stone-100 flex flex-col pt-14">
-      {/* Заголовок с кнопкой назад */}
-    <div className="bg-white shadow-md border-b border-stone-200 sticky top-0 z-20">
-        <div className="px-4 py-4 flex items-center space-x-3">
-          <button
-  onClick={onClose}
-  className="w-11 h-11 rounded-2xl bg-stone-100 hover:bg-amber-100 flex items-center justify-center transition-colors shrink-0"
->
-  <ArrowLeft className="w-6 h-6 text-stone-700" />
-</button>
-          <div className="min-w-0">
-            <h1 className="font-bold text-lg text-stone-900 truncate">✉️ Administrator</h1>
-            <p className="text-xs text-stone-500 truncate">Murojaat va takliflar</p>
-          </div>
-        </div>
-      </div>
-
+   <div className="min-h-screen bg-linear-to-b from-stone-50 to-stone-100 flex flex-col">
+   
       {/* Чат */}
       <div className="flex-1 overflow-y-auto px-4 py-4">
         {loading ? (

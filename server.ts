@@ -85,6 +85,24 @@ async function sendTelegramMessage(chatId: number, text: string) {
     body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'HTML' })
   });
 }
+// Получить username бота (кэшируем)
+let cachedBotUsername: string | null = null;
+async function getBotUsername(): Promise<string> {
+  if (cachedBotUsername) return cachedBotUsername;
+  const botToken = process.env.TELEGRAM_BOT_TOKEN;
+  if (!botToken) return '';
+  try {
+    const res = await fetch(`https://api.telegram.org/bot${botToken}/getMe`);
+    const data: any = await res.json();
+    if (data.ok && data.result?.username) {
+      cachedBotUsername = data.result.username;
+      return cachedBotUsername!;
+    }
+  } catch (e) {
+    console.error('getBotUsername error:', e);
+  }
+  return '';
+}
 // Отправка сообщения с кнопками
 async function sendTelegramMessageWithButtons(
   chatId: number,
@@ -794,27 +812,36 @@ if (message?.text === '/cancel') {
   await sendTelegramMessage(message.from.id, '❌ Отменено');
   return res.sendStatus(200);
 }
-        // Команда /start — инструкция
-    if (message?.text === '/start') {
-      await sendTelegramMessage(
-        message.from.id,
-        `Assalomu alaykum! 👋\n\n` +
-        `🏙️ <b>Bekobod Shahar Portali</b> ilovasiga xush kelibsiz!\n\n` +
-        `👇 Ilovani ochish uchun pastdagi\n` +
-        `   ko'k <b>Ochish</b> tugmasini bosing:\n\n` +
-        `      ⬇️\n` +
-        `   🟦 <b>Ochish</b> 🟦\n` +
-        `      ⬆️\n\n` +
-        `Agar tugma ko'rinmasa, ekranni pastga torting yoki Telegramni qayta ishga tushiring.\n\n` +
-        `━━━━━━━━━━━━━━━━━━━━\n\n` +
-        `📌 <b>Maslahat:</b> Botni yo'qotmaslik uchun uni <b>yuqoriga qadab qo'ying</b> (Pin).\n\n` +
-        `Buning uchun:\n` +
-        `1️⃣ Chat ustiga uzoq bosing\n` +
-        `2️⃣ <b>Pin</b> tugmasini tanlang\n\n` +
-        `Shunda ilova doim qo'l ostingizda bo'ladi! 🚀`
-      );
-      return res.sendStatus(200);
-    }
+// Команда /start — инструкция
+if (message?.text === '/start') {
+  const startText =
+    `Assalomu alaykum! 👋\n\n` +
+    `🏙️ <b>Bekobod Shahar Portali</b> ilovasiga xush kelibsiz!\n\n` +
+    `👇 Ilovani ochish uchun pastdagi\n` +
+    `   ko'k <b>Ochish</b> tugmasini bosing:\n\n` +
+    `      ⬇️\n` +
+    `   🟦 <b>Ochish</b> 🟦\n` +
+    `      ⬆️\n\n` +
+    `Agar tugma ko'rinmasa, ekranni pastga torting yoki Telegramni qayta ishga tushiring.\n\n` +
+    `━━━━━━━━━━━━━━━━━━━━\n\n` +
+    `📌 <b>Maslahat:</b> Botni yo'qotmaslik uchun uni <b>yuqoriga qadab qo'ying</b> (Pin).\n\n` +
+    `Buning uchun:\n` +
+    `1️⃣ Chat ustiga uzoq bosing\n` +
+    `2️⃣ <b>Pin</b> tugmasini tanlang\n\n` +
+    `Shunda ilova doim qo'l ostingizda bo'ladi! 🚀`;
+
+  const startButtons = [
+    [
+      {
+        text: '📤 Do\'stlarga ulashish',
+        url: `https://t.me/share/url?url=https://t.me/${(await getBotUsername())}&text=${encodeURIComponent('🏙️ Bekobod Shahar Portali — shahrimiz uchun bepul va qulay ilova!')}`
+      }
+    ]
+  ];
+
+  await sendTelegramMessageWithButtons(message.from.id, startText, startButtons);
+  return res.sendStatus(200);
+}
     // Команда /broadcast — создать объявление (только SUPER_ADMIN)
 if (message?.text?.startsWith('/broadcast') && message.from.id === SUPER_ADMIN) {
   const text = message.text.replace('/broadcast', '').trim();

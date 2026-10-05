@@ -2571,14 +2571,15 @@ app.post('/api/shops/delete', async (req, res) => {
   }
 });
 // ============ NEWS ============
-   app.get('/api/news/list', async (req, res) => {
+  app.get('/api/news/list', async (req, res) => {
   try {
-        // Удаляем новости старше 3 дней
+    // Удаляем новости старше 3 дней
     await pool.query(`DELETE FROM news WHERE created_at < NOW() - INTERVAL '3 days'`);
-        // Удаляем новости категории bekobod старше 30 дней
+    // Удаляем новости категории bekobod старше 30 дней
     await pool.query(`DELETE FROM news WHERE category = 'bekobod' AND created_at < NOW() - INTERVAL '30 days'`);
+
     const { category } = req.query;
-        let query = 'SELECT id, category, title, content, source, image_url, youtube_url, instagram_url, created_at FROM news';
+    let query = 'SELECT id, category, title, content, source, image_url, youtube_url, instagram_url, created_at FROM news';
     const params: any[] = [];
     if (category && category !== 'all') {
       query += ' WHERE category = $1';
@@ -2586,7 +2587,25 @@ app.post('/api/shops/delete', async (req, res) => {
     }
     query += ' ORDER BY created_at DESC LIMIT 50';
     const result = await pool.query(query, params);
-    res.json({ news: result.rows });
+
+    // Преобразуем file_id в URL через Telegram getFile
+    const botToken = process.env.TELEGRAM_BOT_TOKEN;
+    const news = await Promise.all(result.rows.map(async (item) => {
+      if (item.image_url && !item.image_url.startsWith('http') && botToken) {
+        try {
+          const fileRes = await fetch(`https://api.telegram.org/bot${botToken}/getFile?file_id=${item.image_url}`);
+          const fileData = await fileRes.json();
+          if (fileData.ok) {
+            item.image_url = `https://api.telegram.org/file/bot${botToken}/${fileData.result.file_path}`;
+          }
+        } catch (e) {
+          console.error('News image error:', e);
+        }
+      }
+      return item;
+    }));
+
+    res.json({ news });
   } catch (error: any) {
     console.error('News list error:', error);
     res.status(500).json({ error: error.message });

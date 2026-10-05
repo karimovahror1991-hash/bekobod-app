@@ -1521,55 +1521,92 @@ if (message?.text === '/list_announcements' && message.from.id === SUPER_ADMIN) 
       }
     }
     // Команда /add_news (ручное добавление новости)
-    if (message?.text?.startsWith('/add_news') && ADMINS.includes(message.from.id)) {
-      const parts = message.text.split('|').map((s: string) => s.trim());
+if (message?.text?.startsWith('/add_news') && ADMINS.includes(message.from.id)) {
+  const parts = message.text.split('|').map((s: string) => s.trim());
 
-      if (parts.length < 3) {
-        await sendTelegramMessage(
-          message.from.id,
-          `❌ <b>Format:</b>\n<code>/add_news kategoriya | sarlavha | matn | manba</code>\n\n` +
-          `<b>Kategoriyalar:</b> bekobod, jahon\n\n` +
-          `<b>Misol:</b>\n<code>/add_news bekobod | Yangi park ochildi | Shahar markazida yangi park ochildi | https://t.me/...</code>`
-        );
-      } else {
-        const category = parts[0].replace('/add_news', '').trim();
-        const title = parts[1];
-        const content = parts[2] || null;
-        const source = parts[3] || null;
+  if (parts.length < 3) {
+    await sendTelegramMessage(
+      message.from.id,
+      `❌ <b>Format:</b>\n<code>/add_news kategoriya | sarlavha | matn | youtube=... | instagram=...</code>\n\n` +
+      `<b>Kategoriyalar:</b> bekobod, jahon\n\n` +
+      `<b>Misol (YouTube):</b>\n<code>/add_news bekobod | Yangilik | Matn | youtube=https://youtu.be/abc</code>\n\n` +
+      `<b>Misol (Instagram):</b>\n<code>/add_news bekobod | Yangilik | Matn | instagram=https://instagram.com/reel/xyz</code>\n\n` +
+      `<b>Можно оба:</b>\n<code>/add_news bekobod | Yangilik | Matn | youtube=https://youtu.be/abc | instagram=https://instagram.com/reel/xyz</code>`
+    );
+  } else {
+    const category = parts[0].replace('/add_news', '').trim();
+    const title = parts[1];
+    const content = parts[2] || null;
 
-        const result = await pool.query(
-          `INSERT INTO news (category, title, content, source) VALUES ($1, $2, $3, $4) RETURNING *`,
-          [category, title, content, source]
-        );
+    // Парсим youtube= и instagram= из всех частей
+    let youtubeUrl: string | null = null;
+    let instagramUrl: string | null = null;
+    let source: string | null = null;
 
-        await sendTelegramMessage(
-          message.from.id,
-          `✅ <b>Yangilik qo'shildi!</b>\n\n📂 ${category}\n📰 ${title}\nID: <code>${result.rows[0].id}</code>`
-        );
+    for (let i = 3; i < parts.length; i++) {
+      const part = parts[i];
+      if (part.startsWith('youtube=')) {
+        youtubeUrl = part.replace('youtube=', '').trim();
+      } else if (part.startsWith('instagram=')) {
+        instagramUrl = part.replace('instagram=', '').trim();
+      } else if (part.startsWith('http')) {
+        // Старый формат — просто ссылка
+        source = part;
       }
     }
-    // Команда /add_news с фото или видео (через caption)
+
+    const result = await pool.query(
+      `INSERT INTO news (category, title, content, source, youtube_url, instagram_url) 
+       VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+      [category, title, content, source, youtubeUrl, instagramUrl]
+    );
+
+    let info = `✅ <b>Yangilik qo'shildi!</b>\n\n📂 ${category}\n📰 ${title}`;
+    if (youtubeUrl) info += `\n▶️ YouTube: ha`;
+    if (instagramUrl) info += `\n📷 Instagram: ha`;
+    if (source) info += `\n🔗 Manba: ha`;
+    info += `\nID: <code>${result.rows[0].id}</code>`;
+
+    await sendTelegramMessage(message.from.id, info);
+  }
+}
+   // Команда /add_news с фото или видео (через caption)
 if ((message?.caption?.startsWith('/add_news')) && ADMINS.includes(message.from.id)) {
   const parts = message.caption.split('|').map((s: string) => s.trim());
 
   if (parts.length < 3) {
     await sendTelegramMessage(
       message.from.id,
-      `❌ <b>Format (s фото/видео):</b>\n<code>/add_news kategoriya | sarlavha | matn | manba</code>\n\n` +
-      `<b>Отправь фото или видео с этой подписью.</b>`
+      `❌ <b>Format (s фото/видео):</b>\n<code>/add_news kategoriya | sarlavha | matn | youtube=... | instagram=...</code>\n\n` +
+      `<b>Отправь фото или видео с этой подписью.</b>\n\n` +
+      `<b>Можно:</b> только youtube, только instagram, или оба.`
     );
   } else {
     const category = parts[0].replace('/add_news', '').trim();
     const title = parts[1];
     const content = parts[2] || null;
-    const source = parts[3] || null;
+
+    // Парсим youtube= и instagram= из всех частей
+    let youtubeUrl: string | null = null;
+    let instagramUrl: string | null = null;
+    let source: string | null = null;
+
+    for (let i = 3; i < parts.length; i++) {
+      const part = parts[i];
+      if (part.startsWith('youtube=')) {
+        youtubeUrl = part.replace('youtube=', '').trim();
+      } else if (part.startsWith('instagram=')) {
+        instagramUrl = part.replace('instagram=', '').trim();
+      } else if (part.startsWith('http')) {
+        source = part;
+      }
+    }
 
     // Получаем file_id
     let fileId = null;
     let mediaType = null;
 
     if (message.photo && message.photo.length > 0) {
-      // Берём самый большой размер
       fileId = message.photo[message.photo.length - 1].file_id;
       mediaType = 'photo';
     } else if (message.video) {
@@ -1578,14 +1615,17 @@ if ((message?.caption?.startsWith('/add_news')) && ADMINS.includes(message.from.
     }
 
     const result = await pool.query(
-      `INSERT INTO news (category, title, content, source, image_url) VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-      [category, title, content, source, fileId]
+      `INSERT INTO news (category, title, content, source, image_url, youtube_url, instagram_url) 
+       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+      [category, title, content, source, fileId, youtubeUrl, instagramUrl]
     );
 
-    await sendTelegramMessage(
-      message.from.id,
-      `✅ <b>Yangilik qo'shildi!</b>\n\n📂 ${category}\n📰 ${title}\n🖼 ${mediaType || 'yo\'q'}\nID: <code>${result.rows[0].id}</code>`
-    );
+    let info = `✅ <b>Yangilik qo'shildi!</b>\n\n📂 ${category}\n📰 ${title}\n🖼 ${mediaType || 'yo\'q'}`;
+    if (youtubeUrl) info += `\n▶️ YouTube: ha`;
+    if (instagramUrl) info += `\n📷 Instagram: ha`;
+    info += `\nID: <code>${result.rows[0].id}</code>`;
+
+    await sendTelegramMessage(message.from.id, info);
   }
 }
     // Команда /delete_news ID
@@ -2538,7 +2578,7 @@ app.post('/api/shops/delete', async (req, res) => {
         // Удаляем новости категории bekobod старше 30 дней
     await pool.query(`DELETE FROM news WHERE category = 'bekobod' AND created_at < NOW() - INTERVAL '30 days'`);
     const { category } = req.query;
-    let query = 'SELECT * FROM news';
+        let query = 'SELECT id, category, title, content, source, image_url, youtube_url, instagram_url, created_at FROM news';
     const params: any[] = [];
     if (category && category !== 'all') {
       query += ' WHERE category = $1';

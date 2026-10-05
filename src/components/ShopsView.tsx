@@ -29,6 +29,7 @@ const CATEGORIES = [
   { id: 'oquv_markazi', label: "O'quv markazi", icon: '🎓', gradient: 'from-teal-500 to-emerald-600' },
   { id: 'bolalar_oyingohi', label: "Bolalar o'yingohi", icon: '🎪', gradient: 'from-yellow-500 to-orange-600' },
    { id: 'toyxonalar', label: "To'yxonalar va tantanalar", icon: '🏛️', gradient: 'from-rose-500 to-pink-600' },
+    { id: 'tur_aviakassa', label: 'Tur agentliklari va Aviakassalar', icon: '✈️', gradient: 'from-sky-500 to-blue-600' },
 ];
 
 export const ShopsView: React.FC<ShopsViewProps> = ({ onClose }) => {

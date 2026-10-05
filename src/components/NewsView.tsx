@@ -31,7 +31,12 @@ export const NewsView: React.FC<NewsViewProps> = ({ onClose }) => {
   const [subBadges, setSubBadges] = useState<{ [key: string]: number }>({});
   const [userId, setUserId] = useState<number | null>(null);
   const API_URL = 'https://bekobod-app-1.onrender.com';
-
+// Достать YouTube ID из ссылки
+const getYouTubeId = (url: string | null): string | null => {
+  if (!url) return null;
+  const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|v\/|shorts\/))([^&?/]+)/);
+  return match ? match[1] : null;
+};
   const loadNews = async () => {
     try {
       setLoading(true);
@@ -114,14 +119,31 @@ export const NewsView: React.FC<NewsViewProps> = ({ onClose }) => {
         </div>
 
         <div className="max-w-2xl mx-auto px-4 py-6 space-y-4">
-          {selectedNews.image_url && (
-            <img
-              src={selectedNews.image_url}
-              alt={selectedNews.title}
-              className="w-full rounded-3xl shadow-lg"
-              onError={(e) => (e.currentTarget.style.display = 'none')}
-            />
-          )}
+          {/* Превью: загруженное фото ИЛИ YouTube */}
+{selectedNews.image_url ? (
+  <img
+    src={selectedNews.image_url}
+    alt={selectedNews.title}
+    className="w-full rounded-3xl shadow-lg"
+    onError={(e) => (e.currentTarget.style.display = 'none')}
+  />
+) : selectedNews.youtube_url && getYouTubeId(selectedNews.youtube_url) ? (
+  <div className="relative rounded-3xl overflow-hidden shadow-lg">
+    <img
+      src={`https://img.youtube.com/vi/${getYouTubeId(selectedNews.youtube_url)}/hqdefault.jpg`}
+      alt={selectedNews.title}
+      className="w-full"
+    />
+    {/* Иконка Play поверх */}
+    <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+      <div className="w-16 h-16 rounded-full bg-red-600 flex items-center justify-center shadow-2xl">
+        <svg className="w-8 h-8 text-white ml-1" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M8 5v14l11-7z"/>
+        </svg>
+      </div>
+    </div>
+  </div>
+) : null}
 
           <div className="bg-white rounded-3xl p-6 shadow-sm border border-stone-100 space-y-4">
             <div className="flex items-center space-x-2 text-xs text-stone-500">
@@ -238,34 +260,50 @@ export const NewsView: React.FC<NewsViewProps> = ({ onClose }) => {
                   onClick={() => setSelectedNews(item)}
                   className="w-full bg-white rounded-3xl overflow-hidden shadow-sm border border-stone-100 hover:shadow-xl transition-all text-left active:scale-[0.98]"
                 >
-                  {item.image_url && (
-                    <img
-                      src={item.image_url}
-                      alt={item.title}
-                      className="w-full h-40 object-cover"
-                      onError={(e) => (e.currentTarget.style.display = 'none')}
-                    />
-                  )}
-                  <div className="p-4">
-                    <div className="flex items-center space-x-1.5 text-xs text-stone-400 mb-2">
-                      <Clock className="w-3 h-3" />
-                      <span>{formatDate(item.created_at)}</span>
-                    </div>
-                    <h3 className="font-bold text-base text-stone-900 leading-snug line-clamp-3">
-                      {item.title}
-                    </h3>
-                    {item.content && (
-                      <p className="text-xs text-stone-500 mt-2 line-clamp-2">
-                        {item.content}
-                      </p>
-                    )}
-                    <div className="flex items-center justify-end mt-2 text-amber-600">
-                      <span className="text-xs font-semibold">Batafsil</span>
-                      <ChevronRight className="w-4 h-4" />
-                    </div>
-                  </div>
-                </button>
-              ))}
+                  {/* Превью: загруженное фото ИЛИ YouTube */}
+{item.image_url ? (
+  <img
+    src={item.image_url}
+    alt={item.title}
+    className="w-full h-40 object-cover"
+    onError={(e) => (e.currentTarget.style.display = 'none')}
+  />
+) : item.youtube_url && getYouTubeId(item.youtube_url) ? (
+  <div className="relative">
+    <img
+      src={`https://img.youtube.com/vi/${getYouTubeId(item.youtube_url)}/hqdefault.jpg`}
+      alt={item.title}
+      className="w-full h-40 object-cover"
+    />
+    <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+      <div className="w-12 h-12 rounded-full bg-red-600 flex items-center justify-center shadow-xl">
+        <svg className="w-6 h-6 text-white ml-0.5" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M8 5v14l11-7z"/>
+        </svg>
+      </div>
+    </div>
+  </div>
+) : null}
+<div className="p-4">
+  <div className="flex items-center space-x-1.5 text-xs text-stone-400 mb-2">
+    <Clock className="w-3 h-3" />
+    <span>{formatDate(item.created_at)}</span>
+  </div>
+  <h3 className="font-bold text-base text-stone-900 leading-snug line-clamp-3">
+    {item.title}
+  </h3>
+  {item.content && (
+    <p className="text-xs text-stone-500 mt-2 line-clamp-2">
+      {item.content}
+    </p>
+  )}
+  <div className="flex items-center justify-end mt-2 text-amber-600">
+    <span className="text-xs font-semibold">Batafsil</span>
+    <ChevronRight className="w-4 h-4" />
+  </div>
+</div>
+</button>
+))}
             </div>
           )}
         </div>

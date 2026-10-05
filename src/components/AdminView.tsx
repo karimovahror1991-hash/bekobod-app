@@ -135,14 +135,14 @@ export const AdminView: React.FC<AdminViewProps> = ({ onClose, userId }) => {
   return (
     <div className="min-h-screen bg-linear-to-b from-stone-50 to-stone-100 flex flex-col">
       {/* Заголовок с кнопкой назад */}
-      <div className="bg-white shadow-md border-b border-stone-200 sticky top-0 z-20">
+     <div className="bg-white shadow-md border-b border-stone-200 sticky top-0 z-20" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
         <div className="px-4 py-4 flex items-center space-x-3">
-                   <button
-            onClick={onClose}
-            className="w-11 h-11 rounded-2xl bg-stone-100 hover:bg-amber-100 flex items-center justify-center transition-colors shrink-0 text-2xl font-bold text-stone-700"
-          >
-            ←
-          </button>
+          <button
+  onClick={onClose}
+  className="w-11 h-11 rounded-2xl bg-stone-100 hover:bg-amber-100 flex items-center justify-center transition-colors shrink-0"
+>
+  <ArrowLeft className="w-6 h-6 text-stone-700" />
+</button>
           <div className="min-w-0">
             <h1 className="font-bold text-lg text-stone-900 truncate">✉️ Administrator</h1>
             <p className="text-xs text-stone-500 truncate">Murojaat va takliflar</p>

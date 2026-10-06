@@ -21,7 +21,7 @@ interface Shop {
 const CATEGORIES = [
   { id: 'oziq-ovqat', label: "Oziq-ovqat do'konlari", icon: '🛒', gradient: 'from-emerald-500 to-green-600' },
   { id: 'kiyim', label: 'Kiyim-kechak', icon: '👕', gradient: 'from-violet-500 to-purple-600' },
-  { id: 'maishiy_texnika', label: 'Maishiy texnika', icon: '🔌', gradient: 'from-blue-500 to-indigo-600' },
+  { id: 'maishiy_texnika', label: 'Maishiy texnika va mobil operatorlar', icon: '🔌', gradient: 'from-blue-500 to-indigo-600' },
   { id: 'gozallik', label: "Go'zallik va sartaroshxona", icon: '💇', gradient: 'from-pink-500 to-rose-600' },
   { id: 'qurilish', label: 'Qurilish mollari', icon: '🏗️', gradient: 'from-amber-500 to-orange-600' },
   { id: 'sugurta', label: "Sug'urta", icon: '🛡️', gradient: 'from-cyan-500 to-blue-600' },

@@ -2919,13 +2919,22 @@ app.get('/api/cron/morning-message', async (req, res) => {
       return res.json({ ok: true, message: 'Already sent today' });
     }
 
-    // === 1. Погода ===
-    const lat = 40.22;
-    const lon = 69.22;
-    const weatherRes = await fetch(
-      `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&timezone=auto`
-    );
-    const weatherData: any = await weatherRes.json();
+   // === 1. Погода ===
+const lat = 40.22;
+const lon = 69.22;
+let temp = 0, humidity = 0, wind = 0;
+try {
+  const weatherRes = await fetch(
+    `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,wind_speed_10m&timezone=auto`
+  );
+  const weatherData: any = await weatherRes.json();
+  console.log('Weather data:', JSON.stringify(weatherData.current));
+  temp = Math.round(weatherData.current?.temperature_2m || 0);
+  humidity = weatherData.current?.relative_humidity_2m || 0;
+  wind = weatherData.current?.wind_speed_10m || 0;
+} catch (e) {
+  console.error('Weather error:', e);
+}
 
     // === 2. Курс валют ===
     const ratesRes = await fetch('https://cbu.uz/ru/arkhiv-kursov-valyut/json/');
@@ -2935,13 +2944,48 @@ app.get('/api/cron/morning-message', async (req, res) => {
     const eur = ratesData.find((r: any) => r.Ccy === 'EUR');
     const rub = ratesData.find((r: any) => r.Ccy === 'RUB');
 
-    // === 3. Формируем сообщение ===
-    const temp = Math.round(weatherData.current?.temperature_2m || 0);
-    const humidity = weatherData.current?.relative_humidity_2m || 0;
-    const wind = weatherData.current?.wind_speed_10m || 0;
+    
+     // === 3.1. Время молитв ===
+    let prayerFajr = '—', prayerDhuhr = '—', prayerAsr = '—', prayerMaghrib = '—', prayerIsha = '—';
+    try {
+      const today = new Date();
+      const dd = String(today.getDate()).padStart(2, '0');
+      const mm = String(today.getMonth() + 1).padStart(2, '0');
+      const yyyy = today.getFullYear();
+      const dateKey = `${dd}.${mm}.${yyyy}`;
 
+      const prayerRes = await fetch('https://namoz-vaqti.uz/?lang=lotin&period=month&region=bekobod');
+      const prayerHtml = await prayerRes.text();
+      const $ = cheerio.load(prayerHtml);
+
+      $('tr').each((i, row) => {
+        const cells = $(row).find('td');
+        if (cells.length >= 7) {
+          const rowDate = $(cells[0]).text().trim();
+          if (rowDate === dateKey) {
+            prayerFajr = $(cells[1]).text().trim();
+            prayerDhuhr = $(cells[3]).text().trim();
+            prayerAsr = $(cells[4]).text().trim();
+            prayerMaghrib = $(cells[5]).text().trim();
+            prayerIsha = $(cells[6]).text().trim();
+            return false;
+          }
+        }
+      });
+    } catch (e) {
+      console.error('Prayer times error:', e);
+    }
+
+    // === 3.2. Дата ===
+    const now = new Date();
+    const weekdays = ['Yakshanba', 'Dushanba', 'Seshanba', 'Chorshanba', 'Payshanba', 'Juma', 'Shanba'];
+    const weekday = weekdays[now.getDay()];
+    const dateStr = `${String(now.getDate()).padStart(2, '0')}.${String(now.getMonth() + 1).padStart(2, '0')}.${now.getFullYear()}`;
+
+    // === 3.3. Сообщение ===
     const message =
       `🌅 <b>Xayrli tong, Bekobod!</b>\n\n` +
+      `📅 <b>${dateStr}, ${weekday}</b>\n\n` +
       `🌤 <b>Bugungi ob-havo:</b>\n` +
       `🌡 +${temp}°C\n` +
       `💧 Namlik: ${humidity}%\n` +
@@ -2950,7 +2994,12 @@ app.get('/api/cron/morning-message', async (req, res) => {
       (usd ? `🇺🇸 1 USD = ${Math.round(Number(usd.Rate))} so'm\n` : '') +
       (eur ? `🇪🇺 1 EUR = ${Math.round(Number(eur.Rate))} so'm\n` : '') +
       (rub ? `🇷🇺 1 RUB = ${Math.round(Number(rub.Rate))} so'm\n` : '') +
-      `\n📱 Batafsil: @ИМЯ_ТВОЕГО_БОТА`;
+      `\n🕌 <b>Namoz vaqtlari:</b>\n` +
+      `🌅 Bomdod: ${prayerFajr}\n` +
+      `🌞 Peshin: ${prayerDhuhr}\n` +
+      `🌤 Asr: ${prayerAsr}\n` +
+      `🌆 Shom: ${prayerMaghrib}\n` +
+      `🌙 Xufton: ${prayerIsha}`;
 
     // === 4. Рассылка ===
     const botToken = process.env.TELEGRAM_BOT_TOKEN;

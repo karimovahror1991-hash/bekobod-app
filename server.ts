@@ -2904,19 +2904,24 @@ app.get('/api/exchange-rates', async (req, res) => {
 // ============ MORNING MESSAGE (утреннее уведомление) ============
 app.get('/api/cron/morning-message', async (req, res) => {
   try {
-    // Проверка секрета
+       // Проверка секрета
     const secret = req.query.secret;
     if (secret !== process.env.CRON_SECRET) {
       return res.status(403).json({ error: 'Forbidden' });
     }
 
-    // Проверяем, не отправляли ли уже сегодня
+    // 🧪 ТЕСТОВЫЙ РЕЖИМ: если test=1, отправляем ТОЛЬКО админу
+    const testMode = req.query.test === '1';
+
+        // Проверяем, не отправляли ли уже сегодня (только в обычном режиме)
     const today = new Date().toISOString().split('T')[0];
-    const lastSent = await pool.query(
-      "SELECT value FROM cron_state WHERE key = 'last_morning_message'"
-    );
-    if (lastSent.rows.length > 0 && lastSent.rows[0].value === today) {
-      return res.json({ ok: true, message: 'Already sent today' });
+    if (!testMode) {
+      const lastSent = await pool.query(
+        "SELECT value FROM cron_state WHERE key = 'last_morning_message'"
+      );
+      if (lastSent.rows.length > 0 && lastSent.rows[0].value === today) {
+        return res.json({ ok: true, message: 'Already sent today' });
+      }
     }
 
    // === 1. Погода ===
@@ -2945,13 +2950,13 @@ try {
     const rub = ratesData.find((r: any) => r.Ccy === 'RUB');
 
     
-     // === 3.1. Время молитв ===
+         // === 3.1. Время молитв ===
     let prayerFajr = '—', prayerDhuhr = '—', prayerAsr = '—', prayerMaghrib = '—', prayerIsha = '—';
     try {
-      const today = new Date();
-      const dd = String(today.getDate()).padStart(2, '0');
-      const mm = String(today.getMonth() + 1).padStart(2, '0');
-      const yyyy = today.getFullYear();
+      const todayDate = new Date();
+      const dd = String(todayDate.getDate()).padStart(2, '0');
+      const mm = String(todayDate.getMonth() + 1).padStart(2, '0');
+      const yyyy = todayDate.getFullYear();
       const dateKey = `${dd}.${mm}.${yyyy}`;
 
       const prayerRes = await fetch('https://namoz-vaqti.uz/?lang=lotin&period=month&region=bekobod');
@@ -3005,11 +3010,19 @@ try {
     const botToken = process.env.TELEGRAM_BOT_TOKEN;
     if (!botToken) return res.status(500).json({ error: 'No bot token' });
 
-    const usersResult = await pool.query(`
-      SELECT user_id FROM app_users
-      UNION
-      SELECT user_id FROM bot_users
-    `);
+        let usersResult;
+    if (testMode) {
+      // 🧪 Только админу
+      usersResult = { rows: [{ user_id: SUPER_ADMIN }] };
+      console.log('🧪 TEST MODE: отправка только админу', SUPER_ADMIN);
+    } else {
+      // Всем
+      usersResult = await pool.query(`
+        SELECT user_id FROM app_users
+        UNION
+        SELECT user_id FROM bot_users
+      `);
+    }
 
     let sent = 0;
     let failed = 0;
@@ -3034,13 +3047,15 @@ try {
       await new Promise((r) => setTimeout(r, 50));
     }
 
-    // === 5. Сохраняем, что отправили ===
-    await pool.query(
-      `INSERT INTO cron_state (key, value, updated_at)
-       VALUES ('last_morning_message', $1, NOW())
-       ON CONFLICT (key) DO UPDATE SET value = $1, updated_at = NOW()`,
-      [today]
-    );
+       // === 5. Сохраняем, что отправили (только в обычном режиме) ===
+    if (!testMode) {
+      await pool.query(
+        `INSERT INTO cron_state (key, value, updated_at)
+         VALUES ('last_morning_message', $1, NOW())
+         ON CONFLICT (key) DO UPDATE SET value = $1, updated_at = NOW()`,
+        [today]
+      );
+    }
 
     res.json({ ok: true, sent, failed, date: today });
   } catch (error: any) {

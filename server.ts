@@ -2904,14 +2904,23 @@ app.get('/api/exchange-rates', async (req, res) => {
 // ============ MORNING MESSAGE (утреннее уведомление) ============
 app.get('/api/cron/morning-message', async (req, res) => {
   try {
-       // Проверка секрета
-    const secret = req.query.secret;
-    if (secret !== process.env.CRON_SECRET) {
-      return res.status(403).json({ error: 'Forbidden' });
-    }
+     // Проверка секрета
+const secret = req.query.secret;
+if (secret !== process.env.CRON_SECRET) {
+  return res.status(403).json({ error: 'Forbidden' });
+}
 
-    // 🧪 ТЕСТОВЫЙ РЕЖИМ: если test=1, отправляем ТОЛЬКО админу
-    const testMode = req.query.test === '1';
+// 🧪 ТЕСТОВЫЙ РЕЖИМ: если test=1, отправляем ТОЛЬКО админу
+const testMode = req.query.test === '1';
+
+// Проверка времени: отправляем только после 8:00 по Ташкенту
+if (!testMode) {
+  const tashkentTime = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tashkent' });
+  const tashkentHour = new Date(tashkentTime).getHours();
+  if (tashkentHour < 8) {
+    return res.json({ ok: true, message: 'Too early (before 8:00 Tashkent)' });
+  }
+}
 
         // Проверяем, не отправляли ли уже сегодня (только в обычном режиме)
     const today = new Date().toISOString().split('T')[0];

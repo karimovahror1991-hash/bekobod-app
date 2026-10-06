@@ -2901,6 +2901,104 @@ app.get('/api/exchange-rates', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+// ============ MORNING MESSAGE (утреннее уведомление) ============
+app.get('/api/cron/morning-message', async (req, res) => {
+  try {
+    // Проверка секрета
+    const secret = req.query.secret;
+    if (secret !== process.env.CRON_SECRET) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+
+    // Проверяем, не отправляли ли уже сегодня
+    const today = new Date().toISOString().split('T')[0];
+    const lastSent = await pool.query(
+      "SELECT value FROM cron_state WHERE key = 'last_morning_message'"
+    );
+    if (lastSent.rows.length > 0 && lastSent.rows[0].value === today) {
+      return res.json({ ok: true, message: 'Already sent today' });
+    }
+
+    // === 1. Погода ===
+    const lat = 40.22;
+    const lon = 69.22;
+    const weatherRes = await fetch(
+      `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&timezone=auto`
+    );
+    const weatherData: any = await weatherRes.json();
+
+    // === 2. Курс валют ===
+    const ratesRes = await fetch('https://cbu.uz/ru/arkhiv-kursov-valyut/json/');
+    const ratesData: any[] = await ratesRes.json();
+
+    const usd = ratesData.find((r: any) => r.Ccy === 'USD');
+    const eur = ratesData.find((r: any) => r.Ccy === 'EUR');
+    const rub = ratesData.find((r: any) => r.Ccy === 'RUB');
+
+    // === 3. Формируем сообщение ===
+    const temp = Math.round(weatherData.current?.temperature_2m || 0);
+    const humidity = weatherData.current?.relative_humidity_2m || 0;
+    const wind = weatherData.current?.wind_speed_10m || 0;
+
+    const message =
+      `🌅 <b>Xayrli tong, Bekobod!</b>\n\n` +
+      `🌤 <b>Bugungi ob-havo:</b>\n` +
+      `🌡 +${temp}°C\n` +
+      `💧 Namlik: ${humidity}%\n` +
+      `💨 Shamol: ${wind} km/soat\n\n` +
+      `💵 <b>Valyuta kurslari:</b>\n` +
+      (usd ? `🇺🇸 1 USD = ${Math.round(Number(usd.Rate))} so'm\n` : '') +
+      (eur ? `🇪🇺 1 EUR = ${Math.round(Number(eur.Rate))} so'm\n` : '') +
+      (rub ? `🇷🇺 1 RUB = ${Math.round(Number(rub.Rate))} so'm\n` : '') +
+      `\n📱 Batafsil: @ИМЯ_ТВОЕГО_БОТА`;
+
+    // === 4. Рассылка ===
+    const botToken = process.env.TELEGRAM_BOT_TOKEN;
+    if (!botToken) return res.status(500).json({ error: 'No bot token' });
+
+    const usersResult = await pool.query(`
+      SELECT user_id FROM app_users
+      UNION
+      SELECT user_id FROM bot_users
+    `);
+
+    let sent = 0;
+    let failed = 0;
+
+    for (const user of usersResult.rows) {
+      try {
+        const res2 = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chat_id: user.user_id,
+            text: message,
+            parse_mode: 'HTML',
+          }),
+        });
+        const data: any = await res2.json();
+        if (data.ok) sent++;
+        else failed++;
+      } catch {
+        failed++;
+      }
+      await new Promise((r) => setTimeout(r, 50));
+    }
+
+    // === 5. Сохраняем, что отправили ===
+    await pool.query(
+      `INSERT INTO cron_state (key, value, updated_at)
+       VALUES ('last_morning_message', $1, NOW())
+       ON CONFLICT (key) DO UPDATE SET value = $1, updated_at = NOW()`,
+      [today]
+    );
+
+    res.json({ ok: true, sent, failed, date: today });
+  } catch (error: any) {
+    console.error('Morning message error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
 // ============ SURALAR ============
 app.get('/api/surahs', async (req, res) => {
   try {

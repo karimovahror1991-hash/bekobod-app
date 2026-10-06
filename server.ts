@@ -2929,16 +2929,23 @@ const lat = 40.22;
 const lon = 69.22;
 let temp = 0, humidity = 0, wind = 0;
 try {
-  const weatherRes = await fetch(
-    `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,wind_speed_10m&timezone=auto`
-  );
-  const weatherData: any = await weatherRes.json();
-  console.log('Weather data:', JSON.stringify(weatherData.current));
-  temp = Math.round(weatherData.current?.temperature_2m || 0);
-  humidity = weatherData.current?.relative_humidity_2m || 0;
-  wind = weatherData.current?.wind_speed_10m || 0;
-} catch (e) {
-  console.error('Weather error:', e);
+  const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,wind_speed_10m&timezone=auto`;
+  console.log('🌤 Fetching:', weatherUrl);
+
+  const weatherRes = await fetch(weatherUrl);
+  console.log('🌤 Status:', weatherRes.status);
+
+  const weatherText = await weatherRes.text();
+  console.log('🌤 Raw response:', weatherText.substring(0, 500));
+
+  const weatherData: any = JSON.parse(weatherText);
+  temp = Math.round(weatherData?.current?.temperature_2m || 0);
+  humidity = weatherData?.current?.relative_humidity_2m || 0;
+  wind = weatherData?.current?.wind_speed_10m || 0;
+
+  console.log('🌤 Parsed:', { temp, humidity, wind });
+} catch (e: any) {
+  console.error('❌ Weather error:', e.message);
 }
 
     // === 2. Курс валют ===

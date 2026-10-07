@@ -1852,7 +1852,29 @@ if ((message?.caption?.startsWith('/add_news')) && ADMINS.includes(message.from.
 app.post('/api/taxi/create', async (req, res) => {
   try {
     const { driverName, driverPhone, direction, totalSeats, userId } = req.body;
-    if (!driverName || !driverPhone || !direction) return res.status(400).json({ error: 'Заполните все поля' });
+    if (!driverName || !driverPhone || !direction) {
+      return res.status(400).json({ error: 'Заполните все поля' });
+    }
+
+    // ⚠️ Проверка: у этого номера уже есть активный рейс?
+    const existing = await pool.query(
+      `SELECT id, direction, created_at 
+       FROM taxi_rides 
+       WHERE driver_phone = $1 AND status = 'active'
+       ORDER BY created_at DESC 
+       LIMIT 1`,
+      [driverPhone]
+    );
+
+    if (existing.rows.length > 0) {
+      const oldRide = existing.rows[0];
+      return res.status(409).json({
+        error: `Siz allaqachon aktiv reysga egasiz: "${oldRide.direction}". Avval uni o'chirib tashlang yoki yakunlang.`,
+        existingRideId: oldRide.id,
+      });
+    }
+
+    // Создаём рейс
     const result = await pool.query(
       `INSERT INTO taxi_rides (driver_name, driver_phone, direction, total_seats, booked_seats, status, user_id)
        VALUES ($1, $2, $3, $4, 0, 'active', $5) RETURNING *`,

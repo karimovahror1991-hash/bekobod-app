@@ -55,6 +55,7 @@ export const TaxiView: React.FC<TaxiViewProps> = ({ onClose }) => {
   const [showRatingModal, setShowRatingModal] = useState<string | null>(null);
   const [selectedRating, setSelectedRating] = useState(0);
   const [myRatings, setMyRatings] = useState<{[key: number]: number}>({});
+  const [notifications, setNotifications] = useState<any[]>([]);
 
   const API_URL = 'https://bekobod-app-1.onrender.com';
 
@@ -102,11 +103,17 @@ export const TaxiView: React.FC<TaxiViewProps> = ({ onClose }) => {
   };
 
   useEffect(() => {
-    const tg = (window as any).Telegram?.WebApp;
-    if (tg?.initDataUnsafe?.user?.id) {
-      setUserId(tg.initDataUnsafe.user.id);
-    }
-  }, []);
+  const tg = (window as any).Telegram?.WebApp;
+  const id = tg?.initDataUnsafe?.user?.id;
+  if (id) {
+    setUserId(id);
+    // Загружаем уведомления
+    fetch(`${API_URL}/api/taxi/notifications?userId=${id}`)
+      .then(r => r.json())
+      .then(d => setNotifications(d.notifications || []))
+      .catch(() => {});
+  }
+}, []);
 
   useEffect(() => {
     loadRides();
@@ -299,9 +306,47 @@ export const TaxiView: React.FC<TaxiViewProps> = ({ onClose }) => {
       console.error(err);
     }
   };
-
+const markNotificationRead = async (id: number) => {
+  try {
+    await fetch(`${API_URL}/api/taxi/notifications/${id}/read`, { method: 'POST' });
+    setNotifications(prev => prev.filter(n => n.id !== id));
+  } catch {}
+};
   return (
     <PullToRefresh onRefresh={loadRides}>
+      {/* Уведомления для пассажира */}
+{notifications.length > 0 && (
+  <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+    <div className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl space-y-4">
+      <div className="text-center">
+        <div className="text-5xl mb-2">⚠️</div>
+        <h3 className="font-bold text-lg text-stone-900">
+          Reys bekor qilindi!
+        </h3>
+      </div>
+
+      {notifications.map((n) => (
+        <div key={n.id} className="bg-amber-50 border border-amber-200 rounded-2xl p-4 space-y-2">
+          <p className="text-sm text-stone-800 leading-relaxed">
+            {n.message}
+          </p>
+          {n.direction && (
+            <p className="text-xs text-stone-500">
+              🚗 Yo'nalish: <b>{n.direction}</b>
+            </p>
+          )}
+        </div>
+      ))}
+
+      <button
+        onClick={() => notifications.forEach(n => markNotificationRead(n.id))}
+        className="w-full py-3 bg-linear-to-br from-amber-500 to-orange-600 text-white rounded-2xl font-bold shadow-lg active:scale-95 transition"
+      >
+        Tushundim
+      </button>
+    </div>
+  </div>
+)}
       <div className="min-h-screen bg-linear-to-b from-stone-50 to-stone-100">
         <div className="bg-linear-to-br from-amber-500 to-orange-600 text-white sticky top-0 z-20 shadow-lg">
           <div className="max-w-2xl mx-auto px-4 py-5 flex items-center space-x-3">
@@ -412,22 +457,22 @@ export const TaxiView: React.FC<TaxiViewProps> = ({ onClose }) => {
                         </div>
 
                         {/* Кнопки водителя — только для своих рейсов */}
-                        {isMyRide && (
-                          <div className="px-5 pt-3 space-y-2">
-                            <button
-                              onClick={() => handleCloseRide(ride.id)}
-                              className="w-full py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-2xl text-xs font-semibold transition border border-emerald-200 flex items-center justify-center space-x-1.5"
-                            >
-                              ✅ Reysni yopish (safar tugadi)
-                            </button>
-                            <button
-                              onClick={() => handleDelete(ride.id)}
-                              className="w-full py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-2xl text-xs font-semibold transition border border-rose-200 flex items-center justify-center space-x-1.5"
-                            >
-                              🗑 Reysni o'chirish
-                            </button>
-                          </div>
-                        )}
+                     {isMyRide && (
+  <div className="px-5 pt-3 space-y-2">
+    <button
+      onClick={() => handleCloseRide(ride.id)}
+      className="w-full py-3 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-2xl text-sm font-bold transition border border-emerald-200 flex items-center justify-center space-x-1.5"
+    >
+      ✅ Reysni yopish (safar tugadi)
+    </button>
+    <button
+      onClick={() => handleDelete(ride.id)}
+      className="w-full py-3 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-2xl text-sm font-bold transition border border-rose-200 flex items-center justify-center space-x-1.5"
+    >
+      🗑 Reysni o'chirish
+    </button>
+  </div>
+)}
 
                         <div className="p-5 space-y-4">
                           <div className="flex items-center justify-between">

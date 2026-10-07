@@ -1,6 +1,7 @@
+import { ImageViewer } from './ImageViewer';
 import { PullToRefresh } from './PullToRefresh';
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Phone, MapPin, Loader2, Star, Clock, X } from 'lucide-react';
+import { ArrowLeft, Phone, MapPin, Loader2, Star, Clock } from 'lucide-react';
 
 interface RestaurantsViewProps {
   onClose: () => void;
@@ -44,7 +45,7 @@ export const RestaurantsView: React.FC<RestaurantsViewProps> = ({ onClose }) => 
   const [selectedPhotos, setSelectedPhotos] = useState<{image_url: string | null, menu_images: string[]} | null>(null);
   const [photosLoading, setPhotosLoading] = useState(false);
 
-  // Fullscreen
+  // Fullscreen (теперь управляется через ImageViewer)
   const [fullscreenImage, setFullscreenImage] = useState<string | null>(null);
   const [fullscreenPhotos, setFullscreenPhotos] = useState<string[]>([]);
   const [fullscreenIndex, setFullscreenIndex] = useState(0);
@@ -130,7 +131,7 @@ export const RestaurantsView: React.FC<RestaurantsViewProps> = ({ onClose }) => 
     ? restaurants.filter(r => r.category === selectedCategory)
     : [];
 
-  // === ЭКРАН РЕСТОРАНА (с фото, загружеными при клике) ===
+  // === ЭКРАН РЕСТОРАНА ===
   if (selectedRestaurant) {
     const restaurant = selectedRestaurant;
     const rating = ratings[restaurant.id];
@@ -169,7 +170,6 @@ export const RestaurantsView: React.FC<RestaurantsViewProps> = ({ onClose }) => 
         </div>
 
         <div className="max-w-2xl mx-auto px-4 py-6 space-y-4">
-          {/* Фото — грузятся при клике */}
           {photosLoading ? (
             <div className="flex justify-center py-12">
               <Loader2 className="w-6 h-6 animate-spin text-amber-600" />
@@ -281,72 +281,23 @@ export const RestaurantsView: React.FC<RestaurantsViewProps> = ({ onClose }) => 
           </div>
         )}
 
-        {/* Fullscreen */}
+        {/* ✅ Fullscreen через ImageViewer */}
         {fullscreenImage && (
-          <div
-            className="fixed inset-0 bg-black/95 z-50 flex items-center justify-center"
-            onClick={() => {
+          <ImageViewer
+            images={fullscreenPhotos}
+            startIndex={fullscreenIndex}
+            onClose={() => {
               setFullscreenImage(null);
               setFullscreenPhotos([]);
               setFullscreenIndex(0);
             }}
-          >
-            {fullscreenPhotos.length > 1 && (
-              <div className="absolute top-4 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-white/20 text-white text-xs font-bold z-10">
-                {fullscreenIndex + 1} / {fullscreenPhotos.length}
-              </div>
-            )}
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setFullscreenImage(null);
-                setFullscreenPhotos([]);
-                setFullscreenIndex(0);
-              }}
-              className="absolute top-4 right-4 w-12 h-12 rounded-full bg-white/20 text-white text-2xl flex items-center justify-center z-10"
-            >
-              ✕
-            </button>
-            {fullscreenPhotos.length > 1 && fullscreenIndex > 0 && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  const newIndex = fullscreenIndex - 1;
-                  setFullscreenIndex(newIndex);
-                  setFullscreenImage(fullscreenPhotos[newIndex]);
-                }}
-                className="absolute left-2 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-black/60 text-white text-2xl flex items-center justify-center z-10"
-              >
-                ‹
-              </button>
-            )}
-            {fullscreenPhotos.length > 1 && fullscreenIndex < fullscreenPhotos.length - 1 && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  const newIndex = fullscreenIndex + 1;
-                  setFullscreenIndex(newIndex);
-                  setFullscreenImage(fullscreenPhotos[newIndex]);
-                }}
-                className="absolute right-2 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-black/60 text-white text-2xl flex items-center justify-center z-10"
-              >
-                ›
-              </button>
-            )}
-            <img
-              src={fullscreenImage}
-              alt="Fullscreen"
-              onClick={(e) => e.stopPropagation()}
-              className="max-w-full max-h-full object-contain"
-              style={{ touchAction: 'pinch-zoom' }}
-            />
-          </div>
+          />
         )}
       </div>
     );
   }
 
-  // === ЭКРАН СПИСКА РЕСТОРАНОВ (без фото — быстро!) ===
+  // === ЭКРАН СПИСКА РЕСТОРАНОВ ===
   if (selectedCategory) {
     const catInfo = CATEGORIES.find(c => c.id === selectedCategory);
     return (

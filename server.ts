@@ -1075,11 +1075,11 @@ if (message?.text === '/list_announcements' && message.from.id === SUPER_ADMIN) 
               const arrayBuf = await fetch(tempUrl).then(r => r.arrayBuffer());
               const imageBuffer = Buffer.from(arrayBuf);
 
-                // Сжимаем до 500px по ширине, качество 55%
+                // Сжимаем до 800px по ширине, качество 80%
               const compressed = await sharp(imageBuffer)
-                .resize({ width: 500, withoutEnlargement: true })
-.jpeg({ quality: 55 })
-                .toBuffer();
+  .resize({ width: 800, withoutEnlargement: true })
+  .jpeg({ quality: 80 })
+  .toBuffer();
 
                            // Конвертируем в base64 data URL
               imageUrl = `data:image/jpeg;base64,${compressed.toString('base64')}`;
@@ -1133,11 +1133,11 @@ if (message?.text === '/list_announcements' && message.from.id === SUPER_ADMIN) 
               const arrayBuf = await fetch(tempUrl).then(r => r.arrayBuffer());
               const imageBuffer = Buffer.from(arrayBuf);
 
-                // Сжимаем до 500px по ширине, качество 55%
+                // Сжимаем до 800px по ширине, качество 80%
               const compressed = await sharp(imageBuffer)
-                .resize({ width: 500, withoutEnlargement: true })
-.jpeg({ quality: 55 })
-                .toBuffer();
+  .resize({ width: 800, withoutEnlargement: true })
+  .jpeg({ quality: 80 })
+  .toBuffer();
 
               // Конвертируем в base64 data URL
               const finalUrl = `data:image/jpeg;base64,${compressed.toString('base64')}`;
@@ -1191,11 +1191,11 @@ if (message?.text === '/list_announcements' && message.from.id === SUPER_ADMIN) 
               const arrayBuf = await fetch(tempUrl).then(r => r.arrayBuffer());
               const imageBuffer = Buffer.from(arrayBuf);
 
-              // Сжимаем до 500px по ширине, качество 55%
+              // Сжимаем до 800px по ширине, качество 80%
               const compressed = await sharp(imageBuffer)
-                .resize({ width: 500, withoutEnlargement: true })
-.jpeg({ quality: 55 })
-                .toBuffer();
+  .resize({ width: 800, withoutEnlargement: true })
+  .jpeg({ quality: 80 })
+  .toBuffer();
 
               // Конвертируем в base64 data URL
               const finalUrl = `data:image/jpeg;base64,${compressed.toString('base64')}`;

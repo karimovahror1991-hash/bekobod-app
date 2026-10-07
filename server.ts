@@ -1951,10 +1951,14 @@ app.post('/api/taxi/cancel-booking', async (req, res) => {
 app.post('/api/taxi/delete', async (req, res) => {
   try {
     const { rideId, userId } = req.body;
-    if (!rideId || !userId) return res.status(400).json({ error: 'Не указан рейс или пользователь' });
-    const rideResult = await pool.query('SELECT user_id, direction FROM taxi_rides WHERE id = $1', [rideId]);
-    if (rideResult.rows.length === 0) return res.status(404).json({ error: 'Рейс не найден' });
-    if (Number(rideResult.rows[0].user_id) !== Number(userId)) return res.status(403).json({ error: 'Bu reys sizga tegishli emas' });
+    if (!rideId) return res.status(400).json({ error: 'Не указан рейс' });
+const rideResult = await pool.query('SELECT user_id, direction FROM taxi_rides WHERE id = $1', [rideId]);
+if (rideResult.rows.length === 0) return res.status(404).json({ error: 'Рейс не найден' });
+
+// Проверка: если userId есть и не совпадает — запрещаем
+if (userId && rideResult.rows[0].user_id && Number(rideResult.rows[0].user_id) !== Number(userId)) {
+  return res.status(403).json({ error: 'Bu reys sizga tegishli emas' });
+}
 
     const direction = rideResult.rows[0].direction;
 

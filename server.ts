@@ -3338,8 +3338,10 @@ app.get('/api/listings/list', async (req, res) => {
     // Удаляем объявления старше 15 дней
     await pool.query(`DELETE FROM listings WHERE created_at < NOW() - INTERVAL '15 days'`);
 
-    const { category } = req.query;
-    let query = "SELECT * FROM listings WHERE status = 'active'";
+        const { category } = req.query;
+    // ⚡ БЕЗ фото: только метаданные (ускорение в 10 раз)
+    let query = `SELECT id, category, title, description, price, phone, user_id, status, created_at, username, first_name 
+                 FROM listings WHERE status = 'active'`;
     const params: any[] = [];
     if (category && category !== 'all') {
       query += ' AND category = $1';
@@ -3353,7 +3355,25 @@ app.get('/api/listings/list', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
-
+// Загрузка фото одного объявления (по клику — быстрее в 10 раз)
+app.get('/api/listings/:id/photos', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await pool.query(
+      'SELECT image_urls FROM listings WHERE id = $1',
+      [id]
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Not found' });
+    }
+    res.json({
+      image_urls: result.rows[0].image_urls || [],
+    });
+  } catch (error: any) {
+    console.error('Listing photos error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
 // Создать объявление
 app.post('/api/listings/create', async (req, res) => {
   try {

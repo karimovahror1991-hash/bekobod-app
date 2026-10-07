@@ -14,7 +14,7 @@ interface Listing {
   description: string | null;
   price: string | null;
   phone: string;
-  image_urls: string[] | null;
+  image_urls?: string[] | null;
   user_id: number | null;
   status: string;
   created_at: string;
@@ -38,6 +38,10 @@ export const OldiSotdiView: React.FC<OldiSotdiViewProps> = ({ onClose, userId })
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
   const [subBadges, setSubBadges] = useState<{ [key: string]: number }>({});
+
+  // ⚡ Фото грузим ТОЛЬКО при клике
+  const [selectedPhotos, setSelectedPhotos] = useState<string[]>([]);
+  const [photosLoading, setPhotosLoading] = useState(false);
 
   // Форма
   const [category, setCategory] = useState('transport');
@@ -90,6 +94,23 @@ export const OldiSotdiView: React.FC<OldiSotdiViewProps> = ({ onClose, userId })
     loadSubBadges();
   }, [userId, API_URL]);
 
+  // ⚡ Открыть объявление + загрузить фото
+  const openListing = async (listing: Listing) => {
+    setSelectedListing(listing);
+    setPhotosLoading(true);
+    setSelectedPhotos([]);
+
+    try {
+      const res = await fetch(`${API_URL}/api/listings/${listing.id}/photos`);
+      const data = await res.json();
+      setSelectedPhotos(data.image_urls || []);
+    } catch (err) {
+      console.error('Photos load error:', err);
+    } finally {
+      setPhotosLoading(false);
+    }
+  };
+
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
@@ -137,7 +158,7 @@ export const OldiSotdiView: React.FC<OldiSotdiViewProps> = ({ onClose, userId })
     setImages((prev) => prev.filter((u) => u !== url));
   };
 
-    const handleCreate = async (e: React.FormEvent) => {
+  const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim() || !phone.trim()) return;
 
@@ -212,6 +233,7 @@ export const OldiSotdiView: React.FC<OldiSotdiViewProps> = ({ onClose, userId })
       console.error(err);
     }
   };
+
   const handleSold = async (listingId: number) => {
     if (!userId) return;
     if (!confirm("E'lonni 'Sotildi' deb belgilaysizmi?")) return;
@@ -233,6 +255,7 @@ export const OldiSotdiView: React.FC<OldiSotdiViewProps> = ({ onClose, userId })
       console.error(err);
     }
   };
+
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
     const now = new Date();
@@ -245,17 +268,19 @@ export const OldiSotdiView: React.FC<OldiSotdiViewProps> = ({ onClose, userId })
     return date.toLocaleDateString('uz-UZ', { day: 'numeric', month: 'short' });
   };
 
-  // Экран детального просмотра объявления
+  // === ЭКРАН ОБЪЯВЛЕНИЯ (фото загружаются при клике) ===
   if (selectedListing) {
     const catInfo = CATEGORIES.find(c => c.id === selectedListing.category);
-    const photos = selectedListing.image_urls || [];
 
     return (
       <div className="min-h-screen bg-linear-to-b from-stone-50 to-stone-100">
         <div className={`bg-linear-to-br ${catInfo?.gradient} text-white sticky top-0 z-20 shadow-md`}>
           <div className="max-w-2xl mx-auto px-4 pt-6 pb-4 flex items-center space-x-3">
             <button
-              onClick={() => setSelectedListing(null)}
+              onClick={() => {
+                setSelectedListing(null);
+                setSelectedPhotos([]);
+              }}
               className="w-11 h-11 rounded-2xl bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"
             >
               <ArrowLeft className="w-6 h-6 text-white" />
@@ -265,16 +290,21 @@ export const OldiSotdiView: React.FC<OldiSotdiViewProps> = ({ onClose, userId })
         </div>
 
         <div className="max-w-2xl mx-auto px-4 py-6 space-y-4">
-          {photos.length > 0 && (
+          {/* Фото — грузятся при клике */}
+          {photosLoading ? (
+            <div className="flex justify-center py-12">
+              <Loader2 className="w-6 h-6 animate-spin text-amber-600" />
+            </div>
+          ) : selectedPhotos.length > 0 ? (
             <div className="space-y-3">
               <img
-                src={photos[0]}
+                src={selectedPhotos[0]}
                 alt={selectedListing.title}
                 className="w-full rounded-3xl shadow-lg object-cover max-h-96"
               />
-              {photos.length > 1 && (
+              {selectedPhotos.length > 1 && (
                 <div className="grid grid-cols-3 gap-2">
-                  {photos.slice(1).map((url, i) => (
+                  {selectedPhotos.slice(1).map((url, i) => (
                     <img
                       key={i}
                       src={url}
@@ -285,7 +315,7 @@ export const OldiSotdiView: React.FC<OldiSotdiViewProps> = ({ onClose, userId })
                 </div>
               )}
             </div>
-          )}
+          ) : null}
 
           <div className="bg-white rounded-3xl p-6 shadow-sm border border-stone-100 space-y-4">
             <h1 className="font-bold text-2xl text-stone-900">{selectedListing.title}</h1>
@@ -319,7 +349,7 @@ export const OldiSotdiView: React.FC<OldiSotdiViewProps> = ({ onClose, userId })
               <span>Qo'ng'iroq qilish</span>
             </a>
 
-                        {userId && selectedListing.user_id === userId && (
+            {userId && selectedListing.user_id === userId && (
               <>
                 <button
                   onClick={() => handleSold(selectedListing.id)}
@@ -363,9 +393,7 @@ export const OldiSotdiView: React.FC<OldiSotdiViewProps> = ({ onClose, userId })
         <form onSubmit={handleCreate} className="max-w-2xl mx-auto px-4 py-6 space-y-4">
           <div className="bg-white rounded-3xl p-6 shadow-sm border border-stone-100 space-y-4">
             <div>
-              <label className="block text-xs font-semibold text-stone-700 mb-1">
-                Kategoriya
-              </label>
+              <label className="block text-xs font-semibold text-stone-700 mb-1">Kategoriya</label>
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
@@ -380,9 +408,7 @@ export const OldiSotdiView: React.FC<OldiSotdiViewProps> = ({ onClose, userId })
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-stone-700 mb-1">
-                Sarlavha
-              </label>
+              <label className="block text-xs font-semibold text-stone-700 mb-1">Sarlavha</label>
               <input
                 type="text"
                 required
@@ -394,9 +420,7 @@ export const OldiSotdiView: React.FC<OldiSotdiViewProps> = ({ onClose, userId })
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-stone-700 mb-1">
-                Narxi (ixtiyoriy)
-              </label>
+              <label className="block text-xs font-semibold text-stone-700 mb-1">Narxi (ixtiyoriy)</label>
               <input
                 type="text"
                 value={price}
@@ -407,9 +431,7 @@ export const OldiSotdiView: React.FC<OldiSotdiViewProps> = ({ onClose, userId })
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-stone-700 mb-1">
-                Telefon raqamingiz
-              </label>
+              <label className="block text-xs font-semibold text-stone-700 mb-1">Telefon raqamingiz</label>
               <input
                 type="tel"
                 required
@@ -421,9 +443,7 @@ export const OldiSotdiView: React.FC<OldiSotdiViewProps> = ({ onClose, userId })
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-stone-700 mb-1">
-                Tavsif (ixtiyoriy)
-              </label>
+              <label className="block text-xs font-semibold text-stone-700 mb-1">Tavsif (ixtiyoriy)</label>
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
@@ -433,7 +453,6 @@ export const OldiSotdiView: React.FC<OldiSotdiViewProps> = ({ onClose, userId })
               />
             </div>
 
-            {/* Фото */}
             <div>
               <label className="block text-xs font-semibold text-stone-700 mb-2">
                 Rasmlar ({images.length}/6)
@@ -443,11 +462,7 @@ export const OldiSotdiView: React.FC<OldiSotdiViewProps> = ({ onClose, userId })
                 <div className="grid grid-cols-3 gap-2 mb-3">
                   {images.map((url, i) => (
                     <div key={i} className="relative">
-                      <img
-                        src={url}
-                        alt=""
-                        className="w-full h-24 object-cover rounded-2xl"
-                      />
+                      <img src={url} alt="" className="w-full h-24 object-cover rounded-2xl" />
                       <button
                         type="button"
                         onClick={() => removeImage(url)}
@@ -508,7 +523,7 @@ export const OldiSotdiView: React.FC<OldiSotdiViewProps> = ({ onClose, userId })
     );
   }
 
-  // Экран списка объявлений категории
+  // === ЭКРАН СПИСКА (быстро — без фото) ===
   if (selectedCategory) {
     const catInfo = CATEGORIES.find(c => c.id === selectedCategory);
     const filteredListings = listings.filter(l => l.category === selectedCategory);
@@ -527,9 +542,7 @@ export const OldiSotdiView: React.FC<OldiSotdiViewProps> = ({ onClose, userId })
               <h1 className="font-bold text-xl text-white">
                 {catInfo?.icon} {catInfo?.label}
               </h1>
-              <p className="text-xs text-white/80">
-                {filteredListings.length} ta e'lon
-              </p>
+              <p className="text-xs text-white/80">{filteredListings.length} ta e'lon</p>
             </div>
           </div>
         </div>
@@ -545,110 +558,99 @@ export const OldiSotdiView: React.FC<OldiSotdiViewProps> = ({ onClose, userId })
               <p className="text-sm">Hozircha e'lonlar yo'q</p>
             </div>
           ) : (
-            filteredListings.map((item) => {
-              const photos = item.image_urls || [];
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => setSelectedListing(item)}
-                  className="w-full bg-white rounded-3xl overflow-hidden shadow-sm border border-stone-100 hover:shadow-xl transition-all text-left active:scale-[0.98]"
-                >
-                  {photos.length > 0 && (
-                    <img
-                      src={photos[0]}
-                      alt={item.title}
-                      className="w-full h-48 object-cover"
-                    />
-                  )}
-                  <div className="p-4 space-y-2">
-                    <div className="flex items-start justify-between">
-                      <h3 className="font-bold text-base text-stone-900 leading-tight flex-1">
-                        {item.title}
-                      </h3>
-                      <div className="text-xs text-stone-400 shrink-0 ml-2">
-                        {formatDate(item.created_at)}
-                      </div>
-                    </div>
-                    {item.price && (
-                      <div className="text-base font-bold text-emerald-700">
-                        💰 {item.price}
-                      </div>
-                    )}
+            filteredListings.map((item) => (
+              <button
+                key={item.id}
+                onClick={() => openListing(item)}
+                className="w-full bg-white rounded-3xl p-4 shadow-sm border border-stone-100 hover:shadow-xl transition-all text-left active:scale-[0.98] space-y-2"
+              >
+                <div className="flex items-start justify-between">
+                  <h3 className="font-bold text-base text-stone-900 leading-tight flex-1">
+                    {item.title}
+                  </h3>
+                  <div className="text-xs text-stone-400 shrink-0 ml-2">
+                    {formatDate(item.created_at)}
                   </div>
-                </button>
-              );
-            })
+                </div>
+                {item.price && (
+                  <div className="text-base font-bold text-emerald-700">
+                    💰 {item.price}
+                  </div>
+                )}
+                <div className="text-right text-xs font-semibold text-amber-600 pt-1">
+                  Batafsil →
+                </div>
+              </button>
+            ))
           )}
         </div>
       </div>
     );
   }
 
-   // Главный экран Oldi sotdi
+  // === ГЛАВНЫЙ ЭКРАН ===
   return (
     <PullToRefresh onRefresh={loadListings}>
-    <div className="min-h-screen bg-linear-to-b from-stone-50 to-stone-100">
-      <div className="bg-white/95 backdrop-blur-lg border-b border-stone-200 sticky top-0 z-20 shadow-sm">
-        <div className="max-w-2xl mx-auto px-4 pt-6 pb-4 flex items-center space-x-3">
-          <button
-            onClick={onClose}
-            className="w-11 h-11 rounded-2xl bg-stone-100 hover:bg-amber-100 flex items-center justify-center transition-colors"
-          >
-            <ArrowLeft className="w-6 h-6 text-stone-700" />
-          </button>
-          <h1 className="font-bold text-2xl text-stone-900">🛒 Oldi sotdi</h1>
+      <div className="min-h-screen bg-linear-to-b from-stone-50 to-stone-100">
+        <div className="bg-white/95 backdrop-blur-lg border-b border-stone-200 sticky top-0 z-20 shadow-sm">
+          <div className="max-w-2xl mx-auto px-4 pt-6 pb-4 flex items-center space-x-3">
+            <button
+              onClick={onClose}
+              className="w-11 h-11 rounded-2xl bg-stone-100 hover:bg-amber-100 flex items-center justify-center transition-colors"
+            >
+              <ArrowLeft className="w-6 h-6 text-stone-700" />
+            </button>
+            <h1 className="font-bold text-2xl text-stone-900">🛒 Oldi sotdi</h1>
+          </div>
+
+          <div className="max-w-2xl mx-auto px-4 pb-4">
+            <button
+              onClick={() => setTab('create')}
+              className="w-full py-4 bg-linear-to-br from-amber-500 to-orange-600 text-white rounded-2xl font-bold flex items-center justify-center space-x-2 shadow-lg active:scale-95 transition"
+            >
+              <Plus className="w-5 h-5" />
+              <span>E'lon berish</span>
+            </button>
+          </div>
         </div>
 
-        <div className="max-w-2xl mx-auto px-4 pb-4">
-          <button
-            onClick={() => setTab('create')}
-            className="w-full py-4 bg-linear-to-br from-amber-500 to-orange-600 text-white rounded-2xl font-bold flex items-center justify-center space-x-2 shadow-lg active:scale-95 transition"
-          >
-            <Plus className="w-5 h-5" />
-            <span>E'lon berish</span>
-          </button>
+        <div className="max-w-2xl mx-auto px-4 py-6">
+          <div className="grid grid-cols-2 gap-3">
+            {CATEGORIES.map((cat) => {
+              const count = listings.filter(l => l.category === cat.id).length;
+              const badge = subBadges[cat.id] || 0;
+              return (
+                <button
+                  key={cat.id}
+                  onClick={() => {
+                    setSelectedCategory(cat.id);
+                    if (userId) {
+                      fetch(`${API_URL}/api/badge-sub/oldi_sotdi/${cat.id}/seen`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ userId }),
+                      }).catch(() => {});
+                      setSubBadges(prev => ({ ...prev, [cat.id]: 0 }));
+                    }
+                  }}
+                  className={`relative bg-linear-to-br ${cat.gradient} text-white rounded-3xl p-6 flex flex-col items-center justify-center shadow-xl hover:shadow-2xl transition-all duration-300 active:scale-95 min-h-40`}
+                >
+                  {badge > 0 && (
+                    <div className="absolute top-3 right-3 min-w-7 h-7 px-2 bg-rose-500 text-white text-sm font-bold rounded-full flex items-center justify-center shadow-lg border-2 border-white">
+                      {badge > 99 ? '99+' : badge}
+                    </div>
+                  )}
+                  <div className="text-6xl mb-3">{cat.icon}</div>
+                  <div className="font-bold text-base text-white text-center leading-tight">
+                    {cat.label}
+                  </div>
+                  <div className="text-xs text-white/80 mt-2">{count} ta e'lon</div>
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
-
-      <div className="max-w-2xl mx-auto px-4 py-6">
-        <div className="grid grid-cols-2 gap-3">
-          {CATEGORIES.map((cat) => {
-            const count = listings.filter(l => l.category === cat.id).length;
-            const badge = subBadges[cat.id] || 0;
-            return (
-              <button
-                key={cat.id}
-                onClick={() => {
-                  setSelectedCategory(cat.id);
-                  if (userId) {
-                    fetch(`${API_URL}/api/badge-sub/oldi_sotdi/${cat.id}/seen`, {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ userId }),
-                    }).catch(() => {});
-                    setSubBadges(prev => ({ ...prev, [cat.id]: 0 }));
-                  }
-                }}
-                className={`relative bg-linear-to-br ${cat.gradient} text-white rounded-3xl p-6 flex flex-col items-center justify-center shadow-xl hover:shadow-2xl transition-all duration-300 active:scale-95 min-h-40`}
-              >
-                {badge > 0 && (
-                  <div className="absolute top-3 right-3 min-w-7 h-7 px-2 bg-rose-500 text-white text-sm font-bold rounded-full flex items-center justify-center shadow-lg border-2 border-white">
-                    {badge > 99 ? '99+' : badge}
-                  </div>
-                )}
-                <div className="text-6xl mb-3">{cat.icon}</div>
-                <div className="font-bold text-base text-white text-center leading-tight">
-                  {cat.label}
-                </div>
-                <div className="text-xs text-white/80 mt-2">
-                  {count} ta e'lon
-                </div>
-              </button>
-            );
-          })}
-        </div>
-         </div>
-    </div>
     </PullToRefresh>
   );
 };

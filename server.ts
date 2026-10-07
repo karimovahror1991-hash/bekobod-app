@@ -21,6 +21,8 @@ const pool = new Pool({
 // ============ ADMINS ============
 const SUPER_ADMIN = 988368940;
 const ADMINS = [988368940, 259258146]; // главный + второй админ
+// 🧪 Режим отладки (только для админов)
+const DEBUG_MODE = process.env.DEBUG_MODE === 'true';
 // Валидация initData от Telegram
 function validateInitData(initData: string, botToken: string): { valid: boolean; user?: any; error?: string } {
   try {

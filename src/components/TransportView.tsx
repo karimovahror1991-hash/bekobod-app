@@ -17,23 +17,46 @@ const CATEGORY_GRADIENTS: { [key: string]: string } = {
 export const TransportView: React.FC<TransportViewProps> = ({ onClose }) => {
   const [selectedCategory, setSelectedCategory] = useState<TransportCategory | null>(null);
   const [showTaxi, setShowTaxi] = useState(false);
-    if (selectedCategory?.title === 'Shahar taksi') {
+
+  // ✅ Обработчик клика — решаем здесь, куда идти (без setState в рендере)
+  const handleCategoryClick = (category: TransportCategory) => {
+    // 1) "Shahar taksi" → отдельный экран городского такси
+    if (category.title === 'Shahar taksi') {
+      setSelectedCategory(category);
+      return;
+    }
+
+    // 2) Всё остальное с "taksi" в названии → междугороднее такси
+    if (category.title.toLowerCase().includes('taksi')) {
+      setShowTaxi(true);
+      return;
+    }
+
+    // 3) Обычная категория (автобус, электричка) → список внутри TransportView
+    setSelectedCategory(category);
+  };
+
+  // === ЭКРАН: Shahar taksi (городское) ===
+  if (selectedCategory?.title === 'Shahar taksi') {
     return <CityTaxiView onClose={() => setSelectedCategory(null)} />;
   }
-     if (showTaxi) {
-    return <TaxiView onClose={() => {
-      setShowTaxi(false);
-      setSelectedCategory(null);
-    }} />;
+
+  // === ЭКРАН: Междугороднее такси ===
+  if (showTaxi) {
+    return (
+      <TaxiView
+        onClose={() => {
+          setShowTaxi(false);
+          setSelectedCategory(null);
+        }}
+      />
+    );
   }
 
+  // === ЭКРАН: Список items обычной категории ===
   if (selectedCategory) {
-    if (selectedCategory.title.includes('taksi') || selectedCategory.title.includes('Taksi')) {
-      setShowTaxi(true);
-      return null;
-    }
     const gradient = CATEGORY_GRADIENTS[selectedCategory.title] || 'from-stone-500 to-stone-700';
-    
+
     return (
       <div className="min-h-screen bg-linear-to-b from-stone-50 to-stone-100">
         <div className={`bg-linear-to-br ${gradient} text-white sticky top-0 z-20 shadow-md`}>
@@ -70,7 +93,7 @@ export const TransportView: React.FC<TransportViewProps> = ({ onClose }) => {
                 <h2 className="font-bold text-base text-stone-900">
                   {item.name}
                 </h2>
-                
+
                 <div className="space-y-2 text-sm">
                   <div className="flex items-start space-x-2 text-stone-700">
                     <MapPin className="w-4 h-4 text-blue-500 mt-0.5 shrink-0" />
@@ -98,7 +121,7 @@ export const TransportView: React.FC<TransportViewProps> = ({ onClose }) => {
     );
   }
 
-  // Экран категорий (большие иконки)
+  // === ЭКРАН: Категории (главный) ===
   return (
     <div className="min-h-screen bg-linear-to-b from-stone-50 to-stone-100">
       <div className="bg-white/95 backdrop-blur-lg border-b border-stone-200 sticky top-0 z-20 shadow-sm">
@@ -120,7 +143,7 @@ export const TransportView: React.FC<TransportViewProps> = ({ onClose }) => {
             return (
               <button
                 key={index}
-                onClick={() => setSelectedCategory(category)}
+                onClick={() => handleCategoryClick(category)}
                 className={`w-full bg-linear-to-br ${gradient} text-white rounded-3xl p-8 flex flex-col items-center justify-center shadow-xl hover:shadow-2xl transition-all duration-300 active:scale-95 min-h-50`}
               >
                 <div className="text-7xl mb-4">{category.icon}</div>
@@ -128,8 +151,8 @@ export const TransportView: React.FC<TransportViewProps> = ({ onClose }) => {
                   {category.title}
                 </div>
                 <div className="text-sm text-white/80 mt-2">
-                  {category.items.length > 0 
-                    ? `${category.items.length} ta ma'lumot` 
+                  {category.items.length > 0
+                    ? `${category.items.length} ta ma'lumot`
                     : "Ma'lumot tez orada"}
                 </div>
               </button>

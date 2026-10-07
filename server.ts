@@ -274,7 +274,7 @@ async function updateCommentsButton(announcementId: number) {
 
   console.log(`✅ Обновлено: ${updated}, ошибок: ${failed}`);
 }
-app.use(express.json({ limit: '5mb' }));
+app.use(express.json({ limit: '20mb' }));
 
 // Глобальный лимит: 100 запросов в минуту с одного IP
 const globalLimiter = rateLimit({
@@ -598,69 +598,7 @@ if (callback_query) {
         `ID: <code>${announcementId}</code>`
       );
     }
-// Обновить кнопку комментариев у всех пользователей
-async function updateCommentsButton(announcementId: number) {
-  const botToken = process.env.TELEGRAM_BOT_TOKEN;
-  if (!botToken) return;
 
-  // Считаем актуальное количество комментариев
-  const countResult = await pool.query(
-    'SELECT COUNT(*) FROM announcement_comments WHERE announcement_id = $1',
-    [announcementId]
-  );
-  const commentsCount = Number(countResult.rows[0].count);
-
-  // Получаем все message_id этого объявления
-  const messagesResult = await pool.query(
-    'SELECT user_id, message_id FROM announcement_messages WHERE announcement_id = $1',
-    [announcementId]
-  );
-
-  const buttons = [
-    [
-      { 
-        text: `💬 ${commentsCount} comments`, 
-        web_app: { url: `https://bekobod-app-1.onrender.com/?screen=comments&announcement_id=${announcementId}` }
-      }
-    ]
-  ];
-
-  console.log(`🔄 Обновление кнопки объявления #${announcementId}: ${commentsCount} comments, ${messagesResult.rows.length} сообщений`);
-
-  let updated = 0;
-  let failed = 0;
-
-  for (const row of messagesResult.rows) {
-    try {
-      const res = await fetch(`https://api.telegram.org/bot${botToken}/editMessageReplyMarkup`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          chat_id: row.user_id,
-          message_id: row.message_id,
-          reply_markup: { inline_keyboard: buttons }
-        })
-      });
-      const data: any = await res.json();
-
-      if (data.ok) {
-        updated++;
-      } else {
-        failed++;
-        // Если сообщение старое (>48h) — Telegram не даёт редактировать
-        if (data.error_code === 400) {
-          console.log(`  ⏭ ${row.user_id}: сообщение устарело`);
-        }
-      }
-    } catch (e: any) {
-      failed++;
-    }
-    // Задержка 50мс
-    await new Promise(r => setTimeout(r, 50));
-  }
-
-  console.log(`✅ Обновлено: ${updated}, ошибок: ${failed}`);
-}
     // === Отмена отправки ===
     if (data.startsWith('ann_cancel_') && userId === SUPER_ADMIN) {
       const announcementId = Number(data.replace('ann_cancel_', ''));

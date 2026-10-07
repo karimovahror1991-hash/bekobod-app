@@ -336,9 +336,9 @@ export const JobsView: React.FC<JobsViewProps> = ({ onClose, userId }) => {
               />
             </div>
 
-            <div>
+                        <div>
               <label className="block text-xs font-semibold text-stone-700 mb-1">
-                Soha
+                Soha (kategoriya)
               </label>
               <select
                 value={category}

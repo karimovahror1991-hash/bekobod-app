@@ -138,31 +138,27 @@ async function broadcastAnnouncement(
   const botToken = process.env.TELEGRAM_BOT_TOKEN;
   if (!botToken) return { sent: 0, failed: 0 };
 
-  // Получаем уникальных пользователей (объединение app_users и bot_users)
+  // Получаем уникальных пользователей
   const usersResult = await pool.query(`
-    SELECT user_id FROM app_users
+    SELECT DISTINCT user_id FROM app_users
     UNION
-    SELECT user_id FROM bot_users
+    SELECT DISTINCT user_id FROM bot_users
   `);
 
   const users = usersResult.rows;
   console.log(`📢 Рассылка объявления #${announcementId} на ${users.length} пользователей...`);
 
-  let sent = 0;
-  let failed = 0;
-
-  // Считаем текущее количество комментариев (0 при создании)
+  // Считаем количество комментариев (0 при создании)
   const countResult = await pool.query(
     'SELECT COUNT(*) FROM announcement_comments WHERE announcement_id = $1',
     [announcementId]
   );
   const commentsCount = Number(countResult.rows[0].count);
 
-  // Кнопка — WebApp для комментариев
   const buttons = [
     [
-      { 
-        text: `💬 ${commentsCount} comments`, 
+      {
+        text: `💬 ${commentsCount} comments`,
         web_app: { url: `https://bekobod-app-1.onrender.com/?screen=comments&announcement_id=${announcementId}` }
       }
     ]
@@ -170,38 +166,68 @@ async function broadcastAnnouncement(
 
   const messageText = `📢 <b>Объявление от администрации</b>\n\n${text}`;
 
-  for (const user of users) {
+  let sent = 0;
+  let failed = 0;
+
+  // ⚡ Батчами по 25 — параллельно. Таймаут 5 сек на запрос.
+  const BATCH_SIZE = 25;
+  const TIMEOUT_MS = 5000;
+
+  // Отправить одному юзеру (с таймаутом)
+  const sendToUser = async (userId: number): Promise<boolean> => {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS);
+
     try {
       const res = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          chat_id: user.user_id,
+          chat_id: userId,
           text: messageText,
           parse_mode: 'HTML',
           reply_markup: { inline_keyboard: buttons }
-        })
+        }),
+        signal: controller.signal,
       });
       const data: any = await res.json();
 
       if (data.ok) {
-        sent++;
         // Сохраняем message_id для будущих обновлений
         await pool.query(
           `INSERT INTO announcement_messages (announcement_id, user_id, message_id)
-           VALUES ($1, $2, $3)`,
-          [announcementId, user.user_id, data.result.message_id]
+           VALUES ($1, $2, $3)
+           ON CONFLICT DO NOTHING`,
+          [announcementId, userId, data.result.message_id]
         );
+        return true;
       } else {
-        failed++;
-        console.log(`  ❌ Ошибка для ${user.user_id}: ${data.description}`);
+        // Если юзер заблокировал бота — не ошибка, просто пропускаем
+        if (data.error_code !== 403 && data.error_code !== 400) {
+          console.log(`  ❌ ${userId}: ${data.description}`);
+        }
+        return false;
       }
     } catch (e: any) {
-      failed++;
-      console.log(`  ❌ Ошибка для ${user.user_id}: ${e.message}`);
+      if (e.name === 'AbortError') {
+        console.log(`  ⏱ ${userId}: timeout`);
+      }
+      return false;
+    } finally {
+      clearTimeout(timeout);
     }
-    // Задержка 50мс (20 сообщений/сек — безопасно)
-    await new Promise(r => setTimeout(r, 50));
+  };
+
+  // Обрабатываем батчами
+  for (let i = 0; i < users.length; i += BATCH_SIZE) {
+    const batch = users.slice(i, i + BATCH_SIZE);
+    const results = await Promise.all(
+      batch.map((u) => sendToUser(u.user_id))
+    );
+    results.forEach((ok) => (ok ? sent++ : failed++));
+
+    // Прогресс каждые 25 юзеров
+    console.log(`  📊 Прогресс: ${Math.min(i + BATCH_SIZE, users.length)} / ${users.length}`);
   }
 
   // Обновляем статистику в БД

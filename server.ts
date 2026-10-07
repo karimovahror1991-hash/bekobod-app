@@ -3312,20 +3312,16 @@ app.post('/api/upload-image', strictLimiter, async (req, res) => {
     const { image } = req.body;
     if (!image) return res.status(400).json({ error: 'image required' });
 
-    // image приходит как base64 (data URL или чистый base64)
-    // Очищаем от префикса, если есть
     const base64Data = image.replace(/^data:image\/\w+;base64,/, '');
     const imageBuffer = Buffer.from(base64Data, 'base64');
 
-    // Сжимаем до 500px по ширине, качество 55%
+    // ⚡ Сжимаем до 800px, качество 80% (как у ресторанов)
     const compressed = await sharp(imageBuffer)
-      .resize({ width: 500, withoutEnlargement: true })
-.jpeg({ quality: 55 })
+      .resize({ width: 800, withoutEnlargement: true })
+      .jpeg({ quality: 80 })
       .toBuffer();
 
-    // Возвращаем как data URL
     const url = `data:image/jpeg;base64,${compressed.toString('base64')}`;
-
     res.json({ url, thumb: url });
   } catch (error: any) {
     console.error('Upload image error:', error);

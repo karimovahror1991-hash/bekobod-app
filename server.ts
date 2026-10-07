@@ -1969,20 +1969,41 @@ app.post('/api/taxi/book', async (req, res) => {
 
 app.post('/api/taxi/cancel-booking', async (req, res) => {
   try {
-    const { rideId, passengerPhone } = req.body;
+    const { rideId, userId } = req.body;
     if (!rideId) return res.status(400).json({ error: 'Не указан рейс' });
-    if (passengerPhone) {
-      await pool.query('DELETE FROM taxi_bookings WHERE ride_id = $1 AND passenger_phone = $2', [rideId, passengerPhone]);
-    } else {
-      await pool.query(`DELETE FROM taxi_bookings WHERE id = (SELECT id FROM taxi_bookings WHERE ride_id = $1 ORDER BY created_at DESC LIMIT 1)`, [rideId]);
+    if (!userId) return res.status(400).json({ error: 'Не указан пользователь' });
+
+    // Удаляем бронирование КОНКРЕТНО этого пользователя
+    const deleteResult = await pool.query(
+      'DELETE FROM taxi_bookings WHERE ride_id = $1 AND user_id = $2 RETURNING id',
+      [rideId, userId]
+    );
+
+    // Если не нашли — пользователь и не бронировал
+    if (deleteResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Siz bu reysni band qilmagansiz' });
     }
-    const rideResult = await pool.query('SELECT booked_seats FROM taxi_rides WHERE id = $1', [rideId]);
-    if (rideResult.rows.length > 0) {
-      const newBooked = Math.max(0, rideResult.rows[0].booked_seats - 1);
-      const newStatus = newBooked < 4 ? 'active' : 'full';
-      await pool.query('UPDATE taxi_rides SET booked_seats = $1, status = $2 WHERE id = $3', [newBooked, newStatus, rideId]);
+
+    // Пересчитываем занятые места из реальной БД (надёжнее, чем -1)
+    const countResult = await pool.query(
+      'SELECT COUNT(*) FROM taxi_bookings WHERE ride_id = $1',
+      [rideId]
+    );
+    const newBooked = Number(countResult.rows[0].count);
+
+    const rideResult = await pool.query('SELECT total_seats FROM taxi_rides WHERE id = $1', [rideId]);
+    if (rideResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Reyс topilmadi' });
     }
-    res.json({ ok: true });
+    const totalSeats = rideResult.rows[0].total_seats;
+    const newStatus = newBooked >= totalSeats ? 'full' : 'active';
+
+    await pool.query(
+      'UPDATE taxi_rides SET booked_seats = $1, status = $2 WHERE id = $3',
+      [newBooked, newStatus, rideId]
+    );
+
+    res.json({ ok: true, bookedSeats: newBooked, status: newStatus });
   } catch (error: any) {
     console.error('Cancel booking error:', error);
     res.status(500).json({ error: error.message });

@@ -118,12 +118,13 @@ export const TaxiView: React.FC<TaxiViewProps> = ({ onClose }) => {
     loadDrivers();
   }, []);
 
-  const handleCreate = async (e: React.FormEvent) => {
+    const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!driverName.trim() || !driverPhone.trim() || !newDirection.trim()) return;
 
     setCreating(true);
     try {
+      // Нормализуем телефон: +998XXXXXXXXX
       let normalizedPhone = driverPhone.trim().replace(/\s/g, '');
       if (!normalizedPhone.startsWith('+')) {
         if (normalizedPhone.startsWith('998')) {
@@ -133,23 +134,41 @@ export const TaxiView: React.FC<TaxiViewProps> = ({ onClose }) => {
         }
       }
 
-      const regRes = await fetch(`${API_URL}/api/taxi/register`, {
+      // 1️⃣ Тихо регистрируем водителя (если уже есть — не страшно)
+      try {
+        await fetch(`${API_URL}/api/taxi/register`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: driverName.trim(),      // ⬅️ бэк ждёт "name"
+            phone: normalizedPhone,       // ⬅️ бэк ждёт "phone"
+            userId,
+          }),
+        });
+      } catch {
+        // Игнорируем ошибку регистрации — главное создать рейс
+      }
+
+      // 2️⃣ Создаём РЕЙС — вот это главное
+      const res = await fetch(`${API_URL}/api/taxi/create`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           driverName: driverName.trim(),
           driverPhone: normalizedPhone,
-          direction: newDirection,
+          direction: newDirection.trim(),
           totalSeats,
           userId,
         }),
       });
-      const regData = await regRes.json();
-      
-      if (regData.error) {
-        alert(regData.error);
+      const data = await res.json();
+
+      if (data.error) {
+        alert(data.error);
         return;
       }
+
+      // Успех — очищаем форму
       setDriverName('');
       setDriverPhone('');
       setNewDirection('');
@@ -183,12 +202,13 @@ export const TaxiView: React.FC<TaxiViewProps> = ({ onClose }) => {
     }
   };
 
-  const handleCancel = async (rideId: number) => {
+    const handleCancel = async (rideId: number) => {
+    if (!userId) return;
     try {
       const res = await fetch(`${API_URL}/api/taxi/cancel-booking`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ rideId }),
+        body: JSON.stringify({ rideId, userId }),   // ⬅️ передаём userId
       });
       const data = await res.json();
       if (data.error) {

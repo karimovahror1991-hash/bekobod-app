@@ -1,7 +1,6 @@
 import { PullToRefresh } from './PullToRefresh';
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Phone, User, Plus, Loader2, Star, Search, Car } from 'lucide-react';
-import { getUserId } from '../utils/debug';
 
 interface TaxiViewProps {
   onClose: () => void;
@@ -104,17 +103,14 @@ export const TaxiView: React.FC<TaxiViewProps> = ({ onClose }) => {
   };
 
   useEffect(() => {
-  const id = getUserId();
+  const tg = (window as any).Telegram?.WebApp;
+  const id = tg?.initDataUnsafe?.user?.id;
   if (id) {
-    console.log('🧪 TaxiView userId =', id);
     setUserId(id);
-    // Загружаем уведомления
     fetch(`${API_URL}/api/taxi/notifications?userId=${id}`)
       .then(r => r.json())
       .then(d => setNotifications(d.notifications || []))
       .catch((err) => console.error('Notifications error:', err));
-  } else {
-    console.warn('⚠️ TaxiView: userId не получен');
   }
 }, []);
 

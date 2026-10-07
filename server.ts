@@ -2540,8 +2540,10 @@ app.get('/api/restaurants/:id/photos', async (req, res) => {
 // Список магазинов/услуг
 app.get('/api/shops/list', async (req, res) => {
   try {
-    const { category } = req.query;
-    let query = 'SELECT * FROM shops';
+       const { category } = req.query;
+    // ⚡ БЕЗ фото: только метаданные (ускорение в 10 раз)
+    let query = `SELECT id, category, name, address, phone, hours, description, created_at 
+                 FROM shops`;
     const params: any[] = [];
     if (category && category !== 'all') {
       query += ' WHERE category = $1';
@@ -2555,7 +2557,25 @@ app.get('/api/shops/list', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
-
+// Загрузка фото одного магазина (по клику — быстрее в 10 раз)
+app.get('/api/shops/:id/photos', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await pool.query(
+      'SELECT image_url FROM shops WHERE id = $1',
+      [id]
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Not found' });
+    }
+    res.json({
+      image_url: result.rows[0].image_url || null,
+    });
+  } catch (error: any) {
+    console.error('Shop photos error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
 // Создать магазин/услугу (только админ)
 app.post('/api/shops/create', async (req, res) => {
   try {

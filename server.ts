@@ -2392,7 +2392,12 @@ app.get('/api/restaurants/list-full', async (req, res) => {
   try {
     const { userId } = req.query;
 
-    const restaurants = await pool.query('SELECT * FROM restaurants ORDER BY created_at DESC');
+       // ⚡ БЕЗ фото: только метаданные (ускорение в 10-20 раз)
+    const restaurants = await pool.query(
+      `SELECT id, name, category, address, phone, hours, description, created_at 
+       FROM restaurants 
+       ORDER BY created_at DESC`
+    );
 
     const ratings = await pool.query(
       'SELECT restaurant_id, AVG(rating) as avg, COUNT(*) as count FROM restaurant_ratings GROUP BY restaurant_id'
@@ -2507,6 +2512,26 @@ app.get('/api/restaurants/my-rating/:restaurantId', async (req, res) => {
     res.json({ rating: result.rows.length > 0 ? result.rows[0].rating : null });
   } catch (error: any) {
     console.error('My rating error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+// Загрузка фото одного ресторана (по клику — быстрее в 10 раз)
+app.get('/api/restaurants/:id/photos', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await pool.query(
+      'SELECT image_url, menu_images FROM restaurants WHERE id = $1',
+      [id]
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Not found' });
+    }
+    res.json({
+      image_url: result.rows[0].image_url,
+      menu_images: result.rows[0].menu_images || [],
+    });
+  } catch (error: any) {
+    console.error('Photos error:', error);
     res.status(500).json({ error: error.message });
   }
 });

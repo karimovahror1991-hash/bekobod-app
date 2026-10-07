@@ -1,6 +1,6 @@
 import { PullToRefresh } from './PullToRefresh';
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Phone, MapPin, Loader2, Star, Clock } from 'lucide-react';
+import { ArrowLeft, Phone, MapPin, Loader2, Star, Clock, X } from 'lucide-react';
 
 interface RestaurantsViewProps {
   onClose: () => void;
@@ -13,12 +13,11 @@ interface Restaurant {
   address: string | null;
   phone: string | null;
   description: string | null;
-  image_url: string | null;
+  image_url?: string | null;
   hours: string | null;
-  menu_images: string[] | null;
+  menu_images?: string[] | null;
   created_at: string;
 }
-
 
 const CATEGORIES = [
   { id: 'fastfood', label: 'Fast food', icon: '🍔', gradient: 'from-orange-500 to-red-600' },
@@ -39,39 +38,43 @@ export const RestaurantsView: React.FC<RestaurantsViewProps> = ({ onClose }) => 
   const [showRatingModal, setShowRatingModal] = useState<Restaurant | null>(null);
   const [selectedRating, setSelectedRating] = useState(0);
   const [userId, setUserId] = useState<number | null>(null);
-   const [fullscreenImage, setFullscreenImage] = useState<string | null>(null);
+
+  // ⚡ Оптимизация: фото грузим ТОЛЬКО при открытии ресторана
+  const [selectedRestaurant, setSelectedRestaurant] = useState<Restaurant | null>(null);
+  const [selectedPhotos, setSelectedPhotos] = useState<{image_url: string | null, menu_images: string[]} | null>(null);
+  const [photosLoading, setPhotosLoading] = useState(false);
+
+  // Fullscreen
+  const [fullscreenImage, setFullscreenImage] = useState<string | null>(null);
   const [fullscreenPhotos, setFullscreenPhotos] = useState<string[]>([]);
   const [fullscreenIndex, setFullscreenIndex] = useState(0);
 
   const API_URL = 'https://bekobod-app-1.onrender.com';
 
- const loadRestaurants = async () => {
-  try {
-    setLoading(true);
+  const loadRestaurants = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch(`${API_URL}/api/restaurants/list-full?userId=${userId || ''}`);
+      const data = await res.json();
+      const list = data.restaurants || [];
 
-    // Один запрос — рестораны + рейтинги + мои оценки
-    const res = await fetch(`${API_URL}/api/restaurants/list-full?userId=${userId || ''}`);
-    const data = await res.json();
-    const list = data.restaurants || [];
+      const ratingsData: {[key: number]: {avg: number, count: number}} = {};
+      const myRatingsData: {[key: number]: number} = {};
 
-    // Отделяем рейтинги от ресторанов
-    const ratingsData: {[key: number]: {avg: number, count: number}} = {};
-    const myRatingsData: {[key: number]: number} = {};
+      list.forEach((r: any) => {
+        ratingsData[r.id] = { avg: r.avgRating || 0, count: r.ratingCount || 0 };
+        if (r.myRating) myRatingsData[r.id] = r.myRating;
+      });
 
-    list.forEach((r: any) => {
-      ratingsData[r.id] = { avg: r.avgRating || 0, count: r.ratingCount || 0 };
-      if (r.myRating) myRatingsData[r.id] = r.myRating;
-    });
-
-    setRestaurants(list);
-    setRatings(ratingsData);
-    setMyRatings(myRatingsData);
-  } catch (err) {
-    console.error(err);
-  } finally {
-    setLoading(false);
-  }
-};
+      setRestaurants(list);
+      setRatings(ratingsData);
+      setMyRatings(myRatingsData);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     loadRestaurants();
@@ -81,7 +84,28 @@ export const RestaurantsView: React.FC<RestaurantsViewProps> = ({ onClose }) => 
     }
   }, []);
 
-   const handleRate = async (rating: number) => {
+  // ⚡ Загрузка фото при открытии ресторана
+  const openRestaurant = async (restaurant: Restaurant) => {
+    setSelectedRestaurant(restaurant);
+    setPhotosLoading(true);
+    setSelectedPhotos(null);
+
+    try {
+      const res = await fetch(`${API_URL}/api/restaurants/${restaurant.id}/photos`);
+      const data = await res.json();
+      setSelectedPhotos({
+        image_url: data.image_url || null,
+        menu_images: data.menu_images || [],
+      });
+    } catch (err) {
+      console.error('Photos load error:', err);
+      setSelectedPhotos({ image_url: null, menu_images: [] });
+    } finally {
+      setPhotosLoading(false);
+    }
+  };
+
+  const handleRate = async (rating: number) => {
     if (!showRatingModal) return;
     try {
       const res = await fetch(`${API_URL}/api/restaurants/rate`, {
@@ -106,7 +130,223 @@ export const RestaurantsView: React.FC<RestaurantsViewProps> = ({ onClose }) => 
     ? restaurants.filter(r => r.category === selectedCategory)
     : [];
 
-  // Экран списка ресторанов категории
+  // === ЭКРАН РЕСТОРАНА (с фото, загружеными при клике) ===
+  if (selectedRestaurant) {
+    const restaurant = selectedRestaurant;
+    const rating = ratings[restaurant.id];
+    const allPhotos: string[] = [];
+    if (selectedPhotos) {
+      if (selectedPhotos.image_url) allPhotos.push(selectedPhotos.image_url);
+      selectedPhotos.menu_images.forEach((m) => {
+        if (m && m.startsWith('data:image/')) allPhotos.push(m);
+      });
+    }
+
+    return (
+      <div className="min-h-screen bg-linear-to-b from-stone-50 to-stone-100">
+        <div className="bg-white/95 backdrop-blur-lg border-b border-stone-200 sticky top-0 z-20 shadow-sm">
+          <div className="max-w-2xl mx-auto px-4 pt-6 pb-4 flex items-center space-x-3">
+            <button
+              onClick={() => {
+                setSelectedRestaurant(null);
+                setSelectedPhotos(null);
+              }}
+              className="w-11 h-11 rounded-2xl bg-stone-100 hover:bg-amber-100 flex items-center justify-center transition-colors"
+            >
+              <ArrowLeft className="w-6 h-6 text-stone-700" />
+            </button>
+            <h1 className="font-bold text-lg text-stone-900 flex-1 truncate">
+              {restaurant.name}
+            </h1>
+            {rating && rating.count > 0 && (
+              <div className="flex items-center space-x-1 text-xs bg-amber-50 px-2 py-1 rounded-lg shrink-0">
+                <Star className="w-3.5 h-3.5 fill-amber-500 text-amber-500" />
+                <span className="font-bold text-stone-700">{rating.avg}</span>
+                <span className="text-stone-400">({rating.count})</span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="max-w-2xl mx-auto px-4 py-6 space-y-4">
+          {/* Фото — грузятся при клике */}
+          {photosLoading ? (
+            <div className="flex justify-center py-12">
+              <Loader2 className="w-6 h-6 animate-spin text-amber-600" />
+            </div>
+          ) : allPhotos.length > 0 ? (
+            <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-hide">
+              {allPhotos.map((url, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => {
+                    setFullscreenImage(url);
+                    setFullscreenPhotos(allPhotos);
+                    setFullscreenIndex(idx);
+                  }}
+                  className="shrink-0"
+                >
+                  <img
+                    src={url}
+                    alt={`Photo ${idx + 1}`}
+                    className="w-40 h-40 object-cover rounded-2xl shadow-sm hover:shadow-lg transition"
+                  />
+                </button>
+              ))}
+            </div>
+          ) : null}
+
+          <div className="bg-white rounded-3xl p-5 shadow-sm border border-stone-100 space-y-3">
+            {restaurant.address && (
+              <div className="flex items-start space-x-2 text-sm text-stone-600">
+                <MapPin className="w-4 h-4 text-blue-500 mt-0.5 shrink-0" />
+                <span>{restaurant.address}</span>
+              </div>
+            )}
+            {restaurant.phone && (
+              <div className="flex items-center space-x-2 text-sm text-stone-700">
+                <Phone className="w-4 h-4 text-emerald-500 shrink-0" />
+                <span className="font-semibold">{restaurant.phone}</span>
+              </div>
+            )}
+            {restaurant.hours && (
+              <div className="flex items-center space-x-2 text-sm text-stone-700">
+                <Clock className="w-4 h-4 text-amber-500 shrink-0" />
+                <span className="font-semibold">{restaurant.hours}</span>
+              </div>
+            )}
+            {restaurant.description && (
+              <p className="text-sm text-stone-600 leading-relaxed">{restaurant.description}</p>
+            )}
+
+            <div className="flex space-x-2 pt-2">
+              {restaurant.phone && (
+                <a
+                  href={`tel:${restaurant.phone}`}
+                  className="flex-1 py-3 bg-linear-to-br from-emerald-500 to-green-600 text-white rounded-2xl font-bold flex items-center justify-center space-x-2 transition shadow-lg active:scale-95"
+                >
+                  <Phone className="w-5 h-5" />
+                  <span>Qo'ng'iroq</span>
+                </a>
+              )}
+              <button
+                onClick={() => {
+                  if (myRatings[restaurant.id]) return;
+                  setShowRatingModal(restaurant);
+                }}
+                disabled={!!myRatings[restaurant.id]}
+                className={`flex-1 py-3 rounded-2xl font-bold text-sm transition flex items-center justify-center space-x-2 ${
+                  myRatings[restaurant.id]
+                    ? 'bg-emerald-100 text-emerald-700 cursor-not-allowed'
+                    : 'bg-amber-100 hover:bg-amber-200 text-amber-800 active:scale-95'
+                }`}
+              >
+                {myRatings[restaurant.id] ? '✅ Baholangan' : '⭐ Baholash'}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Модалка оценки */}
+        {showRatingModal && (
+          <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl">
+              <h3 className="font-bold text-lg text-stone-900 text-center mb-2">
+                {showRatingModal.name}
+              </h3>
+              <p className="text-xs text-stone-500 text-center mb-4">
+                Bahoyingizni tanlang
+              </p>
+              <div className="flex justify-center space-x-2 mb-4">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    onClick={() => {
+                      setSelectedRating(star);
+                      setTimeout(() => handleRate(star), 300);
+                    }}
+                    className="text-4xl transition-transform active:scale-110"
+                  >
+                    <span className={star <= selectedRating ? 'text-amber-500' : 'text-stone-300'}>
+                      ★
+                    </span>
+                  </button>
+                ))}
+              </div>
+              <div className="text-center text-xs text-stone-400">
+                Yulduzni bosing va baho yuboriladi
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Fullscreen */}
+        {fullscreenImage && (
+          <div
+            className="fixed inset-0 bg-black/95 z-50 flex items-center justify-center"
+            onClick={() => {
+              setFullscreenImage(null);
+              setFullscreenPhotos([]);
+              setFullscreenIndex(0);
+            }}
+          >
+            {fullscreenPhotos.length > 1 && (
+              <div className="absolute top-4 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-white/20 text-white text-xs font-bold z-10">
+                {fullscreenIndex + 1} / {fullscreenPhotos.length}
+              </div>
+            )}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setFullscreenImage(null);
+                setFullscreenPhotos([]);
+                setFullscreenIndex(0);
+              }}
+              className="absolute top-4 right-4 w-12 h-12 rounded-full bg-white/20 text-white text-2xl flex items-center justify-center z-10"
+            >
+              ✕
+            </button>
+            {fullscreenPhotos.length > 1 && fullscreenIndex > 0 && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const newIndex = fullscreenIndex - 1;
+                  setFullscreenIndex(newIndex);
+                  setFullscreenImage(fullscreenPhotos[newIndex]);
+                }}
+                className="absolute left-2 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-black/60 text-white text-2xl flex items-center justify-center z-10"
+              >
+                ‹
+              </button>
+            )}
+            {fullscreenPhotos.length > 1 && fullscreenIndex < fullscreenPhotos.length - 1 && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const newIndex = fullscreenIndex + 1;
+                  setFullscreenIndex(newIndex);
+                  setFullscreenImage(fullscreenPhotos[newIndex]);
+                }}
+                className="absolute right-2 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-black/60 text-white text-2xl flex items-center justify-center z-10"
+              >
+                ›
+              </button>
+            )}
+            <img
+              src={fullscreenImage}
+              alt="Fullscreen"
+              onClick={(e) => e.stopPropagation()}
+              className="max-w-full max-h-full object-contain"
+              style={{ touchAction: 'pinch-zoom' }}
+            />
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // === ЭКРАН СПИСКА РЕСТОРАНОВ (без фото — быстро!) ===
   if (selectedCategory) {
     const catInfo = CATEGORIES.find(c => c.id === selectedCategory);
     return (
@@ -120,12 +360,8 @@ export const RestaurantsView: React.FC<RestaurantsViewProps> = ({ onClose }) => 
               <ArrowLeft className="w-6 h-6 text-white" />
             </button>
             <div>
-              <h1 className="font-bold text-xl text-white">
-                {catInfo?.label}
-              </h1>
-              <p className="text-xs text-white/80">
-                {filteredRestaurants.length} ta joy
-              </p>
+              <h1 className="font-bold text-xl text-white">{catInfo?.label}</h1>
+              <p className="text-xs text-white/80">{filteredRestaurants.length} ta joy</p>
             </div>
           </div>
         </div>
@@ -145,224 +381,57 @@ export const RestaurantsView: React.FC<RestaurantsViewProps> = ({ onClose }) => 
               {filteredRestaurants.map((restaurant) => {
                 const rating = ratings[restaurant.id];
                 return (
-                  <div
+                  <button
                     key={restaurant.id}
-                    className="bg-white rounded-3xl overflow-hidden shadow-sm border border-stone-100 space-y-3"
+                    onClick={() => openRestaurant(restaurant)}
+                    className="w-full text-left bg-white rounded-3xl p-5 shadow-sm border border-stone-100 hover:shadow-lg transition-all active:scale-[0.98] space-y-3"
                   >
-                                      {/* Галерея всех фото (главное + меню) */}
-                    {(() => {
-                     const allPhotos = [
-  ...(restaurant.image_url && restaurant.image_url.trim() ? [restaurant.image_url] : []),
-  ...(restaurant.menu_images || []).filter(url => url && url.trim() && url.startsWith('data:image/')),
-];
-                      if (allPhotos.length === 0) return null;
-
-                      return (
-                        <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-hide">
-                          {allPhotos.map((url, idx) => (
-                            <button
-                              key={idx}
-                              type="button"
-                              onClick={() => {
-                                setFullscreenImage(url);
-                                setFullscreenPhotos(allPhotos);
-                                setFullscreenIndex(idx);
-                              }}
-                              className="shrink-0"
-                            >
-                              <img
-                                src={url}
-                                alt={`Photo ${idx + 1}`}
-                                className="w-32 h-32 object-cover rounded-2xl shadow-sm hover:shadow-lg transition"
-                              />
-                            </button>
-                          ))}
-                        </div>
-                      );
-                    })()}
-
-                    <div className="p-5 space-y-3">
-                      <div className="flex items-start justify-between">
-                        <h3 className="font-bold text-lg text-stone-900 leading-tight flex-1">
-                          {restaurant.name}
-                        </h3>
-                        {rating && rating.count > 0 && (
-                          <div className="flex items-center space-x-1 text-xs bg-amber-50 px-2 py-1 rounded-lg shrink-0 ml-2">
-                            <Star className="w-3.5 h-3.5 fill-amber-500 text-amber-500" />
-                            <span className="font-bold text-stone-700">{rating.avg}</span>
-                            <span className="text-stone-400">({rating.count})</span>
-                          </div>
-                        )}
-                      </div>
-
-                      {restaurant.address && (
-                        <div className="flex items-start space-x-2 text-sm text-stone-600">
-                          <MapPin className="w-4 h-4 text-blue-500 mt-0.5 shrink-0" />
-                          <span>{restaurant.address}</span>
+                    <div className="flex items-start justify-between">
+                      <h3 className="font-bold text-lg text-stone-900 leading-tight flex-1">
+                        {restaurant.name}
+                      </h3>
+                      {rating && rating.count > 0 && (
+                        <div className="flex items-center space-x-1 text-xs bg-amber-50 px-2 py-1 rounded-lg shrink-0 ml-2">
+                          <Star className="w-3.5 h-3.5 fill-amber-500 text-amber-500" />
+                          <span className="font-bold text-stone-700">{rating.avg}</span>
+                          <span className="text-stone-400">({rating.count})</span>
                         </div>
                       )}
-                      {restaurant.phone && (
-                        <div className="flex items-center space-x-2 text-sm text-stone-700">
-                          <Phone className="w-4 h-4 text-emerald-500 shrink-0" />
-                          <span className="font-semibold">{restaurant.phone}</span>
-                        </div>
-                      )}
-                   
-                      {restaurant.hours && (
-                        <div className="flex items-center space-x-2 text-sm text-stone-700">
-                          <Clock className="w-4 h-4 text-amber-500 shrink-0" />
-                          <span className="font-semibold">{restaurant.hours}</span>
-                        </div>
-                      )}
-                      {restaurant.description && (
-                        <p className="text-sm text-stone-600 leading-relaxed">
-                          {restaurant.description}
-                        </p>
-                      )}
-
-                      <div className="flex space-x-2">
-                        {restaurant.phone && (
-                          <a
-                            href={`tel:${restaurant.phone}`}
-                            className="flex-1 py-3 bg-linear-to-br from-emerald-500 to-green-600 text-white rounded-2xl font-bold flex items-center justify-center space-x-2 transition shadow-lg active:scale-95"
-                          >
-                            <Phone className="w-5 h-5" />
-                            <span>Qo'ng'iroq</span>
-                          </a>
-                        )}
-                        <button
-                          onClick={() => {
-                            if (myRatings[restaurant.id]) return;
-                            setShowRatingModal(restaurant);
-                          }}
-                          disabled={!!myRatings[restaurant.id]}
-                          className={`flex-1 py-3 rounded-2xl font-bold text-sm transition flex items-center justify-center space-x-2 ${
-                            myRatings[restaurant.id]
-                              ? 'bg-emerald-100 text-emerald-700 cursor-not-allowed'
-                              : 'bg-amber-100 hover:bg-amber-200 text-amber-800 active:scale-95'
-                          }`}
-                        >
-                          {myRatings[restaurant.id] ? '✅ Baholangan' : '⭐ Baholash'}
-                        </button>
-                      </div>
                     </div>
-                  </div>
+
+                    {restaurant.address && (
+                      <div className="flex items-start space-x-2 text-sm text-stone-600">
+                        <MapPin className="w-4 h-4 text-blue-500 mt-0.5 shrink-0" />
+                        <span>{restaurant.address}</span>
+                      </div>
+                    )}
+                    {restaurant.phone && (
+                      <div className="flex items-center space-x-2 text-sm text-stone-700">
+                        <Phone className="w-4 h-4 text-emerald-500 shrink-0" />
+                        <span className="font-semibold">{restaurant.phone}</span>
+                      </div>
+                    )}
+                    {restaurant.hours && (
+                      <div className="flex items-center space-x-2 text-sm text-stone-700">
+                        <Clock className="w-4 h-4 text-amber-500 shrink-0" />
+                        <span className="font-semibold">{restaurant.hours}</span>
+                      </div>
+                    )}
+
+                    <div className="text-right text-xs font-semibold text-amber-600 pt-1">
+                      Batafsil →
+                    </div>
+                  </button>
                 );
               })}
             </div>
           )}
         </div>
-
-               {/* Модальное окно оценки */}
-        {showRatingModal && (
-          <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl">
-              <h3 className="font-bold text-lg text-stone-900 text-center mb-2">
-                {showRatingModal.name}
-              </h3>
-              <p className="text-xs text-stone-500 text-center mb-4">
-                Bahoyingizni tanlang
-              </p>
-
-              <div className="flex justify-center space-x-2 mb-4">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <button
-                    key={star}
-                    onClick={() => {
-                      setSelectedRating(star);
-                      setTimeout(() => handleRate(star), 300);
-                    }}
-                    className="text-4xl transition-transform active:scale-110"
-                  >
-                    <span className={star <= selectedRating ? 'text-amber-500' : 'text-stone-300'}>
-                      ★
-                    </span>
-                  </button>
-                ))}
-              </div>
-
-              <div className="text-center text-xs text-stone-400">
-                Yulduzni bosing va baho yuboriladi
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Модалка для просмотра фото — с листанием и зумом */}
-        {fullscreenImage && (
-          <div
-            className="fixed inset-0 bg-black/95 z-50 flex items-center justify-center"
-            onClick={() => {
-              setFullscreenImage(null);
-              setFullscreenPhotos([]);
-              setFullscreenIndex(0);
-            }}
-          >
-            {/* Счётчик */}
-            {fullscreenPhotos.length > 1 && (
-              <div className="absolute top-4 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-white/20 text-white text-xs font-bold z-10">
-                {fullscreenIndex + 1} / {fullscreenPhotos.length}
-              </div>
-            )}
-
-            {/* Кнопка закрыть */}
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setFullscreenImage(null);
-                setFullscreenPhotos([]);
-                setFullscreenIndex(0);
-              }}
-              className="absolute top-4 right-4 w-12 h-12 rounded-full bg-white/20 text-white text-2xl flex items-center justify-center z-10"
-            >
-              ✕
-            </button>
-
-            {/* Стрелка влево */}
-            {fullscreenPhotos.length > 1 && fullscreenIndex > 0 && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  const newIndex = fullscreenIndex - 1;
-                  setFullscreenIndex(newIndex);
-                  setFullscreenImage(fullscreenPhotos[newIndex]);
-                }}
-                className="absolute left-2 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-black/60 text-white text-2xl flex items-center justify-center z-10"
-              >
-                ‹
-              </button>
-            )}
-
-            {/* Стрелка вправо */}
-            {fullscreenPhotos.length > 1 && fullscreenIndex < fullscreenPhotos.length - 1 && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  const newIndex = fullscreenIndex + 1;
-                  setFullscreenIndex(newIndex);
-                  setFullscreenImage(fullscreenPhotos[newIndex]);
-                }}
-                className="absolute right-2 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-black/60 text-white text-2xl flex items-center justify-center z-10"
-              >
-                ›
-              </button>
-            )}
-
-            {/* Само фото — с зумом через pinch */}
-            <img
-              src={fullscreenImage}
-              alt="Fullscreen"
-              onClick={(e) => e.stopPropagation()}
-              className="max-w-full max-h-full object-contain"
-              style={{ touchAction: 'pinch-zoom' }}
-            />
-          </div>
-        )}
       </div>
     );
   }
 
-  // Экран категорий
+  // === ЭКРАН КАТЕГОРИЙ ===
   return (
     <PullToRefresh onRefresh={loadRestaurants}>
       <div className="min-h-screen bg-linear-to-b from-stone-50 to-stone-100">
@@ -392,9 +461,7 @@ export const RestaurantsView: React.FC<RestaurantsViewProps> = ({ onClose }) => 
                   <div className="font-bold text-xl text-white text-center leading-tight">
                     {cat.label}
                   </div>
-                  <div className="text-sm text-white/80 mt-2">
-                    {count} ta joy
-                  </div>
+                  <div className="text-sm text-white/80 mt-2">{count} ta joy</div>
                 </button>
               );
             })}

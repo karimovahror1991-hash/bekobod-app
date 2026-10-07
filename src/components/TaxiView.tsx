@@ -28,7 +28,7 @@ export const TaxiView: React.FC<TaxiViewProps> = ({ onClose }) => {
   const [tab, setTab] = useState<'list' | 'create'>('list');
   const [userId, setUserId] = useState<number | null>(null);
 
-  // 📌 Наши созданные рейсы (сохраняем в localStorage, т.к. Telegram initData не всегда доступен)
+  // 📌 Наши созданные рейсы (localStorage, т.к. Telegram initData не всегда доступен)
   const [myRideIds, setMyRideIds] = useState<number[]>(() => {
     try {
       return JSON.parse(localStorage.getItem('my_taxi_rides') || '[]');
@@ -112,7 +112,6 @@ export const TaxiView: React.FC<TaxiViewProps> = ({ onClose }) => {
     loadRides();
   }, [direction]);
 
-  // Загрузка моих оценок
   useEffect(() => {
     if (!userId || rides.length === 0) return;
     const loadMyRatings = async () => {
@@ -139,7 +138,6 @@ export const TaxiView: React.FC<TaxiViewProps> = ({ onClose }) => {
 
     setCreating(true);
     try {
-      // Нормализуем телефон: +998XXXXXXXXX
       let normalizedPhone = driverPhone.trim().replace(/\s/g, '');
       if (!normalizedPhone.startsWith('+')) {
         if (normalizedPhone.startsWith('998')) {
@@ -149,7 +147,6 @@ export const TaxiView: React.FC<TaxiViewProps> = ({ onClose }) => {
         }
       }
 
-      // 1️⃣ Тихо регистрируем водителя (если уже есть — не страшно)
       try {
         await fetch(`${API_URL}/api/taxi/register`, {
           method: 'POST',
@@ -160,11 +157,8 @@ export const TaxiView: React.FC<TaxiViewProps> = ({ onClose }) => {
             userId,
           }),
         });
-      } catch {
-        // Игнорируем ошибку регистрации — главное создать рейс
-      }
+      } catch {}
 
-      // 2️⃣ Создаём РЕЙС
       const res = await fetch(`${API_URL}/api/taxi/create`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -183,7 +177,6 @@ export const TaxiView: React.FC<TaxiViewProps> = ({ onClose }) => {
         return;
       }
 
-      // ✅ Успех — запоминаем ID созданного рейса
       if (data.ride?.id) {
         saveMyRides([...myRideIds, data.ride.id]);
       }
@@ -241,8 +234,30 @@ export const TaxiView: React.FC<TaxiViewProps> = ({ onClose }) => {
     }
   };
 
+  // ✅ Закрыть рейс (водитель сам завершает)
+  const handleCloseRide = async (rideId: number) => {
+    if (!confirm("Reysni yopishni tasdiqlaysizmi? Yo'lovchilar endi uni ko'rmaydi.")) return;
+
+    try {
+      const res = await fetch(`${API_URL}/api/taxi/close`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rideId, userId }),
+      });
+      const data = await res.json();
+      if (data.error) {
+        alert(data.error);
+        return;
+      }
+      saveMyRides(myRideIds.filter(id => id !== rideId));
+      loadRides();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  // 🗑 Полное удаление рейса
   const handleDelete = async (rideId: number) => {
-    // ✅ userId больше не обязателен — проверяем через localStorage
     if (!confirm("Reysni o'chirishni tasdiqlaysizmi?")) return;
 
     try {
@@ -256,7 +271,6 @@ export const TaxiView: React.FC<TaxiViewProps> = ({ onClose }) => {
         alert(data.error);
         return;
       }
-      // Убираем из localStorage
       saveMyRides(myRideIds.filter(id => id !== rideId));
       loadRides();
     } catch (err) {
@@ -303,14 +317,11 @@ export const TaxiView: React.FC<TaxiViewProps> = ({ onClose }) => {
             </div>
           </div>
 
-          {/* Вкладки */}
           <div className="max-w-2xl mx-auto px-4 pb-4 flex space-x-2">
             <button
               onClick={() => setTab('list')}
               className={`flex-1 py-3 rounded-2xl text-sm font-bold transition-all flex items-center justify-center space-x-2 ${
-                tab === 'list'
-                  ? 'bg-white text-amber-700 shadow-lg'
-                  : 'bg-white/20 text-white'
+                tab === 'list' ? 'bg-white text-amber-700 shadow-lg' : 'bg-white/20 text-white'
               }`}
             >
               <Search className="w-4 h-4" />
@@ -319,9 +330,7 @@ export const TaxiView: React.FC<TaxiViewProps> = ({ onClose }) => {
             <button
               onClick={() => setTab('create')}
               className={`flex-1 py-3 rounded-2xl text-sm font-bold transition-all flex items-center justify-center space-x-2 ${
-                tab === 'create'
-                  ? 'bg-white text-amber-700 shadow-lg'
-                  : 'bg-white/20 text-white'
+                tab === 'create' ? 'bg-white text-amber-700 shadow-lg' : 'bg-white/20 text-white'
               }`}
             >
               <Car className="w-4 h-4" />
@@ -333,7 +342,6 @@ export const TaxiView: React.FC<TaxiViewProps> = ({ onClose }) => {
         <div className="max-w-2xl mx-auto px-4 py-5">
           {tab === 'list' && (
             <>
-              {/* Фильтр */}
               <div className="flex gap-2 mb-5">
                 <button
                   onClick={() => setDirection('all')}
@@ -374,7 +382,6 @@ export const TaxiView: React.FC<TaxiViewProps> = ({ onClose }) => {
                     const driverRating = ratings[ride.driver_phone];
                     const fillPercent = (ride.booked_seats / ride.total_seats) * 100;
 
-                    // ✅ Кнопка удаления: либо из localStorage, либо по user_id
                     const isMyRide =
                       myRideIds.includes(ride.id) ||
                       (userId && Number(ride.user_id) === Number(userId));
@@ -384,7 +391,6 @@ export const TaxiView: React.FC<TaxiViewProps> = ({ onClose }) => {
                         key={ride.id}
                         className="bg-white rounded-3xl shadow-md border border-stone-100 overflow-hidden"
                       >
-                        {/* Верхняя часть — маршрут */}
                         <div className="bg-linear-to-br from-amber-50 to-orange-50 p-5 border-b border-amber-100">
                           <div className="flex items-center justify-between">
                             <div className="flex-1 min-w-0">
@@ -397,27 +403,32 @@ export const TaxiView: React.FC<TaxiViewProps> = ({ onClose }) => {
                             </div>
                             <div className={`text-xs font-bold px-3 py-2 rounded-xl whitespace-nowrap ml-3 ${
                               isFull
-                                ? 'bg-rose-100 text-rose-700'
+                                ? 'bg-amber-100 text-amber-700'
                                 : 'bg-emerald-100 text-emerald-700'
                             }`}>
-                              {isFull ? "To'lgan" : `${freeSeats} joy`}
+                              {isFull ? "Joylar to'ldi" : `${freeSeats} joy`}
                             </div>
                           </div>
                         </div>
 
-                        {/* Кнопка удаления — сразу под заголовком, только для водителя */}
+                        {/* Кнопки водителя — только для своих рейсов */}
                         {isMyRide && (
-                          <div className="px-5 pt-3">
+                          <div className="px-5 pt-3 space-y-2">
+                            <button
+                              onClick={() => handleCloseRide(ride.id)}
+                              className="w-full py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-2xl text-xs font-semibold transition border border-emerald-200 flex items-center justify-center space-x-1.5"
+                            >
+                              ✅ Reysni yopish (safar tugadi)
+                            </button>
                             <button
                               onClick={() => handleDelete(ride.id)}
                               className="w-full py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-2xl text-xs font-semibold transition border border-rose-200 flex items-center justify-center space-x-1.5"
                             >
-                              🗑 Reysni o'chirish (faqat haydovchi uchun)
+                              🗑 Reysni o'chirish
                             </button>
                           </div>
                         )}
 
-                        {/* Водитель + рейтинг */}
                         <div className="p-5 space-y-4">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center space-x-3">
@@ -452,13 +463,14 @@ export const TaxiView: React.FC<TaxiViewProps> = ({ onClose }) => {
                               {myRatings[ride.id] ? '✅ Baholangan' : '⭐ Baholash'}
                             </button>
                           </div>
+
                           {ride.driver_phone && (
                             <div className="flex items-center space-x-2 text-sm text-stone-700">
                               <Phone className="w-4 h-4 shrink-0 text-emerald-500" />
                               <span className="font-semibold">{ride.driver_phone}</span>
                             </div>
                           )}
-                          {/* Прогресс-бар */}
+
                           <div>
                             <div className="flex items-center justify-between text-xs text-stone-500 mb-1.5">
                               <span>Band joylar</span>
@@ -472,7 +484,6 @@ export const TaxiView: React.FC<TaxiViewProps> = ({ onClose }) => {
                             </div>
                           </div>
 
-                          {/* Кнопки пассажира */}
                           <div className="flex space-x-2">
                             <a
                               href={`tel:${ride.driver_phone}`}
@@ -498,7 +509,7 @@ export const TaxiView: React.FC<TaxiViewProps> = ({ onClose }) => {
                                     : 'bg-linear-to-br from-amber-500 to-orange-600 text-white'
                                 }`}
                               >
-                                {isFull ? "To'lgan" : 'Joy band qilish'}
+                                {isFull ? "Joylar to'ldi" : 'Joy band qilish'}
                               </button>
                             )}
                           </div>
@@ -611,7 +622,6 @@ export const TaxiView: React.FC<TaxiViewProps> = ({ onClose }) => {
           )}
         </div>
 
-        {/* Модальное окно оценки */}
         {showRatingModal && (
           <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl">

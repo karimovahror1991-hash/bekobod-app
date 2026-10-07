@@ -1917,10 +1917,10 @@ app.post('/api/taxi/book', async (req, res) => {
       'INSERT INTO taxi_bookings (ride_id, passenger_name, passenger_phone, user_id) VALUES ($1, $2, $3, $4)',
       [rideId, passengerName || null, passengerPhone || null, userId || null]
     );
-    const newBooked = ride.booked_seats + 1;
-    const newStatus = newBooked >= ride.total_seats ? 'full' : 'active';
-    await pool.query('UPDATE taxi_rides SET booked_seats = $1, status = $2 WHERE id = $3', [newBooked, newStatus, rideId]);
-    res.json({ ok: true, bookedSeats: newBooked, status: newStatus });
+const newBooked = ride.booked_seats + 1;
+// НЕ меняем статус автоматически — водитель сам закроет рейс
+await pool.query('UPDATE taxi_rides SET booked_seats = $1 WHERE id = $2', [newBooked, rideId]);
+        res.json({ ok: true, bookedSeats: newBooked });
   } catch (error: any) {
     console.error('Taxi book error:', error);
     res.status(500).json({ error: error.message });
@@ -1951,25 +1951,51 @@ app.post('/api/taxi/cancel-booking', async (req, res) => {
     );
     const newBooked = Number(countResult.rows[0].count);
 
-    const rideResult = await pool.query('SELECT total_seats FROM taxi_rides WHERE id = $1', [rideId]);
-    if (rideResult.rows.length === 0) {
-      return res.status(404).json({ error: 'Reyс topilmadi' });
-    }
-    const totalSeats = rideResult.rows[0].total_seats;
-    const newStatus = newBooked >= totalSeats ? 'full' : 'active';
-
-    await pool.query(
-      'UPDATE taxi_rides SET booked_seats = $1, status = $2 WHERE id = $3',
-      [newBooked, newStatus, rideId]
+        await pool.query(
+      'UPDATE taxi_rides SET booked_seats = $1 WHERE id = $2',
+      [newBooked, rideId]
     );
 
-    res.json({ ok: true, bookedSeats: newBooked, status: newStatus });
+    res.json({ ok: true, bookedSeats: newBooked });
   } catch (error: any) {
     console.error('Cancel booking error:', error);
     res.status(500).json({ error: error.message });
   }
 });
+// Закрыть рейс (водитель сам завершает)
+app.post('/api/taxi/close', async (req, res) => {
+  try {
+    const { rideId, userId } = req.body;
+    if (!rideId) return res.status(400).json({ error: 'Не указан рейс' });
 
+    const rideResult = await pool.query(
+      'SELECT user_id, direction FROM taxi_rides WHERE id = $1',
+      [rideId]
+    );
+    if (rideResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Рейс не найден' });
+    }
+
+    // Проверка владельца (если userId известен)
+    if (
+      userId &&
+      rideResult.rows[0].user_id &&
+      Number(rideResult.rows[0].user_id) !== Number(userId)
+    ) {
+      return res.status(403).json({ error: 'Bu reys sizga tegishli emas' });
+    }
+
+    await pool.query(
+      "UPDATE taxi_rides SET status = 'closed' WHERE id = $1",
+      [rideId]
+    );
+
+    res.json({ ok: true });
+  } catch (error: any) {
+    console.error('Taxi close error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
 app.post('/api/taxi/delete', async (req, res) => {
   try {
     const { rideId, userId } = req.body;

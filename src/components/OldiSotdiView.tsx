@@ -54,7 +54,11 @@ export const OldiSotdiView: React.FC<OldiSotdiViewProps> = ({ onClose, userId })
   const [creating, setCreating] = useState(false);
 
   const API_URL = 'https://bekobod-app-1.onrender.com';
-
+// ✅ Получить initData из Telegram
+const getInitData = (): string => {
+  const tg = (window as any).Telegram?.WebApp;
+  return tg?.initData || '';
+};
   const loadListings = async () => {
     try {
       setLoading(true);
@@ -174,17 +178,17 @@ export const OldiSotdiView: React.FC<OldiSotdiViewProps> = ({ onClose, userId })
       const res = await fetch(`${API_URL}/api/listings/create`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          category,
-          title: title.trim(),
-          description: description.trim() || null,
-          price: price.trim() || null,
-          phone: normalizedPhone,
-          imageUrls: images,
-          userId,
-          username: (window as any).Telegram?.WebApp?.initDataUnsafe?.user?.username || null,
-          firstName: (window as any).Telegram?.WebApp?.initDataUnsafe?.user?.first_name || null,
-        }),
+       body: JSON.stringify({
+  category,
+  title: title.trim(),
+  description: description.trim() || null,
+  price: price.trim() || null,
+  phone: normalizedPhone,
+  imageUrls: images,
+  username: (window as any).Telegram?.WebApp?.initDataUnsafe?.user?.username || null,
+  firstName: (window as any).Telegram?.WebApp?.initDataUnsafe?.user?.first_name || null,
+  initData: getInitData(),
+}),
       });
 
       const data = await res.json();
@@ -218,7 +222,7 @@ export const OldiSotdiView: React.FC<OldiSotdiViewProps> = ({ onClose, userId })
       const res = await fetch(`${API_URL}/api/listings/delete`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ listingId, userId }),
+        body: JSON.stringify({ listingId, initData: getInitData() }),
       });
       const data = await res.json();
       if (data.error) {
@@ -240,7 +244,7 @@ export const OldiSotdiView: React.FC<OldiSotdiViewProps> = ({ onClose, userId })
       const res = await fetch(`${API_URL}/api/listings/sold`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ listingId, userId }),
+       body: JSON.stringify({ listingId, initData: getInitData() }),
       });
       const data = await res.json();
       if (data.error) {

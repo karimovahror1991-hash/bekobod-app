@@ -3560,13 +3560,14 @@ app.post('/api/upload-image', strictLimiter, async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
 // Список объявлений
 app.get('/api/listings/list', async (req, res) => {
   try {
     // Удаляем объявления старше 15 дней
     await pool.query(`DELETE FROM listings WHERE created_at < NOW() - INTERVAL '15 days'`);
 
-        const { category } = req.query;
+    const { category } = req.query;
     // ⚡ БЕЗ фото: только метаданные (ускорение в 10 раз)
     let query = `SELECT id, category, title, description, price, phone, user_id, status, created_at, username, first_name 
                  FROM listings WHERE status = 'active'`;
@@ -3583,6 +3584,7 @@ app.get('/api/listings/list', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
 // Загрузка фото одного объявления (по клику — быстрее в 10 раз)
 app.get('/api/listings/:id/photos', async (req, res) => {
   try {
@@ -3602,17 +3604,23 @@ app.get('/api/listings/:id/photos', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
-// Создать объявление
+
+// ✅ Создать объявление (с проверкой initData)
 app.post('/api/listings/create', async (req, res) => {
   try {
-    const { category, title, description, price, phone, imageUrls, userId, username, firstName } = req.body;
+    const { category, title, description, price, phone, imageUrls, username, firstName } = req.body;
     if (!category || !title || !phone) {
       return res.status(400).json({ error: 'Kategoriya, sarlavha va telefon kerak' });
     }
+
+    // ✅ Проверяем initData и получаем userId
+    const userId = await requireUserId(req, res);
+    if (!userId) return;
+
     const result = await pool.query(
       `INSERT INTO listings (category, title, description, price, phone, image_urls, user_id, username, first_name, status)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'pending') RETURNING *`,
-      [category, title, description || null, price || null, phone, imageUrls || [], userId || null, username || null, firstName || null]
+      [category, title, description || null, price || null, phone, imageUrls || [], userId, username || null, firstName || null]
     );
 
     // Уведомление главному админу
@@ -3641,11 +3649,15 @@ app.post('/api/listings/create', async (req, res) => {
   }
 });
 
-// Пометить объявление как проданное
+// ✅ Пометить объявление как проданное (с проверкой initData)
 app.post('/api/listings/sold', async (req, res) => {
   try {
-    const { listingId, userId } = req.body;
-    if (!listingId || !userId) return res.status(400).json({ error: 'ID kerak' });
+    const { listingId } = req.body;
+    if (!listingId) return res.status(400).json({ error: 'ID kerak' });
+
+    // ✅ Проверяем initData и получаем userId
+    const userId = await requireUserId(req, res);
+    if (!userId) return;
 
     // Проверяем, что объявление принадлежит пользователю
     const check = await pool.query(
@@ -3672,11 +3684,16 @@ app.post('/api/listings/sold', async (req, res) => {
   }
 });
 
-// Удалить объявление (только своё)
+// ✅ Удалить объявление (только своё, с проверкой initData)
 app.post('/api/listings/delete', async (req, res) => {
   try {
-    const { listingId, userId } = req.body;
-    if (!listingId || !userId) return res.status(400).json({ error: 'ID kerak' });
+    const { listingId } = req.body;
+    if (!listingId) return res.status(400).json({ error: 'ID kerak' });
+
+    // ✅ Проверяем initData и получаем userId
+    const userId = await requireUserId(req, res);
+    if (!userId) return;
+
     const result = await pool.query(
       'DELETE FROM listings WHERE id = $1 AND user_id = $2 RETURNING title',
       [listingId, userId]

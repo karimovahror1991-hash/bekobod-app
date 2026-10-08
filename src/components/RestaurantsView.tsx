@@ -21,13 +21,13 @@ interface Restaurant {
 }
 
 const CATEGORIES = [
-  { id: 'fastfood', label: 'Fast food', icon: '🍔', gradient: 'from-orange-500 to-red-600' },
-  { id: 'milliy', label: 'Milliy taomlar', icon: '🍚', gradient: 'from-emerald-500 to-teal-600' },
-  { id: 'kafe', label: 'Kafe', icon: '☕', gradient: 'from-amber-500 to-orange-600' },
-  { id: 'restoran', label: 'Restoran', icon: '🍷', gradient: 'from-rose-500 to-pink-600' },
-  { id: 'choyxona', label: 'Choyxona', icon: '🫖', gradient: 'from-cyan-500 to-blue-600' },
-  { id: 'shirinlik', label: 'Shirinliklar', icon: '🍰', gradient: 'from-violet-500 to-purple-600' },
-  { id: 'yarim_tayyor', label: 'Yarim tayyor mahsulotlar', icon: '🥟', gradient: 'from-indigo-500 to-blue-700' },
+  { id: 'fastfood', label: 'Fast food', icon: '🍔', gradient: 'from-orange-500 to-red-600', line: 'from-orange-400 to-red-500' },
+  { id: 'milliy', label: 'Milliy taomlar', icon: '🍲', gradient: 'from-emerald-500 to-teal-600', line: 'from-emerald-400 to-teal-500' },
+  { id: 'kafe', label: 'Kafe', icon: '☕', gradient: 'from-amber-600 to-orange-700', line: 'from-amber-500 to-orange-600' },
+  { id: 'restoran', label: 'Restoran', icon: '🍷', gradient: 'from-rose-600 to-red-700', line: 'from-rose-500 to-red-600' },
+  { id: 'choyxona', label: 'Choyxona', icon: '🫖', gradient: 'from-cyan-600 to-blue-700', line: 'from-cyan-500 to-blue-600' },
+  { id: 'shirinlik', label: 'Shirinliklar', icon: '🍰', gradient: 'from-pink-500 to-rose-600', line: 'from-pink-400 to-rose-500' },
+  { id: 'yarim_tayyor', label: 'Yarim tayyor mahsulotlar', icon: '🥟', gradient: 'from-violet-600 to-purple-700', line: 'from-violet-500 to-purple-600' },
 ];
 
 export const RestaurantsView: React.FC<RestaurantsViewProps> = ({ onClose }) => {
@@ -40,12 +40,12 @@ export const RestaurantsView: React.FC<RestaurantsViewProps> = ({ onClose }) => 
   const [selectedRating, setSelectedRating] = useState(0);
   const [userId, setUserId] = useState<number | null>(null);
 
-  // ⚡ Оптимизация: фото грузим ТОЛЬКО при открытии ресторана
+  // ⚡ Фото грузим ТОЛЬКО при открытии ресторана
   const [selectedRestaurant, setSelectedRestaurant] = useState<Restaurant | null>(null);
   const [selectedPhotos, setSelectedPhotos] = useState<{image_url: string | null, menu_images: string[]} | null>(null);
   const [photosLoading, setPhotosLoading] = useState(false);
 
-  // Fullscreen (теперь управляется через ImageViewer)
+  // Fullscreen
   const [fullscreenImage, setFullscreenImage] = useState<string | null>(null);
   const [fullscreenPhotos, setFullscreenPhotos] = useState<string[]>([]);
   const [fullscreenIndex, setFullscreenIndex] = useState(0);
@@ -144,8 +144,8 @@ export const RestaurantsView: React.FC<RestaurantsViewProps> = ({ onClose }) => 
     }
 
     return (
-      <div className="min-h-screen bg-linear-to-b from-stone-50 to-stone-100">
-        <div className="bg-white/95 backdrop-blur-lg border-b border-stone-200 sticky top-0 z-20 shadow-sm">
+      <div className="min-h-screen bg-white">
+        <div className="bg-white border-b border-stone-200 sticky top-0 z-20 shadow-sm">
           <div className="max-w-2xl mx-auto px-4 pt-6 pb-4 flex items-center space-x-3">
             <button
               onClick={() => {
@@ -281,7 +281,7 @@ export const RestaurantsView: React.FC<RestaurantsViewProps> = ({ onClose }) => 
           </div>
         )}
 
-        {/* ✅ Fullscreen через ImageViewer */}
+        {/* Fullscreen */}
         {fullscreenImage && (
           <ImageViewer
             images={fullscreenPhotos}
@@ -297,22 +297,29 @@ export const RestaurantsView: React.FC<RestaurantsViewProps> = ({ onClose }) => 
     );
   }
 
-  // === ЭКРАН СПИСКА РЕСТОРАНОВ ===
+  // === ЭКРАН СПИСКА РЕСТОРАНОВ КАТЕГОРИИ ===
   if (selectedCategory) {
     const catInfo = CATEGORIES.find(c => c.id === selectedCategory);
     return (
-      <div className="min-h-screen bg-linear-to-b from-stone-50 to-stone-100">
-        <div className={`bg-linear-to-br ${catInfo?.gradient} text-white sticky top-0 z-20 shadow-md`}>
+      <div className="min-h-screen bg-white">
+        <div className="bg-white border-b border-stone-200 sticky top-0 z-20 shadow-sm">
           <div className="max-w-2xl mx-auto px-4 pt-6 pb-4 flex items-center space-x-3">
             <button
               onClick={() => setSelectedCategory(null)}
-              className="w-11 h-11 rounded-2xl bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"
+              className="w-11 h-11 rounded-2xl bg-stone-100 hover:bg-amber-100 flex items-center justify-center transition-colors"
             >
-              <ArrowLeft className="w-6 h-6 text-white" />
+              <ArrowLeft className="w-6 h-6 text-stone-700" />
             </button>
-            <div>
-              <h1 className="font-bold text-xl text-white">{catInfo?.label}</h1>
-              <p className="text-xs text-white/80">{filteredRestaurants.length} ta joy</p>
+            <div className="flex items-center gap-2">
+              <img
+                src={`/icons/${catInfo?.id}.png`}
+                alt=""
+                className="w-8 h-8 object-contain"
+              />
+              <div>
+                <h1 className="font-bold text-lg text-stone-900">{catInfo?.label}</h1>
+                <p className="text-xs text-stone-400">{filteredRestaurants.length} ta joy</p>
+              </div>
             </div>
           </div>
         </div>
@@ -324,73 +331,75 @@ export const RestaurantsView: React.FC<RestaurantsViewProps> = ({ onClose }) => 
             </div>
           ) : filteredRestaurants.length === 0 ? (
             <div className="text-center py-16 text-stone-400">
-              <div className="text-5xl mb-3">{catInfo?.icon}</div>
+              <img
+                src={`/icons/${catInfo?.id}.png`}
+                alt=""
+                className="w-24 h-24 object-contain mx-auto mb-4 opacity-50"
+              />
               <p className="text-sm">Bu bo'limda hozircha ma'lumot yo'q</p>
             </div>
-      ) : (
-  <div className="space-y-2">
-    {filteredRestaurants.map((restaurant) => {
-      const rating = ratings[restaurant.id];
-      return (
-        <button
-     key={restaurant.id}
-  onClick={() => openRestaurant(restaurant)}
-  className="w-full text-left bg-white rounded-3xl shadow-sm border border-stone-100 hover:shadow-lg transition-all active:scale-[0.98] flex flex-col"
-  style={{ padding: '12px 16px', gap: '4px' }}
->
-  <div className="flex items-start justify-between" style={{ gap: '12px' }}>
-    <h3
-      className="font-bold text-lg text-stone-900 leading-tight flex-1"
-      style={{ wordBreak: 'break-word', minWidth: 0 }}
-    >
-      {restaurant.name}
-    </h3>
-    {rating && rating.count > 0 && (
-      <div className="flex items-center space-x-1 text-xs bg-amber-50 px-2 py-1 rounded-lg shrink-0">
-        <Star className="w-3.5 h-3.5 fill-amber-500 text-amber-500" />
-        <span className="font-bold text-stone-700">{rating.avg}</span>
-        <span className="text-stone-400">({rating.count})</span>
-      </div>
-    )}
-  </div>
+          ) : (
+            <div className="space-y-3">
+              {filteredRestaurants.map((restaurant) => {
+                const rating = ratings[restaurant.id];
+                return (
+                  <button
+                    key={restaurant.id}
+                    onClick={() => openRestaurant(restaurant)}
+                    className="w-full text-left bg-white rounded-3xl shadow-sm border border-stone-100 hover:shadow-lg transition-all active:scale-[0.98] flex flex-col"
+                    style={{ padding: '12px 16px', gap: '4px' }}
+                  >
+                    <div className="flex items-start justify-between" style={{ gap: '8px' }}>
+                      <h3 className="font-bold text-base text-stone-900 leading-tight flex-1 break-words min-w-0">
+                        {restaurant.name}
+                      </h3>
+                      {rating && rating.count > 0 && (
+                        <div className="flex items-center space-x-1 text-xs bg-amber-50 px-2 py-1 rounded-lg shrink-0">
+                          <Star className="w-3.5 h-3.5 fill-amber-500 text-amber-500" />
+                          <span className="font-bold text-stone-700">{rating.avg}</span>
+                          <span className="text-stone-400">({rating.count})</span>
+                        </div>
+                      )}
+                    </div>
 
-  {restaurant.address && (
-    <div className="flex items-center gap-2 text-sm text-stone-600 leading-tight">
-      <MapPin className="w-4 h-4 text-blue-500 shrink-0" />
-      <span className="break-words">{restaurant.address}</span>
-    </div>
-  )}
-  {restaurant.phone && (
-    <div className="flex items-center gap-2 text-sm text-stone-700 leading-tight">
-      <Phone className="w-4 h-4 text-emerald-500 shrink-0" />
-      <span className="font-semibold break-all">{restaurant.phone}</span>
-    </div>
-  )}
-  {restaurant.hours && (
-    <div className="flex items-center gap-2 text-sm text-stone-700 leading-tight">
-      <Clock className="w-4 h-4 text-amber-500 shrink-0" />
-      <span className="font-semibold">{restaurant.hours}</span>
-    </div>
-  )}
+                    {restaurant.address && (
+                      <div className="flex items-center gap-1.5 text-xs text-stone-600 leading-tight">
+                        <MapPin className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+                        <span className="break-words">{restaurant.address}</span>
+                      </div>
+                    )}
+                    {restaurant.phone && (
+                      <div className="flex items-center gap-1.5 text-xs text-stone-700 leading-tight">
+                        <Phone className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                        <span className="font-semibold break-all">{restaurant.phone}</span>
+                      </div>
+                    )}
+                    {restaurant.hours && (
+                      <div className="flex items-center gap-1.5 text-xs text-stone-700 leading-tight">
+                        <Clock className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                        <span className="font-semibold">{restaurant.hours}</span>
+                      </div>
+                    )}
 
-  <div className="text-right text-xs font-semibold text-amber-600 mt-1">
-    Batafsil →
-  </div>
-</button>
-      );
-    })}
-  </div>
-)}
+                    <div className="text-right text-[10px] font-semibold text-amber-600 pt-0.5">
+                      Batafsil →
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
     );
   }
 
-  // === ЭКРАН КАТЕГОРИЙ ===
+  // === ГЛАВНЫЙ ЭКРАН — ВЫБОР КАТЕГОРИИ (как на референсе) ===
   return (
     <PullToRefresh onRefresh={loadRestaurants}>
-      <div className="min-h-screen bg-linear-to-b from-stone-50 to-stone-100">
-        <div className="bg-white/95 backdrop-blur-lg border-b border-stone-200 sticky top-0 z-20 shadow-sm">
+      <div className="min-h-screen bg-white">
+        {/* Заголовок */}
+        <div className="bg-white border-b border-stone-200 sticky top-0 z-20 shadow-sm">
           <div className="max-w-2xl mx-auto px-4 pt-6 pb-4 flex items-center space-x-3">
             <button
               onClick={onClose}
@@ -402,21 +411,37 @@ export const RestaurantsView: React.FC<RestaurantsViewProps> = ({ onClose }) => 
           </div>
         </div>
 
+        {/* Список категорий — крупные карточки как на референсе */}
         <div className="max-w-2xl mx-auto px-4 py-6">
-          <div className="space-y-4">
+          <div className="space-y-6">
             {CATEGORIES.map((cat) => {
               const count = restaurants.filter(r => r.category === cat.id).length;
               return (
                 <button
                   key={cat.id}
                   onClick={() => setSelectedCategory(cat.id)}
-                  className={`w-full bg-linear-to-br ${cat.gradient} text-white rounded-3xl p-8 flex flex-col items-center justify-center shadow-xl hover:shadow-2xl transition-all duration-300 active:scale-95 min-h-50`}
+                  className="group w-full bg-white rounded-3xl pt-6 pb-4 px-6 flex flex-col items-center justify-center shadow-[0_4px_20px_rgba(0,0,0,0.08)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.12)] transition-all duration-300 active:scale-[0.98]"
                 >
-                  <div className="text-7xl mb-4">{cat.icon}</div>
-                  <div className="font-bold text-xl text-white text-center leading-tight">
+                  {/* Иконка — Apple-эмодзи из public/icons */}
+                  <img
+                    src={`/icons/${cat.id}.png`}
+                    alt={cat.label}
+                    className="w-32 h-32 object-contain mb-3 group-hover:scale-110 transition-transform duration-300"
+                  />
+
+                  {/* Название */}
+                  <div className="text-xl font-bold text-stone-900 text-center leading-tight">
                     {cat.label}
                   </div>
-                  <div className="text-sm text-white/80 mt-2">{count} ta joy</div>
+
+                  {/* Подпись с иконкой места */}
+                  <div className="flex items-center gap-1 mt-2 text-sm text-stone-400">
+                    <MapPin className="w-3.5 h-3.5" />
+                    <span>{count} ta joy</span>
+                  </div>
+
+                  {/* Градиентная полоска снизу */}
+                  <div className={`mt-4 w-20 h-1 rounded-full bg-linear-to-r ${cat.line}`} />
                 </button>
               );
             })}

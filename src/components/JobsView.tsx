@@ -44,7 +44,11 @@ export const JobsView: React.FC<JobsViewProps> = ({ onClose, userId }) => {
   const [creating, setCreating] = useState(false);
 
   const API_URL = 'https://bekobod-app-1.onrender.com';
-
+// ✅ Получить initData из Telegram
+const getInitData = (): string => {
+  const tg = (window as any).Telegram?.WebApp;
+  return tg?.initData || '';
+};
   const loadJobs = async () => {
     try {
       setLoading(true);
@@ -81,14 +85,14 @@ export const JobsView: React.FC<JobsViewProps> = ({ onClose, userId }) => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          companyName: companyName.trim(),
-          position: position.trim(),
-          salary: salary.trim() || null,
-          description: description.trim() || null,
-          phone: normalizedPhone,
-          category,
-          userId,
-        }),
+  companyName: companyName.trim(),
+  position: position.trim(),
+  salary: salary.trim() || null,
+  description: description.trim() || null,
+  phone: normalizedPhone,
+  category,
+  initData: getInitData(),
+}),
       });
       const data = await res.json();
       if (data.error) {
@@ -118,7 +122,7 @@ export const JobsView: React.FC<JobsViewProps> = ({ onClose, userId }) => {
       const res = await fetch(`${API_URL}/api/jobs/delete`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ jobId, userId }),
+        body: JSON.stringify({ jobId, initData: getInitData() }),
       });
       const data = await res.json();
       if (data.error) {

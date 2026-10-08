@@ -2482,13 +2482,21 @@ app.post('/api/contacts/create', async (req, res) => {
   }
 });
   // ============ JOBS (VAKANSIYA) ============
+// ✅ Создать вакансию (с проверкой initData)
 app.post('/api/jobs/create', async (req, res) => {
   try {
-    const { companyName, position, salary, description, phone, category, userId } = req.body;
-    if (!companyName || !position || !phone) return res.status(400).json({ error: 'Заполните компанию, должность и телефон' });
+    const { companyName, position, salary, description, phone, category } = req.body;
+    if (!companyName || !position || !phone) {
+      return res.status(400).json({ error: 'Заполните компанию, должность и телефон' });
+    }
+
+    // ✅ Проверяем initData и получаем userId
+    const userId = await requireUserId(req, res);
+    if (!userId) return;
+
     const result = await pool.query(
       'INSERT INTO jobs (company_name, position, salary, description, phone, category, user_id) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
-      [companyName, position, salary || null, description || null, phone, category || 'boshqa', userId || null]
+      [companyName, position, salary || null, description || null, phone, category || 'boshqa', userId]
     );
     res.json({ job: result.rows[0] });
   } catch (error: any) {
@@ -2497,11 +2505,16 @@ app.post('/api/jobs/create', async (req, res) => {
   }
 });
 
-// Удалить вакансию (только своё)
+// ✅ Удалить вакансию (только своё, с проверкой initData)
 app.post('/api/jobs/delete', async (req, res) => {
   try {
-    const { jobId, userId } = req.body;
-    if (!jobId || !userId) return res.status(400).json({ error: 'ID kerak' });
+    const { jobId } = req.body;
+    if (!jobId) return res.status(400).json({ error: 'ID kerak' });
+
+    // ✅ Проверяем initData и получаем userId
+    const userId = await requireUserId(req, res);
+    if (!userId) return;
+
     const result = await pool.query(
       'DELETE FROM jobs WHERE id = $1 AND user_id = $2 RETURNING position',
       [jobId, userId]
@@ -2516,6 +2529,7 @@ app.post('/api/jobs/delete', async (req, res) => {
   }
 });
 
+// Список вакансий (публичный — без изменений)
 app.get('/api/jobs/list', async (req, res) => {
   try {
     const result = await pool.query("SELECT * FROM jobs WHERE status = 'active' ORDER BY created_at DESC");

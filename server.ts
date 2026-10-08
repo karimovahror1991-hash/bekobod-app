@@ -3094,36 +3094,68 @@ try {
     const rub = ratesData.find((r: any) => r.Ccy === 'RUB');
 
     
-         // === 3.1. Время молитв ===
-    let prayerFajr = '—', prayerDhuhr = '—', prayerAsr = '—', prayerMaghrib = '—', prayerIsha = '—';
-    try {
-      const todayDate = new Date();
-      const dd = String(todayDate.getDate()).padStart(2, '0');
-      const mm = String(todayDate.getMonth() + 1).padStart(2, '0');
-      const yyyy = todayDate.getFullYear();
-      const dateKey = `${dd}.${mm}.${yyyy}`;
+    // === 3.1. Время молитв ===
+// Хелпер: добавить минуты к "HH:MM"
+const addMinutes = (timeStr: string, minutes: number): string => {
+  if (!timeStr || timeStr === '—') return '—';
+  const [h, m] = timeStr.split(':').map(Number);
+  if (isNaN(h) || isNaN(m)) return timeStr;
+  const total = h * 60 + m + minutes;
+  const newH = Math.floor(total / 60) % 24;
+  const newM = total % 60;
+  return `${String(newH).padStart(2, '0')}:${String(newM).padStart(2, '0')}`;
+};
 
-      const prayerRes = await fetch('https://namoz-vaqti.uz/?lang=lotin&period=month&region=bekobod');
-      const prayerHtml = await prayerRes.text();
-      const $ = cheerio.load(prayerHtml);
+// Хелпер: сформировать время с двумя значениями (TAQVIM / Oqmasjid)
+const prayerWithJamaat = (taqvim: string, jamaat: string): string => {
+  if (taqvim === '—' && jamaat === '—') return '—';
+  if (taqvim === '—') return jamaat;
+  if (jamaat === '—') return taqvim;
+  return `${taqvim} / ${jamaat}`;
+};
 
-      $('tr').each((i, row) => {
-        const cells = $(row).find('td');
-        if (cells.length >= 7) {
-          const rowDate = $(cells[0]).text().trim();
-          if (rowDate === dateKey) {
-            prayerFajr = $(cells[1]).text().trim();
-            prayerDhuhr = $(cells[3]).text().trim();
-            prayerAsr = $(cells[4]).text().trim();
-            prayerMaghrib = $(cells[5]).text().trim();
-            prayerIsha = $(cells[6]).text().trim();
-            return false;
-          }
-        }
-      });
-    } catch (e) {
-      console.error('Prayer times error:', e);
+let prayerFajr = '—', prayerDhuhr = '—', prayerAsr = '—', prayerMaghrib = '—', prayerIsha = '—';
+let prayerFajrJ = '—', prayerDhuhrJ = '—', prayerAsrJ = '—', prayerMaghribJ = '—', prayerIshaJ = '—';
+
+try {
+  const todayDate = new Date();
+  const dd = String(todayDate.getDate()).padStart(2, '0');
+  const mm = String(todayDate.getMonth() + 1).padStart(2, '0');
+  const yyyy = todayDate.getFullYear();
+  const dateKey = `${dd}.${mm}.${yyyy}`;
+
+  const prayerRes = await fetch('https://namoz-vaqti.uz/?lang=lotin&period=month&region=bekobod');
+  const prayerHtml = await prayerRes.text();
+  const $ = cheerio.load(prayerHtml);
+
+  $('tr').each((i, row) => {
+    const cells = $(row).find('td');
+    if (cells.length >= 7) {
+      const rowDate = $(cells[0]).text().trim();
+      if (rowDate === dateKey) {
+        prayerFajr = $(cells[1]).text().trim();
+        prayerDhuhr = $(cells[3]).text().trim();
+        prayerAsr = $(cells[4]).text().trim();
+        prayerMaghrib = $(cells[5]).text().trim();
+        prayerIsha = $(cells[6]).text().trim();
+        return false;
+      }
     }
+  });
+
+  // 🕌 Время джамаата мечети "Oq masjid" (Бекабад)
+  // Бомдод +42, Пешин всегда 13:00, Аср +6, Шом +8, Хуфтон +23
+  prayerFajrJ = addMinutes(prayerFajr, 42);
+  prayerDhuhrJ = '13:00';  // фиксировано
+  prayerAsrJ = addMinutes(prayerAsr, 6);
+  prayerMaghribJ = addMinutes(prayerMaghrib, 8);
+  prayerIshaJ = addMinutes(prayerIsha, 23);
+
+  console.log('🕌 Prayers TAQVIM:', { prayerFajr, prayerDhuhr, prayerAsr, prayerMaghrib, prayerIsha });
+  console.log('🕌 Prayers Oqmasjid:', { prayerFajrJ, prayerDhuhrJ, prayerAsrJ, prayerMaghribJ, prayerIshaJ });
+} catch (e) {
+  console.error('Prayer times error:', e);
+}
 
     // === 3.2. Дата ===
     const now = new Date();
@@ -3171,11 +3203,11 @@ const message =
   (eur ? `🇪🇺 1 EUR = ${Math.round(Number(eur.Rate))} so'm\n` : '') +
   (rub ? `🇷🇺 1 RUB = ${Math.round(Number(rub.Rate))} so'm\n` : '') +
   `\n🕌 <b>Namoz vaqtlari:</b>\n` +
-  `🌅 Bomdod: ${prayerFajr}\n` +
-  `🌞 Peshin: ${prayerDhuhr}\n` +
-  `🌤 Asr: ${prayerAsr}\n` +
-  `🌆 Shom: ${prayerMaghrib}\n` +
-  `🌙 Xufton: ${prayerIsha}`;
+`🌅 Bomdod: ${prayerWithJamaat(prayerFajr, prayerFajrJ)}\n` +
+`🌞 Peshin: ${prayerWithJamaat(prayerDhuhr, prayerDhuhrJ)}\n` +
+`🌤 Asr: ${prayerWithJamaat(prayerAsr, prayerAsrJ)}\n` +
+`🌆 Shom: ${prayerWithJamaat(prayerMaghrib, prayerMaghribJ)}\n` +
+`🌙 Xufton: ${prayerWithJamaat(prayerIsha, prayerIshaJ)}`;
 
     // === 4. Рассылка ===
     const botToken = process.env.TELEGRAM_BOT_TOKEN;

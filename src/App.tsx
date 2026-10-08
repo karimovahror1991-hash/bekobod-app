@@ -232,36 +232,33 @@ function App() {
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
-      {/* ===== ШАПКА с логотипом и фото города ===== */}
+     {/* ===== ШАПКА с фото города, логотипом и погодой ===== */}
 <div className="relative overflow-hidden">
-  {/* Фото города на фоне */}
+  {/* Фото города на фоне (общее для всей шапки) */}
   <img
     src="/bekobod-city.jpg"
     alt="Bekobod"
     className="absolute inset-0 w-full h-full object-cover"
   />
 
-  {/* Тёмно-синий градиент поверх фото */}
-  <div className="absolute inset-0 bg-linear-to-r from-slate-900/95 via-slate-900/80 to-slate-800/60" />
+  {/* Тёмно-синий градиент поверх всего фото — ОДИН для шапки и погоды */}
+  <div className="absolute inset-0 bg-linear-to-b from-slate-900/90 via-slate-900/80 to-slate-900/90" />
 
-  {/* Контент шапки */}
+  {/* Верхняя часть: логотип + название + ветер */}
   <div className="relative max-w-2xl mx-auto px-4 py-4 flex items-center gap-3 text-white">
-    {/* Логотип */}
     <img
       src="/logo.png"
-      alt="Logo"
+      alt="B"
       className="w-12 h-12 rounded-2xl shadow-lg shrink-0 object-cover"
     />
 
-    {/* Название */}
     <div className="flex-1 min-w-0">
       <h1 className="font-bold text-base leading-tight">
         Bekobod Shahar Portali
       </h1>
     </div>
 
-    {/* Влажность + ветер */}
-    <div className="text-right text-[10px] font-bold space-y-1 shrink-0 drop-shadow-md">
+    <div className="text-right text-[10px] font-bold space-y-1 shrink-0">
       <div className="flex items-center justify-end gap-1">
         <Droplets className="w-3 h-3" />
         <span>{weather?.current?.relative_humidity_2m || 0}%</span>
@@ -273,9 +270,9 @@ function App() {
     </div>
   </div>
 
-  {/* ===== СИНЯЯ ПОЛОСА ПОГОДЫ (7 дней) ===== */}
+  {/* Нижняя часть: 7 дней погоды — на ТОМ ЖЕ фоне, без синего */}
   {weather && (
-    <div className="relative bg-linear-to-r from-blue-500 via-blue-600 to-blue-500 text-white">
+    <div className="relative border-t border-white/20">
       <div className="max-w-2xl mx-auto px-2 py-3 flex justify-between gap-0.5">
         {weather.daily?.time?.slice(0, 7).map((dateStr: string, i: number) => {
           const date = new Date(dateStr);
@@ -288,24 +285,19 @@ function App() {
           const code = weather.daily.weather_code[i];
 
           return (
-            <div key={i} className="flex flex-col items-center flex-1 min-w-0">
-              {/* День недели */}
+            <div key={i} className="flex flex-col items-center flex-1 min-w-0 text-white">
               <span className="text-[10px] font-bold uppercase tracking-tight">
                 {dayName}
               </span>
-              {/* Дата */}
               <span className="text-[9px] text-white/70">
                 {dayNum}.{monthNum}
               </span>
-              {/* Иконка погоды */}
               <div className="my-1 scale-[0.55]">
                 {getWeatherIcon(code, 12)}
               </div>
-              {/* Макс температура */}
               <span className="text-xs font-bold leading-none">
                 {maxTemp}°
               </span>
-              {/* Мин температура */}
               <span className="text-[10px] text-white/70 leading-none mt-0.5">
                 {minTemp}°
               </span>

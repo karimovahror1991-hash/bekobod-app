@@ -8,35 +8,41 @@ interface TransportViewProps {
   onClose: () => void;
 }
 
-const CATEGORY_GRADIENTS: { [key: string]: string } = {
-  'Avtobus': 'from-emerald-500 to-green-600',
-  'Elektropoyezd': 'from-blue-500 to-indigo-600',
-  'Taksi Bekobod — Toshkent': 'from-amber-500 to-orange-600',
+// Маппинг: название категории → имя файла иконки
+const CATEGORY_ICONS: { [key: string]: string } = {
+  'Avtobus': '/icons/avtobus.png',
+  'Elektropoyezd': '/icons/elektropoyezd.png',
+  'Taksi Bekobod — Toshkent': '/icons/taksi.png',
+  'Shaharlararo taksi': '/icons/taksi.png',
+  'Shahar taksi': '/icons/taksi.png',
+};
+
+// Маппинг: название → цвет градиентной полоски
+const CATEGORY_LINES: { [key: string]: string } = {
+  'Avtobus': 'from-emerald-400 to-green-500',
+  'Elektropoyezd': 'from-blue-400 to-indigo-500',
+  'Taksi Bekobod — Toshkent': 'from-amber-400 to-orange-500',
+  'Shaharlararo taksi': 'from-amber-400 to-orange-500',
+  'Shahar taksi': 'from-amber-400 to-orange-500',
 };
 
 export const TransportView: React.FC<TransportViewProps> = ({ onClose }) => {
   const [selectedCategory, setSelectedCategory] = useState<TransportCategory | null>(null);
   const [showTaxi, setShowTaxi] = useState(false);
 
-  // ✅ Обработчик клика — решаем здесь, куда идти (без setState в рендере)
   const handleCategoryClick = (category: TransportCategory) => {
-    // 1) "Shahar taksi" → отдельный экран городского такси
     if (category.title === 'Shahar taksi') {
       setSelectedCategory(category);
       return;
     }
-
-    // 2) Всё остальное с "taksi" в названии → междугороднее такси
     if (category.title.toLowerCase().includes('taksi')) {
       setShowTaxi(true);
       return;
     }
-
-    // 3) Обычная категория (автобус, электричка) → список внутри TransportView
     setSelectedCategory(category);
   };
 
-  // === ЭКРАН: Shahar taksi (городское) ===
+  // === ЭКРАН: Shahar taksi ===
   if (selectedCategory?.title === 'Shahar taksi') {
     return <CityTaxiView onClose={() => setSelectedCategory(null)} />;
   }
@@ -53,27 +59,28 @@ export const TransportView: React.FC<TransportViewProps> = ({ onClose }) => {
     );
   }
 
-  // === ЭКРАН: Список items обычной категории ===
+  // === ЭКРАН: Список items категории ===
   if (selectedCategory) {
-    const gradient = CATEGORY_GRADIENTS[selectedCategory.title] || 'from-stone-500 to-stone-700';
-
     return (
-      <div className="min-h-screen bg-linear-to-b from-stone-50 to-stone-100">
-        <div className={`bg-linear-to-br ${gradient} text-white sticky top-0 z-20 shadow-md`}>
+      <div className="min-h-screen bg-white">
+        <div className="bg-white border-b border-stone-200 sticky top-0 z-20 shadow-sm">
           <div className="max-w-2xl mx-auto px-4 pt-6 pb-4 flex items-center space-x-3">
             <button
               onClick={() => setSelectedCategory(null)}
-              className="w-11 h-11 rounded-2xl bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"
+              className="w-11 h-11 rounded-2xl bg-stone-100 hover:bg-amber-100 flex items-center justify-center transition-colors shrink-0"
             >
-              <ArrowLeft className="w-6 h-6 text-white" />
+              <ArrowLeft className="w-6 h-6 text-stone-700" />
             </button>
-            <div>
-              <h1 className="font-bold text-xl text-white">
-                {selectedCategory.icon} {selectedCategory.title}
-              </h1>
-              <p className="text-xs text-white/80">
-                {selectedCategory.items.length} ta ma'lumot
-              </p>
+            <div className="flex items-center gap-2">
+              <img
+                src={CATEGORY_ICONS[selectedCategory.title] || '/icons/avtobus.png'}
+                alt=""
+                className="w-8 h-8 object-contain"
+              />
+              <div>
+                <h1 className="font-bold text-lg text-stone-900">{selectedCategory.title}</h1>
+                <p className="text-xs text-stone-400">{selectedCategory.items.length} ta ma'lumot</p>
+              </div>
             </div>
           </div>
         </div>
@@ -81,7 +88,11 @@ export const TransportView: React.FC<TransportViewProps> = ({ onClose }) => {
         <div className="max-w-2xl mx-auto px-4 py-6 space-y-4">
           {selectedCategory.items.length === 0 ? (
             <div className="text-center py-16 text-stone-400">
-              <div className="text-5xl mb-3">{selectedCategory.icon}</div>
+              <img
+                src={CATEGORY_ICONS[selectedCategory.title] || '/icons/avtobus.png'}
+                alt=""
+                className="w-24 h-24 object-contain mx-auto mb-4 opacity-50"
+              />
               <p className="text-sm">Ma'lumot tez orada qo'shiladi</p>
             </div>
           ) : (
@@ -121,10 +132,10 @@ export const TransportView: React.FC<TransportViewProps> = ({ onClose }) => {
     );
   }
 
-  // === ЭКРАН: Категории (главный) ===
+  // === ГЛАВНЫЙ ЭКРАН ===
   return (
-    <div className="min-h-screen bg-linear-to-b from-stone-50 to-stone-100">
-      <div className="bg-white/95 backdrop-blur-lg border-b border-stone-200 sticky top-0 z-20 shadow-sm">
+    <div className="min-h-screen bg-white">
+      <div className="bg-white border-b border-stone-200 sticky top-0 z-20 shadow-sm">
         <div className="max-w-2xl mx-auto px-4 pt-6 pb-4 flex items-center space-x-3">
           <button
             onClick={onClose}
@@ -137,24 +148,36 @@ export const TransportView: React.FC<TransportViewProps> = ({ onClose }) => {
       </div>
 
       <div className="max-w-2xl mx-auto px-4 py-6">
-        <div className="space-y-4">
+        <div className="space-y-6">
           {transport.map((category, index) => {
-            const gradient = CATEGORY_GRADIENTS[category.title] || 'from-stone-500 to-stone-700';
+            const iconSrc = CATEGORY_ICONS[category.title] || '/icons/avtobus.png';
+            const line = CATEGORY_LINES[category.title] || 'from-stone-400 to-stone-600';
             return (
               <button
                 key={index}
                 onClick={() => handleCategoryClick(category)}
-                className={`w-full bg-linear-to-br ${gradient} text-white rounded-3xl p-8 flex flex-col items-center justify-center shadow-xl hover:shadow-2xl transition-all duration-300 active:scale-95 min-h-50`}
+                className="group w-full bg-white rounded-3xl pt-6 pb-4 px-6 flex flex-col items-center justify-center shadow-[0_4px_20px_rgba(0,0,0,0.08)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.12)] transition-all duration-300 active:scale-[0.98]"
               >
-                <div className="text-7xl mb-4">{category.icon}</div>
-                <div className="font-bold text-xl text-white text-center leading-tight">
+                <img
+                  src={iconSrc}
+                  alt={category.title}
+                  className="w-32 h-32 object-contain mb-3 group-hover:scale-110 transition-transform duration-300"
+                />
+
+                <div className="text-xl font-bold text-stone-900 text-center leading-tight">
                   {category.title}
                 </div>
-                <div className="text-sm text-white/80 mt-2">
-                  {category.items.length > 0
-                    ? `${category.items.length} ta ma'lumot`
-                    : "Ma'lumot tez orada"}
+
+                <div className="flex items-center gap-1 mt-2 text-sm text-stone-400">
+                  <MapPin className="w-3.5 h-3.5" />
+                  <span>
+                    {category.items.length > 0
+                      ? `${category.items.length} ta ma'lumot`
+                      : "Ma'lumot tez orada"}
+                  </span>
                 </div>
+
+                <div className={`mt-4 w-20 h-1 rounded-full bg-linear-to-r ${line}`} />
               </button>
             );
           })}

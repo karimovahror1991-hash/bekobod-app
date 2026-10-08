@@ -29,6 +29,8 @@ const CATEGORIES = [
   { id: 'clothes', label: 'Kiyim-kechak', icon: '👕', gradient: 'from-violet-500 to-purple-600' },
   { id: 'kids', label: 'Bolalar uchun', icon: '🧸', gradient: 'from-pink-500 to-rose-600' },
   { id: 'animals', label: 'Hayvonlar', icon: '🐄', gradient: 'from-lime-500 to-green-600' },
+  { id: 'boshqa', label: 'Boshqa', icon: '📦', gradient: 'from-stone-500 to-stone-700' },
+  { id: 'bepul', label: 'Bepul bervoraman', icon: '🎁', gradient: 'from-teal-500 to-emerald-600' },
 ];
 
 export const OldiSotdiView: React.FC<OldiSotdiViewProps> = ({ onClose, userId }) => {

@@ -1207,7 +1207,7 @@ if (message?.text === '/list_announcements' && message.from.id === SUPER_ADMIN) 
           `<b>Misol:</b>\n<code>/add_shop oziq-ovqat | Korzinka | Navoiy 15 | +998901234567 | 08:00-23:00 | Oziq-ovqat</code>`
         );
       } else {
-        const category = parts[0].replace('/add_shop', '').trim();
+        const category = parts[0].replace('/add_shop', '').trim().replace(/-/g, '_');
         const name = parts[1];
         const address = parts[2] || null;
         const phone = parts[3] || null;

@@ -58,6 +58,11 @@ export const TaxiView: React.FC<TaxiViewProps> = ({ onClose }) => {
   const [notifications, setNotifications] = useState<any[]>([]);
 
   const API_URL = 'https://bekobod-app-1.onrender.com';
+  // ✅ Получить initData из Telegram
+const getInitData = (): string => {
+  const tg = (window as any).Telegram?.WebApp;
+  return tg?.initData || '';
+};
 
   const loadRides = async () => {
     try {
@@ -166,16 +171,16 @@ export const TaxiView: React.FC<TaxiViewProps> = ({ onClose }) => {
       } catch {}
 
       const res = await fetch(`${API_URL}/api/taxi/create`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          driverName: driverName.trim(),
-          driverPhone: normalizedPhone,
-          direction: newDirection.trim(),
-          totalSeats,
-          userId,
-        }),
-      });
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    driverName: driverName.trim(),
+    driverPhone: normalizedPhone,
+    direction: newDirection.trim(),
+    totalSeats,
+    initData: getInitData(),   // ⬅️ вместо userId
+  }),
+});
       const data = await res.json();
 
       if (data.error) {
@@ -204,10 +209,10 @@ export const TaxiView: React.FC<TaxiViewProps> = ({ onClose }) => {
   const handleBook = async (rideId: number) => {
     try {
       const res = await fetch(`${API_URL}/api/taxi/book`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ rideId, userId }),
-      });
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ rideId, initData: getInitData() }),
+});
       const data = await res.json();
       if (data.error) {
         alert(data.error);
@@ -223,11 +228,11 @@ export const TaxiView: React.FC<TaxiViewProps> = ({ onClose }) => {
   const handleCancel = async (rideId: number) => {
     if (!userId) return;
     try {
-      const res = await fetch(`${API_URL}/api/taxi/cancel-booking`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ rideId, userId }),
-      });
+     const res = await fetch(`${API_URL}/api/taxi/cancel-booking`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ rideId, initData: getInitData() }),
+});
       const data = await res.json();
       if (data.error) {
         alert(data.error);
@@ -246,10 +251,10 @@ export const TaxiView: React.FC<TaxiViewProps> = ({ onClose }) => {
 
     try {
       const res = await fetch(`${API_URL}/api/taxi/close`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ rideId, userId }),
-      });
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ rideId, initData: getInitData() }),
+});
       const data = await res.json();
       if (data.error) {
         alert(data.error);
@@ -268,10 +273,10 @@ export const TaxiView: React.FC<TaxiViewProps> = ({ onClose }) => {
 
     try {
       const res = await fetch(`${API_URL}/api/taxi/delete`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ rideId, userId }),
-      });
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ rideId, initData: getInitData() }),
+});
       const data = await res.json();
       if (data.error) {
         alert(data.error);
@@ -289,10 +294,10 @@ export const TaxiView: React.FC<TaxiViewProps> = ({ onClose }) => {
     const rideId = Number(showRatingModal);
     try {
       const res = await fetch(`${API_URL}/api/taxi/rate`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ rideId, rating, userId }),
-      });
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ rideId, rating, initData: getInitData() }),
+});
       const data = await res.json();
       if (data.error) {
         alert(data.error);
@@ -307,7 +312,11 @@ export const TaxiView: React.FC<TaxiViewProps> = ({ onClose }) => {
   };
 const markNotificationRead = async (id: number) => {
   try {
-    await fetch(`${API_URL}/api/taxi/notifications/${id}/read`, { method: 'POST' });
+    await fetch(`${API_URL}/api/taxi/notifications/${id}/read`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ initData: getInitData() }),
+    });
     setNotifications(prev => prev.filter(n => n.id !== id));
   } catch {}
 };

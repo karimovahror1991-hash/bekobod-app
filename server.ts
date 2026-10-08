@@ -76,6 +76,37 @@ function validateInitData(initData: string, botToken: string): { valid: boolean;
     return { valid: false, error: error.message };
   }
 }
+// ✅ Helper: проверить initData и получить userId
+async function requireUserId(req: any, res: any): Promise<number | null> {
+  try {
+    const { initData } = req.body || {};
+    if (!initData) {
+      res.status(401).json({ error: 'initData required' });
+      return null;
+    }
+
+    const botToken = process.env.TELEGRAM_BOT_TOKEN || '';
+    const validation = validateInitData(initData, botToken);
+
+    if (!validation.valid) {
+      console.warn('❌ requireUserId: invalid initData:', validation.error);
+      res.status(403).json({ error: 'Invalid initData' });
+      return null;
+    }
+
+    const userId = validation.user?.id;
+    if (!userId) {
+      res.status(403).json({ error: 'userId not found' });
+      return null;
+    }
+
+    return Number(userId);
+  } catch (e: any) {
+    console.error('requireUserId error:', e);
+    res.status(500).json({ error: 'Auth error' });
+    return null;
+  }
+}
 async function sendTelegramMessage(chatId: number, text: string) {
   const botToken = process.env.TELEGRAM_BOT_TOKEN;
   if (!botToken) return;
@@ -1883,10 +1914,13 @@ if ((message?.caption?.startsWith('/add_news')) && ADMINS.includes(message.from.
 // ============ TAXI ============
 app.post('/api/taxi/create', async (req, res) => {
   try {
-    const { driverName, driverPhone, direction, totalSeats, userId } = req.body;
+    const { driverName, driverPhone, direction, totalSeats } = req.body;
     if (!driverName || !driverPhone || !direction) {
       return res.status(400).json({ error: 'Заполните все поля' });
     }
+    // ✅ Проверяем initData и получаем userId
+    const userId = await requireUserId(req, res);
+    if (!userId) return;
 
     // ⚠️ Проверка: у этого номера уже есть активный рейс?
     const existing = await pool.query(
@@ -1939,8 +1973,14 @@ app.get('/api/taxi/list', async (req, res) => {
 
 app.post('/api/taxi/book', async (req, res) => {
   try {
-    const { rideId, passengerName, passengerPhone, userId } = req.body;
+    const { rideId, passengerName, passengerPhone } = req.body;
     if (!rideId) return res.status(400).json({ error: 'Не указан рейс' });
+
+    // ✅ Проверяем initData и получаем userId
+    const userId = await requireUserId(req, res);
+    if (!userId) return;
+
+    // ... остальное как было
     const rideResult = await pool.query('SELECT * FROM taxi_rides WHERE id = $1', [rideId]);
     if (rideResult.rows.length === 0) return res.status(404).json({ error: 'Рейс не найден' });
     const ride = rideResult.rows[0];
@@ -1961,9 +2001,12 @@ await pool.query('UPDATE taxi_rides SET booked_seats = $1 WHERE id = $2', [newBo
 
 app.post('/api/taxi/cancel-booking', async (req, res) => {
   try {
-    const { rideId, userId } = req.body;
+    const { rideId } = req.body;
     if (!rideId) return res.status(400).json({ error: 'Не указан рейс' });
-    if (!userId) return res.status(400).json({ error: 'Не указан пользователь' });
+
+    // ✅ Проверяем initData и получаем userId
+    const userId = await requireUserId(req, res);
+    if (!userId) return;
 
     // Удаляем бронирование КОНКРЕТНО этого пользователя
     const deleteResult = await pool.query(
@@ -1997,8 +2040,14 @@ app.post('/api/taxi/cancel-booking', async (req, res) => {
 // Закрыть рейс (водитель сам завершает)
 app.post('/api/taxi/close', async (req, res) => {
   try {
-    const { rideId, userId } = req.body;
+    const { rideId } = req.body;
     if (!rideId) return res.status(400).json({ error: 'Не указан рейс' });
+
+    // ✅ Проверяем initData и получаем userId
+    const userId = await requireUserId(req, res);
+    if (!userId) return;
+
+    // ... остальное как было
 
     const rideResult = await pool.query(
       'SELECT user_id, direction FROM taxi_rides WHERE id = $1',
@@ -2054,7 +2103,16 @@ app.get('/api/taxi/notifications', async (req, res) => {
 app.post('/api/taxi/notifications/:id/read', async (req, res) => {
   try {
     const { id } = req.params;
-    await pool.query('UPDATE taxi_notifications SET is_read = true WHERE id = $1', [id]);
+
+    // ✅ Проверяем initData и получаем userId
+    const userId = await requireUserId(req, res);
+    if (!userId) return;
+
+    // Обновляем только СВОИ уведомления
+    await pool.query(
+      'UPDATE taxi_notifications SET is_read = true WHERE id = $1 AND user_id = $2',
+      [id, userId]
+    );
     res.json({ ok: true });
   } catch (error: any) {
     console.error('Taxi notification read error:', error);
@@ -2063,8 +2121,12 @@ app.post('/api/taxi/notifications/:id/read', async (req, res) => {
 });
 app.post('/api/taxi/delete', async (req, res) => {
   try {
-    const { rideId, userId } = req.body;
+    const { rideId } = req.body;
     if (!rideId) return res.status(400).json({ error: 'Не указан рейс' });
+
+    // ✅ Проверяем initData и получаем userId
+    const userId = await requireUserId(req, res);
+    if (!userId) return;
 
     const rideResult = await pool.query('SELECT user_id, direction FROM taxi_rides WHERE id = $1', [rideId]);
     if (rideResult.rows.length === 0) return res.status(404).json({ error: 'Рейс не найден' });
@@ -2109,13 +2171,14 @@ app.post('/api/taxi/delete', async (req, res) => {
 
 app.post('/api/taxi/rate', async (req, res) => {
   try {
-    const { rideId, rating, userId } = req.body;
+    const { rideId, rating } = req.body;
     if (!rideId || !rating || rating < 1 || rating > 5) {
       return res.status(400).json({ error: 'Неверная оценка' });
     }
-    if (!userId) {
-      return res.status(400).json({ error: 'Avval Telegram orqali kiring' });
-    }
+
+    // ✅ Проверяем initData и получаем userId
+    const userId = await requireUserId(req, res);
+    if (!userId) return;
 
     const existing = await pool.query(
       'SELECT id FROM taxi_ratings WHERE ride_id = $1 AND user_id = $2',

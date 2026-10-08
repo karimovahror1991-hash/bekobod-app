@@ -1,6 +1,6 @@
 import { CityTaxiView } from './CityTaxiView';
 import { TaxiView } from './TaxiView';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Clock, MapPin } from 'lucide-react';
 import { transport, TransportCategory } from '../data/transport';
 
@@ -29,6 +29,21 @@ const CATEGORY_LINES: { [key: string]: string } = {
 export const TransportView: React.FC<TransportViewProps> = ({ onClose }) => {
   const [selectedCategory, setSelectedCategory] = useState<TransportCategory | null>(null);
   const [showTaxi, setShowTaxi] = useState(false);
+  const [cityTaxiCount, setCityTaxiCount] = useState(0);
+  const [taxiRidesCount, setTaxiRidesCount] = useState(0);
+
+  // Загрузка счётчиков из БД
+  useEffect(() => {
+    fetch('https://bekobod-app-1.onrender.com/api/city-taxi/list')
+      .then(r => r.json())
+      .then(d => setCityTaxiCount((d.taxis || []).length))
+      .catch(() => {});
+
+    fetch('https://bekobod-app-1.onrender.com/api/taxi/list')
+      .then(r => r.json())
+      .then(d => setTaxiRidesCount((d.rides || []).length))
+      .catch(() => {});
+  }, []);
 
   const handleCategoryClick = (category: TransportCategory) => {
     if (category.title === 'Shahar taksi') {
@@ -152,6 +167,19 @@ export const TransportView: React.FC<TransportViewProps> = ({ onClose }) => {
           {transport.map((category, index) => {
             const iconSrc = CATEGORY_ICONS[category.title] || '/icons/avtobus.png';
             const line = CATEGORY_LINES[category.title] || 'from-stone-400 to-stone-600';
+
+            // Счётчик для подписи
+            let countText = '';
+            if (category.title === 'Shahar taksi') {
+              countText = `${cityTaxiCount} ta xizmat`;
+            } else if (category.title === 'Shaharlararo taksi') {
+              countText = `${taxiRidesCount} ta reys`;
+            } else if (category.items.length > 0) {
+              countText = `${category.items.length} ta ma'lumot`;
+            } else {
+              countText = "Ma'lumot tez orada";
+            }
+
             return (
               <button
                 key={index}
@@ -170,11 +198,7 @@ export const TransportView: React.FC<TransportViewProps> = ({ onClose }) => {
 
                 <div className="flex items-center gap-1 mt-2 text-sm text-stone-400">
                   <MapPin className="w-3.5 h-3.5" />
-                  <span>
-                    {category.items.length > 0
-                      ? `${category.items.length} ta ma'lumot`
-                      : "Ma'lumot tez orada"}
-                  </span>
+                  <span>{countText}</span>
                 </div>
 
                 <div className={`mt-4 w-20 h-1 rounded-full bg-linear-to-r ${line}`} />

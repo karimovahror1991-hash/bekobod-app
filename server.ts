@@ -2893,6 +2893,7 @@ app.get('/api/fetch-world-news', async (req, res) => {
 });
 
 // ============ EVENTS ============
+// Список событий (публичный — без изменений)
 app.get('/api/events/list', async (req, res) => {
   try {
     const { category } = req.query;
@@ -2924,15 +2925,34 @@ app.get('/api/events/list', async (req, res) => {
   }
 });
 
+// ✅ Заявка на день рождения (с проверкой initData)
 app.post('/api/events/birthday-request', async (req, res) => {
   try {
-    const { userId, userName, name, birthDate, message, phone } = req.body;
-    if (!name || !birthDate || !message) return res.status(400).json({ error: 'Заполните имя, дату и поздравление' });
+    const { userName, name, birthDate, message, phone } = req.body;
+    if (!name || !birthDate || !message) {
+      return res.status(400).json({ error: 'Заполните имя, дату и поздравление' });
+    }
+
+    // ✅ Проверяем initData и получаем userId
+    const userId = await requireUserId(req, res);
+    if (!userId) return;
+
     const result = await pool.query(
       `INSERT INTO events (category, title, description, event_date, phone, status) VALUES ($1, $2, $3, $4, $5, 'pending') RETURNING *`,
       ['tugilgan_kun', name, message, birthDate, phone || null]
     );
-    await sendTelegramMessage(988368940, `🎂 Yangi tug'ilgan kun so'rovi! Ism: ${name}, Sana: ${birthDate}, Xabar: ${message}, Tel: ${phone || 'yo\'q'}\n\nTasdiqlash: /approve_event ${result.rows[0].id}`);
+
+    await sendTelegramMessage(
+      SUPER_ADMIN,
+      `🎂 Yangi tug'ilgan kun so'rovi!\n\n` +
+      `👤 Ism: ${name}\n` +
+      `📅 Sana: ${birthDate}\n` +
+      `💬 Xabar: ${message}\n` +
+      `📞 Tel: ${phone || "yo'q"}\n` +
+      `🆔 User ID: <code>${userId}</code>\n\n` +
+      `✅ Tasdiqlash: <code>/approve_event ${result.rows[0].id}</code>`
+    );
+
     res.json({ ok: true, event: result.rows[0] });
   } catch (error: any) {
     console.error('Birthday request error:', error);
@@ -2940,6 +2960,7 @@ app.post('/api/events/birthday-request', async (req, res) => {
   }
 });
 
+// Одобрить событие (только админ через бота — без изменений)
 app.post('/api/events/approve', async (req, res) => {
   try {
     const { adminId, eventId } = req.body;

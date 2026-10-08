@@ -16,13 +16,13 @@ interface Provider {
 }
 
 const CATEGORIES = [
-  { id: 'usta', label: 'Usta xizmatlari', icon: '🔧', line: 'from-orange-400 to-red-500' },
-  { id: 'gozallik', label: "Go'zallik", icon: '💇', line: 'from-pink-400 to-rose-500' },
-  { id: 'avto', label: 'Avto xizmatlar', icon: '🚗', line: 'from-blue-400 to-indigo-500' },
-  { id: 'talim', label: "Ta'lim", icon: '📚', line: 'from-emerald-400 to-teal-500' },
-  { id: 'uy', label: 'Uy xizmatlari', icon: '🏠', line: 'from-cyan-400 to-blue-500' },
-  { id: 'komp', label: 'Kompyuter', icon: '💻', line: 'from-violet-400 to-purple-500' },
-  { id: 'telefon', label: 'Telefon ustalari', icon: '📱', line: 'from-teal-400 to-emerald-500' },
+  { id: 'usta', label: 'Usta xizmatlari', icon: '🔧', iconFile: 'usta', line: 'from-orange-400 to-red-500' },
+  { id: 'gozallik', label: "Go'zallik", icon: '💇', iconFile: 'gozallik', line: 'from-pink-400 to-rose-500' },
+  { id: 'avto', label: 'Avto xizmatlar', icon: '🚗', iconFile: 'avto_servis', line: 'from-blue-400 to-indigo-500' },
+  { id: 'talim', label: "Ta'lim", icon: '📚', iconFile: 'talim', line: 'from-emerald-400 to-teal-500' },
+  { id: 'uy', label: 'Uy xizmatlari', icon: '🏠', iconFile: 'uy', line: 'from-cyan-400 to-blue-500' },
+  { id: 'komp', label: 'Kompyuter', icon: '💻', iconFile: 'komp', line: 'from-violet-400 to-purple-500' },
+  { id: 'telefon', label: 'Telefon ustalari', icon: '📱', iconFile: 'telefon', line: 'from-teal-400 to-emerald-500' },
 ];
 
 export const ServicesView: React.FC<ServicesViewProps> = ({ onClose }) => {
@@ -121,7 +121,7 @@ export const ServicesView: React.FC<ServicesViewProps> = ({ onClose }) => {
               <ArrowLeft className="w-6 h-6 text-stone-700" />
             </button>
             <div className="flex items-center gap-2">
-              <img src={`/icons/${catInfo?.id}.png`} alt="" className="w-8 h-8 object-contain" />
+             <img src={`/icons/${catInfo?.iconFile || catInfo?.id}.png`} alt="" className="w-8 h-8 object-contain" />
               <div>
                 <h1 className="font-bold text-lg text-stone-900">{catInfo?.label}</h1>
                 <p className="text-xs text-stone-400">{filteredProviders.length} ta usta</p>
@@ -137,7 +137,7 @@ export const ServicesView: React.FC<ServicesViewProps> = ({ onClose }) => {
             </div>
           ) : filteredProviders.length === 0 ? (
             <div className="text-center py-16 text-stone-400">
-              <img src={`/icons/${catInfo?.id}.png`} alt="" className="w-24 h-24 object-contain mx-auto mb-4 opacity-50" />
+              <img src={`/icons/${catInfo?.iconFile || catInfo?.id}.png`} alt="" className="w-24 h-24 object-contain mx-auto mb-4 opacity-50" />
               <p className="text-sm">Hozircha ustalar yo'q</p>
             </div>
           ) : (
@@ -312,10 +312,10 @@ export const ServicesView: React.FC<ServicesViewProps> = ({ onClose }) => {
                   className="group w-full bg-white rounded-3xl pt-6 pb-4 px-6 flex flex-col items-center justify-center shadow-[0_4px_20px_rgba(0,0,0,0.08)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.12)] transition-all duration-300 active:scale-[0.98]"
                 >
                   <img
-                    src={`/icons/${cat.id}.png`}
-                    alt={cat.label}
-                    className="w-32 h-32 object-contain mb-3 group-hover:scale-110 transition-transform duration-300"
-                  />
+  src={`/icons/${cat.iconFile || cat.id}.png`}
+  alt={cat.label}
+  className="w-32 h-32 object-contain mb-3 group-hover:scale-110 transition-transform duration-300"
+/>
 
                   <div className="text-xl font-bold text-stone-900 text-center leading-tight">
                     {cat.label}

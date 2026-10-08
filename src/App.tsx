@@ -242,7 +242,7 @@ function App() {
   />
 
   {/* Тёмно-синий градиент поверх всего фото — ОДИН для шапки и погоды */}
-  <div className="absolute inset-0 bg-linear-to-b from-slate-900/90 via-slate-900/80 to-slate-900/90" />
+  <div className="absolute inset-0 bg-linear-to-b from-slate-900/40 via-slate-900/30 to-slate-900/40" />
 
   {/* Верхняя часть: логотип + название + ветер */}
   <div className="relative max-w-2xl mx-auto px-4 py-4 flex items-center gap-3 text-white">
@@ -319,11 +319,11 @@ function App() {
   />
 
   {/* Затемнение — посветлее, чтобы фото было заметно */}
-  <div className="absolute inset-0 bg-linear-to-b from-slate-900/55 via-slate-900/45 to-slate-900/60" />
+  <div className="absolute inset-0 bg-linear-to-b from-slate-900/35 via-slate-900/25 to-slate-900/35" />
 
   {/* Контент разделов */}
   <div className="relative max-w-2xl w-full mx-auto px-4 py-6">
-    <h2 className="font-bold text-lg mb-4 flex items-center space-x-2 text-white">
+    <h2 className="font-bold text-lg mb-4 flex items-center space-x-2 text-white drop-shadow-md">
       <span>Bo'limlar</span>
       <span className="text-xs font-normal text-white/60">Bo'limlar / Разделы</span>
     </h2>
@@ -336,7 +336,7 @@ function App() {
           <button
             key={section.id}
             onClick={() => setActiveSection(section.id)}
-            className="group relative bg-white/15 hover:bg-white/25 backdrop-blur-md rounded-3xl p-6 flex flex-col items-center justify-center space-y-3 border border-white/15 shadow-sm hover:shadow-xl transition-all duration-300 active:scale-95"
+            className="group relative bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-3xl p-6 flex flex-col items-center justify-center space-y-3 border border-white/15 shadow-sm hover:shadow-xl transition-all duration-300 active:scale-95"
           >
             <div className="relative">
               {/* Иконка в круге */}
@@ -352,10 +352,10 @@ function App() {
             </div>
 
             <div className="text-center">
-              <div className="text-base font-bold text-white leading-tight">
+              <div className="text-base font-bold text-white leading-tight drop-shadow-md">
                 {section.titleUz}
               </div>
-              <div className="text-xs text-white/60 leading-tight mt-1">
+              <div className="text-xs text-white/80 leading-tight mt-1 drop-shadow-md">
                 {section.titleRu}
               </div>
             </div>

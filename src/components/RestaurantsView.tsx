@@ -333,10 +333,10 @@ export const RestaurantsView: React.FC<RestaurantsViewProps> = ({ onClose }) => 
       const rating = ratings[restaurant.id];
       return (
         <button
-         key={restaurant.id}
+     key={restaurant.id}
   onClick={() => openRestaurant(restaurant)}
   className="w-full text-left bg-white rounded-3xl shadow-sm border border-stone-100 hover:shadow-lg transition-all active:scale-[0.98] flex flex-col"
-  style={{ padding: '14px', gap: '12px' }}
+  style={{ padding: '12px 16px', gap: '4px' }}
 >
   <div className="flex items-start justify-between" style={{ gap: '12px' }}>
     <h3
@@ -355,25 +355,25 @@ export const RestaurantsView: React.FC<RestaurantsViewProps> = ({ onClose }) => 
   </div>
 
   {restaurant.address && (
-    <div className="flex items-start gap-2 text-sm text-stone-600">
-      <MapPin className="w-4 h-4 text-blue-500 mt-0.5 shrink-0" />
+    <div className="flex items-center gap-2 text-sm text-stone-600 leading-tight">
+      <MapPin className="w-4 h-4 text-blue-500 shrink-0" />
       <span className="break-words">{restaurant.address}</span>
     </div>
   )}
   {restaurant.phone && (
-    <div className="flex items-center gap-2 text-sm text-stone-700">
+    <div className="flex items-center gap-2 text-sm text-stone-700 leading-tight">
       <Phone className="w-4 h-4 text-emerald-500 shrink-0" />
       <span className="font-semibold break-all">{restaurant.phone}</span>
     </div>
   )}
   {restaurant.hours && (
-    <div className="flex items-center gap-2 text-sm text-stone-700">
+    <div className="flex items-center gap-2 text-sm text-stone-700 leading-tight">
       <Clock className="w-4 h-4 text-amber-500 shrink-0" />
       <span className="font-semibold">{restaurant.hours}</span>
     </div>
   )}
 
-  <div className="text-right text-xs font-semibold text-amber-600 pt-1">
+  <div className="text-right text-xs font-semibold text-amber-600 mt-1">
     Batafsil →
   </div>
 </button>

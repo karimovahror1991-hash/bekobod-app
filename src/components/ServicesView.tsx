@@ -1,6 +1,6 @@
 import { PullToRefresh } from './PullToRefresh';
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Phone, User, Plus, Loader2, Star } from 'lucide-react';
+import { ArrowLeft, Phone, User, Plus, Loader2 } from 'lucide-react';
 
 interface ServicesViewProps {
   onClose: () => void;
@@ -16,13 +16,13 @@ interface Provider {
 }
 
 const CATEGORIES = [
-  { id: 'usta', label: 'Usta xizmatlari', icon: '🔧', gradient: 'from-orange-500 to-red-600' },
-  { id: 'gozallik', label: "Go'zallik", icon: '💇', gradient: 'from-pink-500 to-rose-600' },
-  { id: 'avto', label: 'Avto xizmatlar', icon: '🚗', gradient: 'from-blue-500 to-indigo-600' },
-  { id: 'talim', label: "Ta'lim", icon: '📚', gradient: 'from-emerald-500 to-teal-600' },
-  { id: 'uy', label: 'Uy xizmatlari', icon: '🏠', gradient: 'from-cyan-500 to-blue-600' },
-  { id: 'komp', label: 'Kompyuter', icon: '💻', gradient: 'from-violet-500 to-purple-600' },
-    { id: 'telefon', label: 'Telefon ustalari', icon: '📱', gradient: 'from-teal-500 to-emerald-600' },
+  { id: 'usta', label: 'Usta xizmatlari', icon: '🔧', line: 'from-orange-400 to-red-500' },
+  { id: 'gozallik', label: "Go'zallik", icon: '💇', line: 'from-pink-400 to-rose-500' },
+  { id: 'avto', label: 'Avto xizmatlar', icon: '🚗', line: 'from-blue-400 to-indigo-500' },
+  { id: 'talim', label: "Ta'lim", icon: '📚', line: 'from-emerald-400 to-teal-500' },
+  { id: 'uy', label: 'Uy xizmatlari', icon: '🏠', line: 'from-cyan-400 to-blue-500' },
+  { id: 'komp', label: 'Kompyuter', icon: '💻', line: 'from-violet-400 to-purple-500' },
+  { id: 'telefon', label: 'Telefon ustalari', icon: '📱', line: 'from-teal-400 to-emerald-500' },
 ];
 
 export const ServicesView: React.FC<ServicesViewProps> = ({ onClose }) => {
@@ -31,7 +31,6 @@ export const ServicesView: React.FC<ServicesViewProps> = ({ onClose }) => {
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
-  // Форма
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [category, setCategory] = useState('usta');
@@ -106,28 +105,27 @@ export const ServicesView: React.FC<ServicesViewProps> = ({ onClose }) => {
     }
   };
 
-  // Экран списка мастеров
+  // === ЭКРАН СПИСКА МАСТЕРОВ ===
   if (selectedCategory) {
     const catInfo = CATEGORIES.find(c => c.id === selectedCategory);
     const filteredProviders = providers.filter(p => p.category === selectedCategory);
 
     return (
-      <div className="min-h-screen bg-linear-to-b from-stone-50 to-stone-100">
-        <div className={`bg-linear-to-br ${catInfo?.gradient} text-white sticky top-0 z-20 shadow-md`}>
+      <div className="min-h-screen bg-white">
+        <div className="bg-white border-b border-stone-200 sticky top-0 z-20 shadow-sm">
           <div className="max-w-2xl mx-auto px-4 pt-6 pb-4 flex items-center space-x-3">
             <button
               onClick={() => setSelectedCategory(null)}
-              className="w-11 h-11 rounded-2xl bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"
+              className="w-11 h-11 rounded-2xl bg-stone-100 hover:bg-amber-100 flex items-center justify-center transition-colors shrink-0"
             >
-              <ArrowLeft className="w-6 h-6 text-white" />
+              <ArrowLeft className="w-6 h-6 text-stone-700" />
             </button>
-            <div>
-              <h1 className="font-bold text-xl text-white">
-                {catInfo?.icon} {catInfo?.label}
-              </h1>
-              <p className="text-xs text-white/80">
-                {filteredProviders.length} ta usta
-              </p>
+            <div className="flex items-center gap-2">
+              <img src={`/icons/${catInfo?.id}.png`} alt="" className="w-8 h-8 object-contain" />
+              <div>
+                <h1 className="font-bold text-lg text-stone-900">{catInfo?.label}</h1>
+                <p className="text-xs text-stone-400">{filteredProviders.length} ta usta</p>
+              </div>
             </div>
           </div>
         </div>
@@ -139,7 +137,7 @@ export const ServicesView: React.FC<ServicesViewProps> = ({ onClose }) => {
             </div>
           ) : filteredProviders.length === 0 ? (
             <div className="text-center py-16 text-stone-400">
-              <div className="text-5xl mb-3">{catInfo?.icon}</div>
+              <img src={`/icons/${catInfo?.id}.png`} alt="" className="w-24 h-24 object-contain mx-auto mb-4 opacity-50" />
               <p className="text-sm">Hozircha ustalar yo'q</p>
             </div>
           ) : (
@@ -155,7 +153,7 @@ export const ServicesView: React.FC<ServicesViewProps> = ({ onClose }) => {
                 {provider.description && (
                   <p className="text-sm text-stone-600">{provider.description}</p>
                 )}
-                                {provider.phone && (
+                {provider.phone && (
                   <div className="flex items-center space-x-2 text-sm text-stone-700">
                     <Phone className="w-4 h-4 shrink-0 text-emerald-500" />
                     <span className="font-semibold">{provider.phone}</span>
@@ -176,11 +174,11 @@ export const ServicesView: React.FC<ServicesViewProps> = ({ onClose }) => {
     );
   }
 
-  // Экран формы регистрации
+  // === ЭКРАН ФОРМЫ РЕГИСТРАЦИИ ===
   if (tab === 'create') {
     return (
-      <div className="min-h-screen bg-linear-to-b from-stone-50 to-stone-100">
-        <div className="bg-white/95 backdrop-blur-lg border-b border-stone-200 sticky top-0 z-20 shadow-sm">
+      <div className="min-h-screen bg-white">
+        <div className="bg-white border-b border-stone-200 sticky top-0 z-20 shadow-sm">
           <div className="max-w-2xl mx-auto px-4 pt-6 pb-4 flex items-center space-x-3">
             <button
               onClick={() => setTab('list')}
@@ -275,55 +273,66 @@ export const ServicesView: React.FC<ServicesViewProps> = ({ onClose }) => {
     );
   }
 
-    // Экран категорий (две колонки)
+  // === ГЛАВНЫЙ ЭКРАН ===
   return (
     <PullToRefresh onRefresh={loadProviders}>
-    <div className="min-h-screen bg-linear-to-b from-stone-50 to-stone-100">
-      <div className="bg-white/95 backdrop-blur-lg border-b border-stone-200 sticky top-0 z-20 shadow-sm">
-        <div className="max-w-2xl mx-auto px-4 pt-6 pb-4 flex items-center space-x-3">
-          <button
-            onClick={onClose}
-            className="w-11 h-11 rounded-2xl bg-stone-100 hover:bg-amber-100 flex items-center justify-center transition-colors"
-          >
-            <ArrowLeft className="w-6 h-6 text-stone-700" />
-          </button>
-          <h1 className="font-bold text-2xl text-stone-900">🔧 Xizmatlar</h1>
+      <div className="min-h-screen bg-white">
+        {/* Заголовок + кнопка регистрации */}
+        <div className="bg-white border-b border-stone-200 sticky top-0 z-20 shadow-sm">
+          <div className="max-w-2xl mx-auto px-4 pt-6 pb-4 flex items-center space-x-3">
+            <button
+              onClick={onClose}
+              className="w-11 h-11 rounded-2xl bg-stone-100 hover:bg-amber-100 flex items-center justify-center transition-colors"
+            >
+              <ArrowLeft className="w-6 h-6 text-stone-700" />
+            </button>
+            <h1 className="font-bold text-2xl text-stone-900">🔧 Xizmatlar</h1>
+          </div>
+
+          <div className="max-w-2xl mx-auto px-4 pb-4">
+            <button
+              onClick={() => setTab('create')}
+              className="w-full py-4 bg-linear-to-br from-amber-500 to-orange-600 text-white rounded-2xl font-bold flex items-center justify-center space-x-2 shadow-lg active:scale-95 transition"
+            >
+              <Plus className="w-5 h-5" />
+              <span>Usta sifatida ro'yxatdan o'tish</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Крупные карточки категорий */}
+        <div className="max-w-2xl mx-auto px-4 py-6">
+          <div className="space-y-6">
+            {CATEGORIES.map((cat) => {
+              const count = providers.filter(p => p.category === cat.id).length;
+              return (
+                <button
+                  key={cat.id}
+                  onClick={() => setSelectedCategory(cat.id)}
+                  className="group w-full bg-white rounded-3xl pt-6 pb-4 px-6 flex flex-col items-center justify-center shadow-[0_4px_20px_rgba(0,0,0,0.08)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.12)] transition-all duration-300 active:scale-[0.98]"
+                >
+                  <img
+                    src={`/icons/${cat.id}.png`}
+                    alt={cat.label}
+                    className="w-32 h-32 object-contain mb-3 group-hover:scale-110 transition-transform duration-300"
+                  />
+
+                  <div className="text-xl font-bold text-stone-900 text-center leading-tight">
+                    {cat.label}
+                  </div>
+
+                  <div className="flex items-center gap-1 mt-2 text-sm text-stone-400">
+                    <User className="w-3.5 h-3.5" />
+                    <span>{count} ta usta</span>
+                  </div>
+
+                  <div className={`mt-4 w-20 h-1 rounded-full bg-linear-to-r ${cat.line}`} />
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
-
-      <div className="max-w-2xl mx-auto px-4 py-6">
-        {/* Кнопка регистрации */}
-        <button
-          onClick={() => setTab('create')}
-          className="w-full mb-6 py-4 bg-linear-to-br from-amber-500 to-orange-600 text-white rounded-3xl font-bold flex items-center justify-center space-x-2 shadow-lg active:scale-95 transition"
-        >
-          <Plus className="w-5 h-5" />
-          <span>Usta sifatida ro'yxatdan o'tish</span>
-        </button>
-
-        {/* Категории в две колонки */}
-        <div className="grid grid-cols-2 gap-4">
-          {CATEGORIES.map((cat) => {
-            const count = providers.filter(p => p.category === cat.id).length;
-            return (
-              <button
-                key={cat.id}
-                onClick={() => setSelectedCategory(cat.id)}
-                className={`bg-linear-to-br ${cat.gradient} text-white rounded-3xl p-6 flex flex-col items-center justify-center shadow-xl hover:shadow-2xl transition-all duration-300 active:scale-95 min-h-50`}
-              >
-                <div className="text-6xl mb-3">{cat.icon}</div>
-                <div className="font-bold text-base text-white text-center leading-tight">
-                  {cat.label}
-                </div>
-                <div className="text-xs text-white/80 mt-2">
-                  {count} ta usta
-                </div>
-              </button>
-            );
-          })}
-        </div>
-        </div>
-    </div>
     </PullToRefresh>
   );
 };

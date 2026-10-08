@@ -3775,15 +3775,19 @@ app.get('/api/announcements/:id/comments', async (req, res) => {
   }
 });
 
-// Добавить комментарий
+// ✅ Добавить комментарий (с проверкой initData)
 app.post('/api/announcements/:id/comments', async (req, res) => {
   try {
     const { id } = req.params;
-    const { userId, userName, text } = req.body;
+    const { userName, text } = req.body;
 
-    if (!userId || !text || !text.trim()) {
-      return res.status(400).json({ error: 'userId и text обязательны' });
+    if (!text || !text.trim()) {
+      return res.status(400).json({ error: 'text обязателен' });
     }
+
+    // ✅ Проверяем initData и получаем userId
+    const userId = await requireUserId(req, res);
+    if (!userId) return;
 
     // Проверка, что объявление существует
     const annCheck = await pool.query('SELECT id FROM announcements WHERE id = $1', [id]);

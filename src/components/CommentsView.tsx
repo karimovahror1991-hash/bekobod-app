@@ -32,6 +32,10 @@ export const CommentsView: React.FC<CommentsViewProps> = ({ announcementId }) =>
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const API_URL = 'https://bekobod-app-1.onrender.com';
+  const getInitData = (): string => {
+  const tg = (window as any).Telegram?.WebApp;
+  return tg?.initData || '';
+};
 
   // Получаем данные пользователя из Telegram
   useEffect(() => {
@@ -79,14 +83,14 @@ export const CommentsView: React.FC<CommentsViewProps> = ({ announcementId }) =>
     setSending(true);
     try {
       const res = await fetch(`${API_URL}/api/announcements/${announcementId}/comments`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId,
-          userName,
-          text: newComment.trim(),
-        }),
-      });
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    userName,
+    text: newComment.trim(),
+    initData: getInitData(),
+  }),
+});
       const data = await res.json();
       if (data.error) {
         alert(data.error);

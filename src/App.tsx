@@ -55,16 +55,13 @@ const sections: Section[] = [
 ];
 
 // ⚙️ ФЛАГ: показывать ли блок рекламы на главном экране
-// false = реклама скрыта, true = реклама видна
 const SHOW_ADS = false;
 
 function App() {
-    // Проверка: открыт ли экран комментариев
   const urlParams = new URLSearchParams(window.location.search);
   const screen = urlParams.get('screen');
   const announcementId = urlParams.get('announcement_id');
 
-  // Если открыт экран комментариев — показываем CommentsView
   if (screen === 'comments' && announcementId) {
     return <CommentsView announcementId={Number(announcementId)} />;
   }
@@ -76,7 +73,6 @@ function App() {
   const [userId, setUserId] = useState<number | null>(null);
   const [badges, setBadges] = useState<{ news: number; events: number; oldi_sotdi: number }>({ news: 0, events: 0, oldi_sotdi: 0 });
 
-  // Telegram init + трекинг
   useEffect(() => {
     const tg = (window as any).Telegram?.WebApp;
     const user = tg?.initDataUnsafe?.user;
@@ -84,8 +80,7 @@ function App() {
     if (user?.id) {
       setUserId(user.id);
 
-      // Трекинг открытия приложения
-            fetch('https://bekobod-app-1.onrender.com/api/track', {
+      fetch('https://bekobod-app-1.onrender.com/api/track', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -96,16 +91,15 @@ function App() {
 
     if (tg?.disableVerticalSwipes) tg.disableVerticalSwipes();
     if (tg?.expand) tg.expand();
-      if (tg?.enableClosingConfirmation) tg.enableClosingConfirmation();
+    if (tg?.enableClosingConfirmation) tg.enableClosingConfirmation();
   }, []);
 
-   // Погода
   useEffect(() => {
     const lat = 40.22;
     const lon = 69.22;
 
     fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min,weather_code&timezone=auto&forecast_days=7`)
-      .then((res) => res.json())         // ⬅️ ЭТА СТРОКА БЫЛА ПОТЕРЯНА!
+      .then((res) => res.json())
       .then((data) => {
         setWeather(data);
         setWeatherLoading(false);
@@ -116,15 +110,14 @@ function App() {
       });
   }, []);
 
-  // Загрузка бейджей
   useEffect(() => {
     if (!userId) return;
 
     const loadBadges = async () => {
       try {
-        const sections = ['news', 'events', 'oldi_sotdi'];
+        const sectionsToLoad = ['news', 'events', 'oldi_sotdi'];
         const results: any = {};
-        for (const s of sections) {
+        for (const s of sectionsToLoad) {
           const res = await fetch(`https://bekobod-app-1.onrender.com/api/badge/${s}?userId=${userId}`);
           const data = await res.json();
           results[s] = data.count || 0;
@@ -140,7 +133,6 @@ function App() {
     return () => clearInterval(interval);
   }, [userId]);
 
-  // Отметить раздел как просмотренный
   useEffect(() => {
     if (!userId || !activeSection) return;
 
@@ -164,7 +156,6 @@ function App() {
       .catch(() => {});
   }, [activeSection, userId]);
 
-     // Загрузка рекламы из БД (только если SHOW_ADS = true)
   useEffect(() => {
     if (!SHOW_ADS) return;
     fetch('https://bekobod-app-1.onrender.com/api/ads/list')
@@ -173,7 +164,6 @@ function App() {
       .catch((err) => console.error('Ads error:', err));
   }, []);
 
-  // Авто-переключение рекламы
   useEffect(() => {
     if (!SHOW_ADS || ads.length === 0) return;
     const interval = setInterval(() => {
@@ -182,8 +172,7 @@ function App() {
     return () => clearInterval(interval);
   }, [ads.length]);
 
-    const getWeatherIcon = (code: number, hour?: number) => {
-    // Проверка: ночь или день (21:00 - 05:59 = ночь)
+  const getWeatherIcon = (code: number, hour?: number) => {
     const isNight = hour !== undefined && (hour >= 21 || hour < 6);
 
     if (code === 0 || code === 1) {
@@ -201,18 +190,15 @@ function App() {
       : <Sun className="w-8 h-8 text-yellow-300 drop-shadow-lg" />;
   };
 
-  
-  // Экран разделов
   if (activeSection === 'emergency') {
     return <EmergencyView onClose={() => setActiveSection(null)} />;
   }
   if (activeSection === 'transport') {
     return <TransportView onClose={() => setActiveSection(null)} />;
   }
-      if (activeSection === 'jobs') {
+  if (activeSection === 'jobs') {
     return <JobsView onClose={() => setActiveSection(null)} userId={userId} />;
   }
-  
   if (activeSection === 'restaurants') {
     return <RestaurantsView onClose={() => setActiveSection(null)} />;
   }
@@ -234,7 +220,7 @@ function App() {
   if (activeSection === 'oldi_sotdi') {
     return <OldiSotdiView onClose={() => setActiveSection(null)} userId={userId} />;
   }
-    if (activeSection === 'shops') {
+  if (activeSection === 'shops') {
     return <ShopsView onClose={() => setActiveSection(null)} />;
   }
   if (activeSection === 'mini_oyinlar') {
@@ -243,11 +229,10 @@ function App() {
   if (activeSection === 'donate') {
     return <DonateView onClose={() => setActiveSection(null)} />;
   }
-  return (
-    <div className="min-h-screen bg-linear-to-b from-stone-50 to-stone-100 text-stone-900 flex flex-col">
-     
 
-           {/* Погода */}
+  return (
+    <div className="min-h-screen bg-slate-50 flex flex-col">
+      {/* Погода */}
       <div className="max-w-2xl w-full mx-auto px-4 pt-4">
         <div className="bg-linear-to-br from-sky-400 to-blue-600 rounded-3xl p-4 shadow-xl text-white">
           {weatherLoading ? (
@@ -255,7 +240,6 @@ function App() {
           ) : weather ? (
             <>
               <div className="flex items-center justify-between mb-3">
-                {/* Левая часть: иконка + температура */}
                 <div className="flex items-center space-x-3 shrink-0">
                   <div className="scale-110">
                     {getWeatherIcon(weather.current?.weather_code || 0)}
@@ -271,7 +255,6 @@ function App() {
                   </div>
                 </div>
 
-                               {/* Центр: дата */}
                 <div className="text-center text-sm text-white font-bold leading-tight px-2 drop-shadow-md">
                   <div>
                     {new Date().toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' })}
@@ -281,7 +264,6 @@ function App() {
                   </div>
                 </div>
 
-                {/* Правая часть: влажность + ветер */}
                 <div className="text-right text-sm text-white font-bold space-y-1 shrink-0 drop-shadow-md">
                   <div className="flex items-center justify-end space-x-1.5">
                     <Droplets className="w-4 h-4" />
@@ -294,9 +276,8 @@ function App() {
                 </div>
               </div>
 
-                           {/* Прогноз на 7 дней — горизонтально */}
               <div className="flex justify-between gap-0.5 pt-3 border-t border-white/30">
-                               {weather.daily?.time?.slice(0, 7).map((dateStr: string, i: number) => {
+                {weather.daily?.time?.slice(0, 7).map((dateStr: string, i: number) => {
                   const date = new Date(dateStr);
                   const UZ_DAYS = ['Yak', 'Dush', 'Sesh', 'Chor', 'Pay', 'Jum', 'Shan'];
                   const dayName = UZ_DAYS[date.getDay()];
@@ -308,23 +289,18 @@ function App() {
 
                   return (
                     <div key={i} className="flex flex-col items-center flex-1 text-white">
-                      {/* День недели */}
                       <span className="text-[10px] font-bold uppercase drop-shadow-md">
                         {dayName}
                       </span>
-                      {/* Дата */}
                       <span className="text-[9px] text-white/80 drop-shadow-md">
                         {dayNum}.{monthNum}
                       </span>
-                      {/* Иконка */}
                       <div className="scale-[0.5] my-0.5">
                         {getWeatherIcon(code, 12)}
                       </div>
-                      {/* Макс температура */}
                       <span className="text-xs font-bold drop-shadow-md">
                         {maxTemp}°
                       </span>
-                      {/* Мин температура */}
                       <span className="text-[10px] text-white/70 drop-shadow-md">
                         {minTemp}°
                       </span>
@@ -338,100 +314,7 @@ function App() {
           )}
         </div>
       </div>
-            {/* Карусель рекламы (временно отключена флагом SHOW_ADS) */}
-           {SHOW_ADS && (
-      <div className="max-w-2xl w-full mx-auto px-4 pt-4">
-        <div className="relative rounded-3xl overflow-hidden shadow-xl h-48">
-          {ads.length === 0 ? (
-            <div className="absolute inset-0 bg-linear-to-br from-purple-600 to-indigo-700 flex flex-col items-center justify-center text-white p-6">
-              <div className="text-4xl mb-2">📢</div>
-              <h3 className="font-bold text-lg">Reklama joyi</h3>
-              <p className="text-xs text-white/80 mt-1">Bu yerda sizning reklamangiz bo'lishi mumkin</p>
-            </div>
-          ) : (
-                            ads.map((ad, index) => {
-              const textColor = ad.text_color || 'white';
-              return (
-                <div
-                  key={ad.id}
-                  className={`absolute inset-0 bg-linear-to-br ${ad.gradient} transition-opacity duration-700 ${
-                    index === currentAd ? 'opacity-100' : 'opacity-0'
-                  }`}
-                >
-                  {ad.image_url && (
-                    <img
-                      src={ad.image_url}
-                      alt={ad.title}
-                      className="absolute inset-0 w-full h-full object-cover"
-                    />
-                  )}
 
-                  {/* Затемнение снизу для читаемости */}
-                  <div className="absolute bottom-0 left-0 right-0 h-3/4 bg-linear-to-t from-black/90 via-black/50 to-transparent" />
-
-                  
-                                    {/* Иконка если без фото */}
-                  {!ad.image_url && (
-                    <div className="absolute top-6 left-1/2 -translate-x-1/2 text-4xl">📢</div>
-                  )}
-
-                  {/* Текст снизу */}
-                  <div className="absolute bottom-0 left-0 right-0 p-4 space-y-1">
-                    <h3
-                      className="font-extrabold text-xl leading-tight"
-                      style={{ color: textColor }}
-                    >
-                      {ad.title}
-                    </h3>
-                    {ad.subtitle && (
-                      <p
-                        className="text-xs font-semibold"
-                        style={{ color: textColor, opacity: 0.9 }}
-                      >
-                        {ad.subtitle}
-                      </p>
-                    )}
-                    {(ad.address || ad.hours) && (
-                      <div
-                        className="text-[10px] space-y-0.5 pt-1"
-                        style={{ color: textColor, opacity: 0.8 }}
-                      >
-                        {ad.address && <div>📍 {ad.address}</div>}
-                        {ad.hours && <div>🕐 {ad.hours}</div>}
-                      </div>
-                    )}
-                    {ad.phone && (
-                      <a
-                        href={`tel:${ad.phone}`}
-                        onClick={(e) => e.stopPropagation()}
-                        className="inline-block mt-2 px-4 py-2 bg-white/25 hover:bg-white/35 backdrop-blur rounded-xl text-xs font-bold transition active:scale-95"
-                        style={{ color: textColor }}
-                      >
-                        📞 {ad.phone}
-                      </a>
-                    )}
-                  </div>
-                </div>
-              );
-            })
-          )}
-                   <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex space-x-1.5">
-            {ads.map((_, index) => (
-              <button
-                key={index}
-                onClick={() => setCurrentAd(index)}
-                className={`h-1.5 rounded-full transition-all ${
-                  index === currentAd ? 'w-6 bg-white' : 'w-1.5 bg-white/50'
-                }`}
-              />
-            ))}
-          </div>
-        </div>
-        <div className="text-center mt-2 text-[10px] text-stone-400 font-medium">
-          📢 Reklama: {ads.length} / 4
-        </div>
-      </div>
-   )}
       {/* Разделы */}
       <div className="flex-1 max-w-2xl w-full mx-auto px-4 py-6">
         <h2 className="font-bold text-lg mb-4 flex items-center space-x-2">
@@ -439,7 +322,7 @@ function App() {
           <span className="text-xs font-normal text-stone-400">Bo'limlar / Разделы</span>
         </h2>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-4">
           {sections.map((section) => {
             const Icon = section.icon;
             const badgeCount = badges[section.id as keyof typeof badges] || 0;
@@ -447,23 +330,29 @@ function App() {
               <button
                 key={section.id}
                 onClick={() => setActiveSection(section.id)}
-                                className="group relative bg-white/60 backdrop-blur-sm rounded-3xl p-5 flex flex-col items-center justify-center space-y-3 border border-white/40 shadow-sm hover:bg-white/80 hover:shadow-lg transition-all duration-300 active:scale-95"
+                className="group relative bg-white rounded-3xl p-6 flex flex-col items-center justify-center space-y-3 shadow-sm hover:shadow-xl transition-all duration-300 active:scale-95 border border-slate-100"
               >
                 <div className="relative">
-                  <div className={`w-16 h-16 rounded-2xl bg-linear-to-br ${section.gradient} flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform duration-300`}>
-                    <Icon className="w-8 h-8" />
+                  {/* Glow — размытое цветное свечение за иконкой */}
+                  <div className={`absolute inset-0 rounded-full bg-linear-to-br ${section.gradient} blur-xl opacity-50`} />
+
+                  {/* Иконка в круге */}
+                  <div className={`relative w-20 h-20 rounded-full bg-linear-to-br ${section.gradient} flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+                    <Icon className="w-9 h-9" />
                   </div>
+
                   {badgeCount > 0 && (
                     <div className="absolute -top-1 -right-1 min-w-6 h-6 px-1.5 bg-rose-500 text-white text-xs font-bold rounded-full flex items-center justify-center shadow-lg border-2 border-white">
                       {badgeCount > 99 ? '99+' : badgeCount}
                     </div>
                   )}
                 </div>
+
                 <div className="text-center">
-                  <div className="text-sm font-bold text-stone-900 leading-tight">
+                  <div className="text-base font-bold text-slate-900 leading-tight">
                     {section.titleUz}
                   </div>
-                  <div className="text-[10px] text-stone-400 leading-tight mt-0.5">
+                  <div className="text-xs text-slate-400 leading-tight mt-1">
                     {section.titleRu}
                   </div>
                 </div>

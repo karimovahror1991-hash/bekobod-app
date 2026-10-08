@@ -19,8 +19,8 @@ interface NewsItem {
 }
 
 const CATEGORIES = [
-  { id: 'bekobod', label: 'Bekobod yangiliklari', icon: '🏙️', gradient: 'from-blue-500 to-indigo-600' },
-  { id: 'jahon', label: "O'zbekiston va Jahon yangiliklari", icon: '🌍', gradient: 'from-emerald-500 to-teal-600' },
+  { id: 'bekobod', label: 'Bekobod yangiliklari', icon: '🏙️', line: 'from-blue-400 to-indigo-500' },
+  { id: 'jahon', label: "O'zbekiston va Jahon yangiliklari", icon: '🌍', line: 'from-emerald-400 to-teal-500' },
 ];
 
 export const NewsView: React.FC<NewsViewProps> = ({ onClose }) => {
@@ -31,12 +31,13 @@ export const NewsView: React.FC<NewsViewProps> = ({ onClose }) => {
   const [subBadges, setSubBadges] = useState<{ [key: string]: number }>({});
   const [userId, setUserId] = useState<number | null>(null);
   const API_URL = 'https://bekobod-app-1.onrender.com';
-// Достать YouTube ID из ссылки
-const getYouTubeId = (url: string | null): string | null => {
-  if (!url) return null;
-  const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|v\/|shorts\/))([^&?/]+)/);
-  return match ? match[1] : null;
-};
+
+  const getYouTubeId = (url: string | null): string | null => {
+    if (!url) return null;
+    const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|v\/|shorts\/))([^&?/]+)/);
+    return match ? match[1] : null;
+  };
+
   const loadNews = async () => {
     try {
       setLoading(true);
@@ -50,7 +51,7 @@ const getYouTubeId = (url: string | null): string | null => {
     }
   };
 
-    useEffect(() => {
+  useEffect(() => {
     loadNews();
 
     const tg = (window as any).Telegram?.WebApp;
@@ -58,7 +59,6 @@ const getYouTubeId = (url: string | null): string | null => {
     if (uid) setUserId(uid);
   }, []);
 
-  // Загрузка бейджей подкатегорий
   useEffect(() => {
     if (!userId) return;
 
@@ -80,7 +80,7 @@ const getYouTubeId = (url: string | null): string | null => {
     loadSubBadges();
   }, [userId, API_URL]);
 
-    const formatDate = (dateStr: string) => {
+  const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
     return date.toLocaleString('uz-UZ', {
       day: '2-digit',
@@ -102,14 +102,14 @@ const getYouTubeId = (url: string | null): string | null => {
     });
   };
 
-  // Экран полной новости
+  // === ЭКРАН ПОЛНОЙ НОВОСТИ ===
   if (selectedNews) {
     return (
-      <div className="min-h-screen bg-linear-to-b from-stone-50 to-stone-100">
-        <div className="bg-white/95 backdrop-blur-lg border-b border-stone-200 sticky top-0 z-20 shadow-sm">
+      <div className="min-h-screen bg-white">
+        <div className="bg-white border-b border-stone-200 sticky top-0 z-20 shadow-sm">
           <div className="max-w-2xl mx-auto px-4 pt-6 pb-4 flex items-center space-x-3">
             <button
-             onClick={() =>  setSelectedNews(null)}
+              onClick={() => setSelectedNews(null)}
               className="w-11 h-11 rounded-2xl bg-stone-100 hover:bg-amber-100 flex items-center justify-center transition-colors"
             >
               <ArrowLeft className="w-6 h-6 text-stone-700" />
@@ -120,30 +120,29 @@ const getYouTubeId = (url: string | null): string | null => {
 
         <div className="max-w-2xl mx-auto px-4 py-6 space-y-4">
           {/* Превью: загруженное фото ИЛИ YouTube */}
-{selectedNews.image_url ? (
-  <img
-    src={selectedNews.image_url}
-    alt={selectedNews.title}
-    className="w-full rounded-3xl shadow-lg"
-    onError={(e) => (e.currentTarget.style.display = 'none')}
-  />
-) : selectedNews.youtube_url && getYouTubeId(selectedNews.youtube_url) ? (
-  <div className="relative rounded-3xl overflow-hidden shadow-lg">
-    <img
-      src={`https://img.youtube.com/vi/${getYouTubeId(selectedNews.youtube_url)}/hqdefault.jpg`}
-      alt={selectedNews.title}
-      className="w-full"
-    />
-    {/* Иконка Play поверх */}
-    <div className="absolute inset-0 flex items-center justify-center bg-black/20">
-      <div className="w-16 h-16 rounded-full bg-red-600 flex items-center justify-center shadow-2xl">
-        <svg className="w-8 h-8 text-white ml-1" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M8 5v14l11-7z"/>
-        </svg>
-      </div>
-    </div>
-  </div>
-) : null}
+          {selectedNews.image_url ? (
+            <img
+              src={selectedNews.image_url}
+              alt={selectedNews.title}
+              className="w-full rounded-3xl shadow-lg"
+              onError={(e) => (e.currentTarget.style.display = 'none')}
+            />
+          ) : selectedNews.youtube_url && getYouTubeId(selectedNews.youtube_url) ? (
+            <div className="relative rounded-3xl overflow-hidden shadow-lg">
+              <img
+                src={`https://img.youtube.com/vi/${getYouTubeId(selectedNews.youtube_url)}/hqdefault.jpg`}
+                alt={selectedNews.title}
+                className="w-full"
+              />
+              <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                <div className="w-16 h-16 rounded-full bg-red-600 flex items-center justify-center shadow-2xl">
+                  <svg className="w-8 h-8 text-white ml-1" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M8 5v14l11-7z"/>
+                  </svg>
+                </div>
+              </div>
+            </div>
+          ) : null}
 
           <div className="bg-white rounded-3xl p-6 shadow-sm border border-stone-100 space-y-4">
             <div className="flex items-center space-x-2 text-xs text-stone-500">
@@ -158,87 +157,84 @@ const getYouTubeId = (url: string | null): string | null => {
                 {selectedNews.content}
               </p>
             )}
-           {(selectedNews.youtube_url || selectedNews.instagram_url || selectedNews.source) && (
-  <div className="pt-3 border-t border-stone-100 space-y-2">
-    {/* YouTube */}
-    {selectedNews.youtube_url && (
-      <button
-        onClick={() => {
-          const tg = (window as any).Telegram?.WebApp;
-          const url = selectedNews.youtube_url!;
-          if (tg?.openLink) tg.openLink(url);
-          else window.open(url, '_blank');
-        }}
-        className="w-full py-3 bg-gradient-to-br from-red-500 to-red-600 text-white rounded-2xl font-bold flex items-center justify-center space-x-2 transition shadow-md active:scale-95"
-      >
-        <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
-        </svg>
-        <span>YouTube'da ko'rish</span>
-      </button>
-    )}
 
-    {/* Instagram */}
-    {selectedNews.instagram_url && (
-      <button
-        onClick={() => {
-          const tg = (window as any).Telegram?.WebApp;
-          const url = selectedNews.instagram_url!;
-          if (tg?.openLink) tg.openLink(url);
-          else window.open(url, '_blank');
-        }}
-        className="w-full py-3 bg-gradient-to-br from-pink-500 to-purple-600 text-white rounded-2xl font-bold flex items-center justify-center space-x-2 transition shadow-md active:scale-95"
-      >
-        <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
-        </svg>
-        <span>Instagram'da ko'rish</span>
-      </button>
-    )}
+            {(selectedNews.youtube_url || selectedNews.instagram_url || selectedNews.source) && (
+              <div className="pt-3 border-t border-stone-100 space-y-2">
+                {selectedNews.youtube_url && (
+                  <button
+                    onClick={() => {
+                      const tg = (window as any).Telegram?.WebApp;
+                      const url = selectedNews.youtube_url!;
+                      if (tg?.openLink) tg.openLink(url);
+                      else window.open(url, '_blank');
+                    }}
+                    className="w-full py-3 bg-gradient-to-br from-red-500 to-red-600 text-white rounded-2xl font-bold flex items-center justify-center space-x-2 transition shadow-md active:scale-95"
+                  >
+                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                    </svg>
+                    <span>YouTube'da ko'rish</span>
+                  </button>
+                )}
 
-    {/* Обычная ссылка (fallback для старых новостей) */}
-    {selectedNews.source && !selectedNews.youtube_url && !selectedNews.instagram_url && (
-      <button
-        onClick={() => {
-          const tg = (window as any).Telegram?.WebApp;
-          const url = selectedNews.source!;
-          if (tg?.openLink) tg.openLink(url);
-          else window.open(url, '_blank');
-        }}
-        className="w-full py-3 bg-gradient-to-br from-amber-500 to-orange-600 text-white rounded-2xl font-bold flex items-center justify-center space-x-2 transition shadow-md active:scale-95"
-      >
-        <ExternalLink className="w-5 h-5" />
-        <span>Manbani ochish</span>
-      </button>
-    )}
-  </div>
-)}
+                {selectedNews.instagram_url && (
+                  <button
+                    onClick={() => {
+                      const tg = (window as any).Telegram?.WebApp;
+                      const url = selectedNews.instagram_url!;
+                      if (tg?.openLink) tg.openLink(url);
+                      else window.open(url, '_blank');
+                    }}
+                    className="w-full py-3 bg-gradient-to-br from-pink-500 to-purple-600 text-white rounded-2xl font-bold flex items-center justify-center space-x-2 transition shadow-md active:scale-95"
+                  >
+                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                    </svg>
+                    <span>Instagram'da ko'rish</span>
+                  </button>
+                )}
+
+                {selectedNews.source && !selectedNews.youtube_url && !selectedNews.instagram_url && (
+                  <button
+                    onClick={() => {
+                      const tg = (window as any).Telegram?.WebApp;
+                      const url = selectedNews.source!;
+                      if (tg?.openLink) tg.openLink(url);
+                      else window.open(url, '_blank');
+                    }}
+                    className="w-full py-3 bg-gradient-to-br from-amber-500 to-orange-600 text-white rounded-2xl font-bold flex items-center justify-center space-x-2 transition shadow-md active:scale-95"
+                  >
+                    <ExternalLink className="w-5 h-5" />
+                    <span>Manbani ochish</span>
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>
     );
   }
 
-  // Экран списка новостей категории
+  // === ЭКРАН СПИСКА НОВОСТЕЙ КАТЕГОРИИ ===
   if (selectedCategory) {
     const catInfo = CATEGORIES.find(c => c.id === selectedCategory);
     const filteredNews = news.filter(n => n.category === selectedCategory);
 
     return (
-      <div className="min-h-screen bg-linear-to-b from-stone-50 to-stone-100">
-        <div className={`bg-linear-to-br ${catInfo?.gradient} text-white sticky top-0 z-20 shadow-md`}>
+      <div className="min-h-screen bg-white">
+        <div className="bg-white border-b border-stone-200 sticky top-0 z-20 shadow-sm">
           <div className="max-w-2xl mx-auto px-4 pt-6 pb-4 flex items-center space-x-3">
             <button
               onClick={() => setSelectedCategory(null)}
-              className="w-11 h-11 rounded-2xl bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"
+              className="w-11 h-11 rounded-2xl bg-stone-100 hover:bg-amber-100 flex items-center justify-center transition-colors shrink-0"
             >
-              <ArrowLeft className="w-6 h-6 text-white" />
+              <ArrowLeft className="w-6 h-6 text-stone-700" />
             </button>
-            <div>
-              <h1 className="font-bold text-xl text-white">
-                {catInfo?.label}
-              </h1>
-             </div>
+            <div className="flex items-center gap-2">
+              <img src={`/icons/${catInfo?.id}.png`} alt="" className="w-8 h-8 object-contain" />
+              <h1 className="font-bold text-lg text-stone-900">{catInfo?.label}</h1>
+            </div>
           </div>
         </div>
 
@@ -249,7 +245,7 @@ const getYouTubeId = (url: string | null): string | null => {
             </div>
           ) : filteredNews.length === 0 ? (
             <div className="text-center py-16 text-stone-400">
-              <div className="text-5xl mb-3">{catInfo?.icon}</div>
+              <img src={`/icons/${catInfo?.id}.png`} alt="" className="w-24 h-24 object-contain mx-auto mb-4 opacity-50" />
               <p className="text-sm">Hozircha yangiliklar yo'q</p>
             </div>
           ) : (
@@ -260,50 +256,49 @@ const getYouTubeId = (url: string | null): string | null => {
                   onClick={() => setSelectedNews(item)}
                   className="w-full bg-white rounded-3xl overflow-hidden shadow-sm border border-stone-100 hover:shadow-xl transition-all text-left active:scale-[0.98]"
                 >
-                  {/* Превью: загруженное фото ИЛИ YouTube */}
-{item.image_url ? (
-  <img
-    src={item.image_url}
-    alt={item.title}
-    className="w-full h-40 object-cover"
-    onError={(e) => (e.currentTarget.style.display = 'none')}
-  />
-) : item.youtube_url && getYouTubeId(item.youtube_url) ? (
-  <div className="relative">
-    <img
-      src={`https://img.youtube.com/vi/${getYouTubeId(item.youtube_url)}/hqdefault.jpg`}
-      alt={item.title}
-      className="w-full h-40 object-cover"
-    />
-    <div className="absolute inset-0 flex items-center justify-center bg-black/20">
-      <div className="w-12 h-12 rounded-full bg-red-600 flex items-center justify-center shadow-xl">
-        <svg className="w-6 h-6 text-white ml-0.5" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M8 5v14l11-7z"/>
-        </svg>
-      </div>
-    </div>
-  </div>
-) : null}
-<div className="p-4">
-  <div className="flex items-center space-x-1.5 text-xs text-stone-400 mb-2">
-    <Clock className="w-3 h-3" />
-    <span>{formatDate(item.created_at)}</span>
-  </div>
-  <h3 className="font-bold text-base text-stone-900 leading-snug line-clamp-3">
-    {item.title}
-  </h3>
-  {item.content && (
-    <p className="text-xs text-stone-500 mt-2 line-clamp-2">
-      {item.content}
-    </p>
-  )}
-  <div className="flex items-center justify-end mt-2 text-amber-600">
-    <span className="text-xs font-semibold">Batafsil</span>
-    <ChevronRight className="w-4 h-4" />
-  </div>
-</div>
-</button>
-))}
+                  {item.image_url ? (
+                    <img
+                      src={item.image_url}
+                      alt={item.title}
+                      className="w-full h-40 object-cover"
+                      onError={(e) => (e.currentTarget.style.display = 'none')}
+                    />
+                  ) : item.youtube_url && getYouTubeId(item.youtube_url) ? (
+                    <div className="relative">
+                      <img
+                        src={`https://img.youtube.com/vi/${getYouTubeId(item.youtube_url)}/hqdefault.jpg`}
+                        alt={item.title}
+                        className="w-full h-40 object-cover"
+                      />
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                        <div className="w-12 h-12 rounded-full bg-red-600 flex items-center justify-center shadow-xl">
+                          <svg className="w-6 h-6 text-white ml-0.5" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M8 5v14l11-7z"/>
+                          </svg>
+                        </div>
+                      </div>
+                    </div>
+                  ) : null}
+                  <div className="p-4">
+                    <div className="flex items-center space-x-1.5 text-xs text-stone-400 mb-2">
+                      <Clock className="w-3 h-3" />
+                      <span>{formatDate(item.created_at)}</span>
+                    </div>
+                    <h3 className="font-bold text-base text-stone-900 leading-snug line-clamp-3">
+                      {item.title}
+                    </h3>
+                    {item.content && (
+                      <p className="text-xs text-stone-500 mt-2 line-clamp-2">
+                        {item.content}
+                      </p>
+                    )}
+                    <div className="flex items-center justify-end mt-2 text-amber-600">
+                      <span className="text-xs font-semibold">Batafsil</span>
+                      <ChevronRight className="w-4 h-4" />
+                    </div>
+                  </div>
+                </button>
+              ))}
             </div>
           )}
         </div>
@@ -311,57 +306,71 @@ const getYouTubeId = (url: string | null): string | null => {
     );
   }
 
-  // Экран категорий
-   return (
+  // === ГЛАВНЫЙ ЭКРАН — ВЫБОР КАТЕГОРИИ ===
+  return (
     <PullToRefresh onRefresh={loadNews}>
-    <div className="min-h-screen bg-linear-to-b from-stone-50 to-stone-100">
-      <div className="bg-white/95 backdrop-blur-lg border-b border-stone-200 sticky top-0 z-20 shadow-sm">
-        <div className="max-w-2xl mx-auto px-4 pt-6 pb-4 flex items-center space-x-3">
-          <button
-            onClick={onClose}
-            className="w-11 h-11 rounded-2xl bg-stone-100 hover:bg-amber-100 flex items-center justify-center transition-colors"
-          >
-            <ArrowLeft className="w-6 h-6 text-stone-700" />
-          </button>
-          <h1 className="font-bold text-2xl text-stone-900">📰 Yangiliklar</h1>
+      <div className="min-h-screen bg-white">
+        <div className="bg-white border-b border-stone-200 sticky top-0 z-20 shadow-sm">
+          <div className="max-w-2xl mx-auto px-4 pt-6 pb-4 flex items-center space-x-3">
+            <button
+              onClick={onClose}
+              className="w-11 h-11 rounded-2xl bg-stone-100 hover:bg-amber-100 flex items-center justify-center transition-colors"
+            >
+              <ArrowLeft className="w-6 h-6 text-stone-700" />
+            </button>
+            <h1 className="font-bold text-2xl text-stone-900">📰 Yangiliklar</h1>
+          </div>
+        </div>
+
+        <div className="max-w-2xl mx-auto px-4 py-6">
+          <div className="space-y-6">
+            {CATEGORIES.map((cat) => {
+              const count = news.filter(n => n.category === cat.id).length;
+              const badge = subBadges[cat.id] || 0;
+              return (
+                <button
+                  key={cat.id}
+                  onClick={() => {
+                    setSelectedCategory(cat.id);
+                    if (userId) {
+                      fetch(`${API_URL}/api/badge-sub/news/${cat.id}/seen`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ userId }),
+                      }).catch(() => {});
+                      setSubBadges(prev => ({ ...prev, [cat.id]: 0 }));
+                    }
+                  }}
+                  className="group relative w-full bg-white rounded-3xl pt-6 pb-4 px-6 flex flex-col items-center justify-center shadow-[0_4px_20px_rgba(0,0,0,0.08)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.12)] transition-all duration-300 active:scale-[0.98]"
+                >
+                  {badge > 0 && (
+                    <div className="absolute top-4 right-4 min-w-7 h-7 px-2 bg-rose-500 text-white text-sm font-bold rounded-full flex items-center justify-center shadow-lg">
+                      {badge > 99 ? '99+' : badge}
+                    </div>
+                  )}
+
+                  <img
+                    src={`/icons/${cat.id}.png`}
+                    alt={cat.label}
+                    className="w-32 h-32 object-contain mb-3 group-hover:scale-110 transition-transform duration-300"
+                  />
+
+                  <div className="text-xl font-bold text-stone-900 text-center leading-tight">
+                    {cat.label}
+                  </div>
+
+                  <div className="flex items-center gap-1 mt-2 text-sm text-stone-400">
+                    <ChevronRight className="w-3.5 h-3.5" />
+                    <span>{count} ta yangilik</span>
+                  </div>
+
+                  <div className={`mt-4 w-20 h-1 rounded-full bg-linear-to-r ${cat.line}`} />
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
-
-      <div className="max-w-2xl mx-auto px-4 py-6">
-        <div className="space-y-4">
-          {CATEGORIES.map((cat) => {
-            const count = news.filter(n => n.category === cat.id).length;
-            return (
-                            <button
-                key={cat.id}
-                onClick={() => {
-                  setSelectedCategory(cat.id);
-                  if (userId) {
-                    fetch(`${API_URL}/api/badge-sub/news/${cat.id}/seen`, {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ userId }),
-                    }).catch(() => {});
-                    setSubBadges(prev => ({ ...prev, [cat.id]: 0 }));
-                  }
-                }}
-                className={`relative w-full bg-linear-to-br ${cat.gradient} text-white rounded-3xl p-8 flex flex-col items-center justify-center shadow-xl hover:shadow-2xl transition-all duration-300 active:scale-95 min-h-50`}
-              >
-                {subBadges[cat.id] > 0 && (
-                  <div className="absolute top-4 right-4 min-w-7 h-7 px-2 bg-rose-500 text-white text-sm font-bold rounded-full flex items-center justify-center shadow-lg border-2 border-white">
-                    {subBadges[cat.id] > 99 ? '99+' : subBadges[cat.id]}
-                  </div>
-                )}
-                <div className="text-7xl mb-4">{cat.icon}</div>
-                <div className="font-bold text-xl text-white text-center leading-tight">
-                  {cat.label}
-                </div>
-               </button>
-            );
-          })}
-        </div>
-         </div>
-    </div>
     </PullToRefresh>
   );
 };

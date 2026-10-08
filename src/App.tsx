@@ -258,7 +258,7 @@ function App() {
       </h1>
     </div>
 
-    <div className="text-right text-[10px] font-bold space-y-1 shrink-0">
+    <div className="text-right text-[10px] font-extrabold space-y-1 shrink-0 drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">
       <div className="flex items-center justify-end gap-1">
         <Droplets className="w-3 h-3" />
         <span>{weather?.current?.relative_humidity_2m || 0}%</span>
@@ -286,18 +286,21 @@ function App() {
 
           return (
             <div key={i} className="flex flex-col items-center flex-1 min-w-0 text-white">
-              <span className="text-[10px] font-bold uppercase tracking-tight">
-                {dayName}
-              </span>
-              <span className="text-[9px] text-white/70">
-                {dayNum}.{monthNum}
-              </span>
-              <div className="my-1 scale-[0.55]">
-                {getWeatherIcon(code, 12)}
-              </div>
-              <span className="text-xs font-bold leading-none">
-                {maxTemp}°
-              </span>
+              <span className="text-[10px] font-extrabold uppercase tracking-tight drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">
+  {dayName}
+</span>
+<span className="text-[9px] text-white font-semibold drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">
+  {dayNum}.{monthNum}
+</span>
+<div className="my-1 scale-[0.55] drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">
+  {getWeatherIcon(code, 12)}
+</div>
+<span className="text-xs font-extrabold leading-none drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">
+  {maxTemp}°
+</span>
+<span className="text-[10px] text-white font-semibold leading-none mt-0.5 drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">
+  {minTemp}°
+</span>
               <span className="text-[10px] text-white/70 leading-none mt-0.5">
                 {minTemp}°
               </span>
@@ -366,7 +369,7 @@ function App() {
   </div>
 
      {/* Футер — внутри блока с фото */}
-  <div className="relative text-center py-4 text-[10px] text-white/50">
+  <div className="relative text-center py-4 text-[10px] text-white/80 font-semibold drop-shadow-md">
     © 2026 Bekobod Shahar Portali
   </div>
 </div>

@@ -21,12 +21,12 @@ interface EventItem {
 }
 
 const CATEGORIES = [
-  { id: 'madaniyat', label: 'Madaniyat', icon: '🎭', gradient: 'from-purple-500 to-indigo-600' },
-  { id: 'sport', label: 'Sport', icon: '⚽', gradient: 'from-emerald-500 to-green-600' },
-  { id: 'bayram', label: 'Bayramlar', icon: '🎪', gradient: 'from-pink-500 to-rose-600' },
-  { id: 'talim', label: "Ta'lim", icon: '📚', gradient: 'from-blue-500 to-cyan-600' },
-  { id: 'rasmiy', label: 'Rasmiy', icon: '🏛️', gradient: 'from-amber-500 to-orange-600' },
-  { id: 'bozor', label: 'Yarmarkalar', icon: '🛒', gradient: 'from-teal-500 to-emerald-600' },
+  { id: 'madaniyat', label: 'Madaniyat', icon: '🎭', iconFile: 'madaniyat', line: 'from-purple-400 to-indigo-500' },
+  { id: 'sport', label: 'Sport', icon: '⚽', iconFile: 'sport', line: 'from-emerald-400 to-green-500' },
+  { id: 'bayram', label: 'Bayramlar', icon: '🎪', iconFile: 'bayram', line: 'from-pink-400 to-rose-500' },
+  { id: 'talim', label: "Ta'lim", icon: '📚', iconFile: 'talim_event', line: 'from-blue-400 to-cyan-500' },
+  { id: 'rasmiy', label: 'Rasmiy', icon: '🏛️', iconFile: 'rasmiy', line: 'from-amber-400 to-orange-500' },
+  { id: 'bozor', label: 'Yarmarkalar', icon: '🛒', iconFile: 'bozor', line: 'from-teal-400 to-emerald-500' },
 ];
 
 export const EventsView: React.FC<EventsViewProps> = ({ onClose, userId }) => {
@@ -54,7 +54,6 @@ export const EventsView: React.FC<EventsViewProps> = ({ onClose, userId }) => {
     loadEvents();
   }, []);
 
-  // Загрузка бейджей подкатегорий
   useEffect(() => {
     if (!userId) return;
 
@@ -88,28 +87,31 @@ export const EventsView: React.FC<EventsViewProps> = ({ onClose, userId }) => {
     });
   };
 
-  // Экран списка событий категории
+  // === ЭКРАН СПИСКА СОБЫТИЙ КАТЕГОРИИ ===
   if (selectedCategory) {
     const catInfo = CATEGORIES.find(c => c.id === selectedCategory);
     const filteredEvents = events.filter(e => e.category === selectedCategory);
 
     return (
-      <div className="min-h-screen bg-linear-to-b from-stone-50 to-stone-100">
-        <div className={`bg-linear-to-br ${catInfo?.gradient} text-white sticky top-0 z-20 shadow-md`}>
+      <div className="min-h-screen bg-white">
+        <div className="bg-white border-b border-stone-200 sticky top-0 z-20 shadow-sm">
           <div className="max-w-2xl mx-auto px-4 pt-6 pb-4 flex items-center space-x-3">
             <button
               onClick={() => setSelectedCategory(null)}
-              className="w-11 h-11 rounded-2xl bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"
+              className="w-11 h-11 rounded-2xl bg-stone-100 hover:bg-amber-100 flex items-center justify-center transition-colors shrink-0"
             >
-              <ArrowLeft className="w-6 h-6 text-white" />
+              <ArrowLeft className="w-6 h-6 text-stone-700" />
             </button>
-            <div>
-              <h1 className="font-bold text-xl text-white">
-                {catInfo?.icon} {catInfo?.label}
-              </h1>
-              <p className="text-xs text-white/80">
-                {filteredEvents.length} ta tadbir
-              </p>
+            <div className="flex items-center gap-2">
+              <img
+                src={`/icons/${catInfo?.iconFile}.png`}
+                alt=""
+                className="w-8 h-8 object-contain"
+              />
+              <div>
+                <h1 className="font-bold text-lg text-stone-900">{catInfo?.label}</h1>
+                <p className="text-xs text-stone-400">{filteredEvents.length} ta tadbir</p>
+              </div>
             </div>
           </div>
         </div>
@@ -121,7 +123,11 @@ export const EventsView: React.FC<EventsViewProps> = ({ onClose, userId }) => {
             </div>
           ) : filteredEvents.length === 0 ? (
             <div className="text-center py-16 text-stone-400">
-              <div className="text-5xl mb-3">{catInfo?.icon}</div>
+              <img
+                src={`/icons/${catInfo?.iconFile}.png`}
+                alt=""
+                className="w-24 h-24 object-contain mx-auto mb-4 opacity-50"
+              />
               <p className="text-sm">Hozircha tadbirlar yo'q</p>
             </div>
           ) : (
@@ -179,11 +185,11 @@ export const EventsView: React.FC<EventsViewProps> = ({ onClose, userId }) => {
     );
   }
 
-  // Экран категорий
+  // === ГЛАВНЫЙ ЭКРАН — ВЫБОР КАТЕГОРИИ ===
   return (
     <PullToRefresh onRefresh={loadEvents}>
-      <div className="min-h-screen bg-linear-to-b from-stone-50 to-stone-100">
-        <div className="bg-white/95 backdrop-blur-lg border-b border-stone-200 sticky top-0 z-20 shadow-sm">
+      <div className="min-h-screen bg-white">
+        <div className="bg-white border-b border-stone-200 sticky top-0 z-20 shadow-sm">
           <div className="max-w-2xl mx-auto px-4 pt-6 pb-4 flex items-center space-x-3">
             <button
               onClick={onClose}
@@ -196,7 +202,7 @@ export const EventsView: React.FC<EventsViewProps> = ({ onClose, userId }) => {
         </div>
 
         <div className="max-w-2xl mx-auto px-4 py-6">
-          <div className="space-y-4">
+          <div className="space-y-6">
             {CATEGORIES.map((cat) => {
               const count = events.filter(e => e.category === cat.id).length;
               const badge = subBadges[cat.id] || 0;
@@ -214,20 +220,30 @@ export const EventsView: React.FC<EventsViewProps> = ({ onClose, userId }) => {
                       setSubBadges(prev => ({ ...prev, [cat.id]: 0 }));
                     }
                   }}
-                  className={`relative w-full bg-linear-to-br ${cat.gradient} text-white rounded-3xl p-8 flex flex-col items-center justify-center shadow-xl hover:shadow-2xl transition-all duration-300 active:scale-95 min-h-50`}
+                  className="group relative w-full bg-white rounded-3xl pt-6 pb-4 px-6 flex flex-col items-center justify-center shadow-[0_4px_20px_rgba(0,0,0,0.08)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.12)] transition-all duration-300 active:scale-[0.98]"
                 >
                   {badge > 0 && (
-                    <div className="absolute top-4 right-4 min-w-7 h-7 px-2 bg-rose-500 text-white text-sm font-bold rounded-full flex items-center justify-center shadow-lg border-2 border-white">
+                    <div className="absolute top-4 right-4 min-w-7 h-7 px-2 bg-rose-500 text-white text-sm font-bold rounded-full flex items-center justify-center shadow-lg">
                       {badge > 99 ? '99+' : badge}
                     </div>
                   )}
-                  <div className="text-7xl mb-4">{cat.icon}</div>
-                  <div className="font-bold text-xl text-white text-center leading-tight">
+
+                  <img
+                    src={`/icons/${cat.iconFile}.png`}
+                    alt={cat.label}
+                    className="w-32 h-32 object-contain mb-3 group-hover:scale-110 transition-transform duration-300"
+                  />
+
+                  <div className="text-xl font-bold text-stone-900 text-center leading-tight">
                     {cat.label}
                   </div>
-                  <div className="text-sm text-white/80 mt-2">
-                    {count} ta tadbir
+
+                  <div className="flex items-center gap-1 mt-2 text-sm text-stone-400">
+                    <Calendar className="w-3.5 h-3.5" />
+                    <span>{count} ta tadbir</span>
                   </div>
+
+                  <div className={`mt-4 w-20 h-1 rounded-full bg-linear-to-r ${cat.line}`} />
                 </button>
               );
             })}

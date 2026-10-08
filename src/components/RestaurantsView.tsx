@@ -335,14 +335,18 @@ export const RestaurantsView: React.FC<RestaurantsViewProps> = ({ onClose }) => 
                   <button
                     key={restaurant.id}
                     onClick={() => openRestaurant(restaurant)}
-                    className="w-full text-left bg-white rounded-3xl p-5 shadow-sm border border-stone-100 hover:shadow-lg transition-all active:scale-[0.98] space-y-3"
+                    className="w-full text-left bg-white rounded-3xl shadow-sm border border-stone-100 hover:shadow-lg transition-all active:scale-[0.98] flex flex-col"
+                    style={{ padding: '20px', gap: '12px' }}
                   >
-                    <div className="flex items-start justify-between">
-                      <h3 className="font-bold text-lg text-stone-900 leading-tight flex-1">
+                    <div className="flex items-start justify-between" style={{ gap: '12px' }}>
+                      <h3
+                        className="font-bold text-lg text-stone-900 leading-tight flex-1"
+                        style={{ wordBreak: 'break-word', minWidth: 0 }}
+                      >
                         {restaurant.name}
                       </h3>
                       {rating && rating.count > 0 && (
-                        <div className="flex items-center space-x-1 text-xs bg-amber-50 px-2 py-1 rounded-lg shrink-0 ml-2">
+                        <div className="flex items-center space-x-1 text-xs bg-amber-50 px-2 py-1 rounded-lg shrink-0">
                           <Star className="w-3.5 h-3.5 fill-amber-500 text-amber-500" />
                           <span className="font-bold text-stone-700">{rating.avg}</span>
                           <span className="text-stone-400">({rating.count})</span>

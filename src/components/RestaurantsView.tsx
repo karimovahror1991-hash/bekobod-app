@@ -327,60 +327,60 @@ export const RestaurantsView: React.FC<RestaurantsViewProps> = ({ onClose }) => 
               <div className="text-5xl mb-3">{catInfo?.icon}</div>
               <p className="text-sm">Bu bo'limda hozircha ma'lumot yo'q</p>
             </div>
-          ) : (
-            <div className="space-y-3">
-              {filteredRestaurants.map((restaurant) => {
-                const rating = ratings[restaurant.id];
-                return (
-                  <button
-                    key={restaurant.id}
-                    onClick={() => openRestaurant(restaurant)}
-                    className="w-full text-left bg-white rounded-3xl shadow-sm border border-stone-100 hover:shadow-lg transition-all active:scale-[0.98] flex flex-col"
-                    style={{ padding: '20px', gap: '12px' }}
-                  >
-                    <div className="flex items-start justify-between" style={{ gap: '12px' }}>
-                      <h3
-                        className="font-bold text-lg text-stone-900 leading-tight flex-1"
-                        style={{ wordBreak: 'break-word', minWidth: 0 }}
-                      >
-                        {restaurant.name}
-                      </h3>
-                      {rating && rating.count > 0 && (
-                        <div className="flex items-center space-x-1 text-xs bg-amber-50 px-2 py-1 rounded-lg shrink-0">
-                          <Star className="w-3.5 h-3.5 fill-amber-500 text-amber-500" />
-                          <span className="font-bold text-stone-700">{rating.avg}</span>
-                          <span className="text-stone-400">({rating.count})</span>
-                        </div>
-                      )}
-                    </div>
+      ) : (
+  <div className="space-y-2">
+    {filteredRestaurants.map((restaurant) => {
+      const rating = ratings[restaurant.id];
+      return (
+        <button
+          key={restaurant.id}
+          onClick={() => openRestaurant(restaurant)}
+          className="w-full text-left bg-white rounded-2xl shadow-sm border border-stone-100 hover:shadow-lg transition-all active:scale-[0.98] flex flex-col"
+          style={{ padding: '14px', gap: '8px' }}
+        >
+          <div className="flex items-start justify-between" style={{ gap: '8px' }}>
+            <h3
+              className="font-bold text-base text-stone-900 leading-tight flex-1"
+              style={{ wordBreak: 'break-word', minWidth: 0 }}
+            >
+              {restaurant.name}
+            </h3>
+            {rating && rating.count > 0 && (
+              <div className="flex items-center space-x-1 text-xs bg-amber-50 px-2 py-1 rounded-lg shrink-0">
+                <Star className="w-3.5 h-3.5 fill-amber-500 text-amber-500" />
+                <span className="font-bold text-stone-700">{rating.avg}</span>
+                <span className="text-stone-400">({rating.count})</span>
+              </div>
+            )}
+          </div>
 
-                    {restaurant.address && (
-                      <div className="flex items-start space-x-2 text-sm text-stone-600">
-                        <MapPin className="w-4 h-4 text-blue-500 mt-0.5 shrink-0" />
-                        <span>{restaurant.address}</span>
-                      </div>
-                    )}
-                    {restaurant.phone && (
-                      <div className="flex items-center space-x-2 text-sm text-stone-700">
-                        <Phone className="w-4 h-4 text-emerald-500 shrink-0" />
-                        <span className="font-semibold">{restaurant.phone}</span>
-                      </div>
-                    )}
-                    {restaurant.hours && (
-                      <div className="flex items-center space-x-2 text-sm text-stone-700">
-                        <Clock className="w-4 h-4 text-amber-500 shrink-0" />
-                        <span className="font-semibold">{restaurant.hours}</span>
-                      </div>
-                    )}
-
-                    <div className="text-right text-xs font-semibold text-amber-600 pt-1">
-                      Batafsil →
-                    </div>
-                  </button>
-                );
-              })}
+          {restaurant.address && (
+            <div className="flex items-start gap-1.5 text-xs text-stone-600">
+              <MapPin className="w-3.5 h-3.5 text-blue-500 mt-0.5 shrink-0" />
+              <span className="break-words">{restaurant.address}</span>
             </div>
           )}
+          {restaurant.phone && (
+            <div className="flex items-center gap-1.5 text-xs text-stone-700">
+              <Phone className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+              <span className="font-semibold break-all">{restaurant.phone}</span>
+            </div>
+          )}
+          {restaurant.hours && (
+            <div className="flex items-center gap-1.5 text-xs text-stone-700">
+              <Clock className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+              <span className="font-semibold">{restaurant.hours}</span>
+            </div>
+          )}
+
+          <div className="text-right text-[10px] font-semibold text-amber-600 pt-0.5">
+            Batafsil →
+          </div>
+        </button>
+      );
+    })}
+  </div>
+)}
         </div>
       </div>
     );

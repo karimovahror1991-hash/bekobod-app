@@ -309,59 +309,69 @@ function App() {
   )}
 </div>
 
-      {/* Разделы */}
-      <div className="flex-1 max-w-2xl w-full mx-auto px-4 py-6">
-        <h2 className="font-bold text-lg mb-4 flex items-center space-x-2">
-          <span>Bo'limlar</span>
-          <span className="text-xs font-normal text-stone-400">Bo'limlar / Разделы</span>
-        </h2>
+     {/* ===== РАЗДЕЛЫ на фоне города ===== */}
+<div className="relative flex-1">
+  {/* Фото города */}
+  <img
+    src="/bekobod-city.jpg"
+    alt="Bekobod"
+    className="absolute inset-0 w-full h-full object-cover"
+  />
 
-        <div className="grid grid-cols-2 gap-4">
-          {sections.map((section) => {
-            const Icon = section.icon;
-            const badgeCount = badges[section.id as keyof typeof badges] || 0;
-            return (
-              <button
-                key={section.id}
-                onClick={() => setActiveSection(section.id)}
-                className="group relative bg-white rounded-3xl p-6 flex flex-col items-center justify-center space-y-3 shadow-sm hover:shadow-xl transition-all duration-300 active:scale-95 border border-slate-100"
-              >
-                <div className="relative">
-                  {/* Glow — размытое цветное свечение за иконкой */}
-                  <div className={`absolute inset-0 rounded-full bg-linear-to-br ${section.gradient} blur-xl opacity-50`} />
+  {/* Затемнение — посветлее, чтобы фото было заметно */}
+  <div className="absolute inset-0 bg-linear-to-b from-slate-900/70 via-slate-900/60 to-slate-900/75" />
 
-                  {/* Иконка в круге */}
-                  <div className={`relative w-20 h-20 rounded-full bg-linear-to-br ${section.gradient} flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform duration-300`}>
-                    <Icon className="w-9 h-9" />
-                  </div>
+  {/* Контент разделов */}
+  <div className="relative max-w-2xl w-full mx-auto px-4 py-6">
+    <h2 className="font-bold text-lg mb-4 flex items-center space-x-2 text-white">
+      <span>Bo'limlar</span>
+      <span className="text-xs font-normal text-white/60">Bo'limlar / Разделы</span>
+    </h2>
 
-                  {badgeCount > 0 && (
-                    <div className="absolute -top-1 -right-1 min-w-6 h-6 px-1.5 bg-rose-500 text-white text-xs font-bold rounded-full flex items-center justify-center shadow-lg border-2 border-white">
-                      {badgeCount > 99 ? '99+' : badgeCount}
-                    </div>
-                  )}
+    <div className="grid grid-cols-2 gap-4">
+      {sections.map((section) => {
+        const Icon = section.icon;
+        const badgeCount = badges[section.id as keyof typeof badges] || 0;
+        return (
+          <button
+            key={section.id}
+            onClick={() => setActiveSection(section.id)}
+            className="group relative bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-3xl p-6 flex flex-col items-center justify-center space-y-3 border border-white/15 shadow-sm hover:shadow-xl transition-all duration-300 active:scale-95"
+          >
+            <div className="relative">
+              {/* Иконка в круге */}
+              <div className={`relative w-20 h-20 rounded-full bg-linear-to-br ${section.gradient} flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+                <Icon className="w-9 h-9" />
+              </div>
+
+              {badgeCount > 0 && (
+                <div className="absolute -top-1 -right-1 min-w-6 h-6 px-1.5 bg-rose-500 text-white text-xs font-bold rounded-full flex items-center justify-center shadow-lg border-2 border-white/30">
+                  {badgeCount > 99 ? '99+' : badgeCount}
                 </div>
+              )}
+            </div>
 
-                <div className="text-center">
-                  <div className="text-base font-bold text-slate-900 leading-tight">
-                    {section.titleUz}
-                  </div>
-                  <div className="text-xs text-slate-400 leading-tight mt-1">
-                    {section.titleRu}
-                  </div>
-                </div>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Футер */}
-      <div className="text-center py-6 text-[10px] text-stone-400">
-        © 2026 Bekobod Shahar Portali
-      </div>
+            <div className="text-center">
+              <div className="text-base font-bold text-white leading-tight">
+                {section.titleUz}
+              </div>
+              <div className="text-xs text-white/60 leading-tight mt-1">
+                {section.titleRu}
+              </div>
+            </div>
+          </button>
+        );
+      })}
     </div>
-  );
+  </div>
+
+     {/* Футер — внутри блока с фото */}
+  <div className="relative text-center py-4 text-[10px] text-white/50">
+    © 2026 Bekobod Shahar Portali
+  </div>
+</div>
+</div>
+);
 }
 
 export default App;

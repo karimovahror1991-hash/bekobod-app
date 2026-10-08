@@ -232,88 +232,90 @@ function App() {
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
-      {/* Погода */}
-      <div className="max-w-2xl w-full mx-auto px-4 pt-4">
-        <div className="bg-linear-to-br from-sky-400 to-blue-600 rounded-3xl p-4 shadow-xl text-white">
-          {weatherLoading ? (
-            <div className="text-center py-4 text-white text-sm">Yuklanmoqda...</div>
-          ) : weather ? (
-            <>
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center space-x-3 shrink-0">
-                  <div className="scale-110">
-                    {getWeatherIcon(weather.current?.weather_code || 0)}
-                  </div>
-                  <div>
-                    <div className="text-4xl font-bold leading-none drop-shadow-md">
-                      {Math.round(weather.current?.temperature_2m || 0)}°
-                    </div>
-                    <div className="text-sm font-bold text-white mt-1 whitespace-nowrap drop-shadow-md">
-                      ↑{Math.round(weather.daily?.temperature_2m_max?.[0] || 0)}° ↓
-                      {Math.round(weather.daily?.temperature_2m_min?.[0] || 0)}°
-                    </div>
-                  </div>
-                </div>
+      {/* ===== ШАПКА с логотипом и фото города ===== */}
+<div className="relative overflow-hidden">
+  {/* Фото города на фоне */}
+  <img
+    src="/bekobod-city.jpg"
+    alt="Bekobod"
+    className="absolute inset-0 w-full h-full object-cover"
+  />
 
-                <div className="text-center text-sm text-white font-bold leading-tight px-2 drop-shadow-md">
-                  <div>
-                    {new Date().toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' })}
-                  </div>
-                  <div className="text-xs text-white/90 mt-0.5">
-                    {['Yak', 'Dush', 'Sesh', 'Chor', 'Pay', 'Jum', 'Shan'][new Date().getDay()]}
-                  </div>
-                </div>
+  {/* Тёмно-синий градиент поверх фото */}
+  <div className="absolute inset-0 bg-linear-to-r from-slate-900/95 via-slate-900/80 to-slate-800/60" />
 
-                <div className="text-right text-sm text-white font-bold space-y-1 shrink-0 drop-shadow-md">
-                  <div className="flex items-center justify-end space-x-1.5">
-                    <Droplets className="w-4 h-4" />
-                    <span>{weather.current?.relative_humidity_2m || 0}%</span>
-                  </div>
-                  <div className="flex items-center justify-end space-x-1.5">
-                    <Wind className="w-4 h-4" />
-                    <span>{weather.current?.wind_speed_10m || 0} km/h</span>
-                  </div>
-                </div>
-              </div>
+  {/* Контент шапки */}
+  <div className="relative max-w-2xl mx-auto px-4 py-4 flex items-center gap-3 text-white">
+    {/* Логотип */}
+    <img
+      src="/logo.png"
+      alt="Logo"
+      className="w-12 h-12 rounded-2xl shadow-lg shrink-0 object-cover"
+    />
 
-              <div className="flex justify-between gap-0.5 pt-3 border-t border-white/30">
-                {weather.daily?.time?.slice(0, 7).map((dateStr: string, i: number) => {
-                  const date = new Date(dateStr);
-                  const UZ_DAYS = ['Yak', 'Dush', 'Sesh', 'Chor', 'Pay', 'Jum', 'Shan'];
-                  const dayName = UZ_DAYS[date.getDay()];
-                  const dayNum = String(date.getDate()).padStart(2, '0');
-                  const monthNum = String(date.getMonth() + 1).padStart(2, '0');
-                  const maxTemp = Math.round(weather.daily.temperature_2m_max[i]);
-                  const minTemp = Math.round(weather.daily.temperature_2m_min[i]);
-                  const code = weather.daily.weather_code[i];
+    {/* Название */}
+    <div className="flex-1 min-w-0">
+      <h1 className="font-bold text-base leading-tight">
+        Bekobod Shahar Portali
+      </h1>
+    </div>
 
-                  return (
-                    <div key={i} className="flex flex-col items-center flex-1 text-white">
-                      <span className="text-[10px] font-bold uppercase drop-shadow-md">
-                        {dayName}
-                      </span>
-                      <span className="text-[9px] text-white/80 drop-shadow-md">
-                        {dayNum}.{monthNum}
-                      </span>
-                      <div className="scale-[0.5] my-0.5">
-                        {getWeatherIcon(code, 12)}
-                      </div>
-                      <span className="text-xs font-bold drop-shadow-md">
-                        {maxTemp}°
-                      </span>
-                      <span className="text-[10px] text-white/70 drop-shadow-md">
-                        {minTemp}°
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-            </>
-          ) : (
-            <div className="text-center py-4 text-white text-sm">—</div>
-          )}
-        </div>
+    {/* Влажность + ветер */}
+    <div className="text-right text-[10px] font-bold space-y-1 shrink-0 drop-shadow-md">
+      <div className="flex items-center justify-end gap-1">
+        <Droplets className="w-3 h-3" />
+        <span>{weather?.current?.relative_humidity_2m || 0}%</span>
       </div>
+      <div className="flex items-center justify-end gap-1">
+        <Wind className="w-3 h-3" />
+        <span>{weather?.current?.wind_speed_10m || 0} km/h</span>
+      </div>
+    </div>
+  </div>
+
+  {/* ===== СИНЯЯ ПОЛОСА ПОГОДЫ (7 дней) ===== */}
+  {weather && (
+    <div className="relative bg-linear-to-r from-blue-500 via-blue-600 to-blue-500 text-white">
+      <div className="max-w-2xl mx-auto px-2 py-3 flex justify-between gap-0.5">
+        {weather.daily?.time?.slice(0, 7).map((dateStr: string, i: number) => {
+          const date = new Date(dateStr);
+          const UZ_DAYS = ['Yak', 'Dush', 'Sesh', 'Chor', 'Pay', 'Jum', 'Shan'];
+          const dayName = UZ_DAYS[date.getDay()];
+          const dayNum = String(date.getDate()).padStart(2, '0');
+          const monthNum = String(date.getMonth() + 1).padStart(2, '0');
+          const maxTemp = Math.round(weather.daily.temperature_2m_max[i]);
+          const minTemp = Math.round(weather.daily.temperature_2m_min[i]);
+          const code = weather.daily.weather_code[i];
+
+          return (
+            <div key={i} className="flex flex-col items-center flex-1 min-w-0">
+              {/* День недели */}
+              <span className="text-[10px] font-bold uppercase tracking-tight">
+                {dayName}
+              </span>
+              {/* Дата */}
+              <span className="text-[9px] text-white/70">
+                {dayNum}.{monthNum}
+              </span>
+              {/* Иконка погоды */}
+              <div className="my-1 scale-[0.55]">
+                {getWeatherIcon(code, 12)}
+              </div>
+              {/* Макс температура */}
+              <span className="text-xs font-bold leading-none">
+                {maxTemp}°
+              </span>
+              {/* Мин температура */}
+              <span className="text-[10px] text-white/70 leading-none mt-0.5">
+                {minTemp}°
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  )}
+</div>
 
       {/* Разделы */}
       <div className="flex-1 max-w-2xl w-full mx-auto px-4 py-6">

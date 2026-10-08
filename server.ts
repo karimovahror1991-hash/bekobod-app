@@ -169,9 +169,9 @@ async function broadcastAnnouncement(
   let sent = 0;
   let failed = 0;
 
-  // ⚡ Батчами по 25 — параллельно. Таймаут 5 сек на запрос.
-  const BATCH_SIZE = 25;
-  const TIMEOUT_MS = 5000;
+    // ⚡ Батчами по 5 — параллельно (Telegram лимит ~30/сек, 5 безопаснее)
+  const BATCH_SIZE = 5;
+  const TIMEOUT_MS = 10000;
 
   // Отправить одному юзеру (с таймаутом)
   const sendToUser = async (userId: number): Promise<boolean> => {
@@ -566,16 +566,22 @@ app.post('/api/badge-sub/:section/:sub/seen', async (req, res) => {
 // ============ TELEGRAM WEBHOOK ============
 app.post('/api/telegram-webhook', async (req, res) => {
   try {
-    
-        // Проверка секрета от Telegram
     const secret = req.headers['x-telegram-bot-api-secret-token'];
     if (secret !== process.env.TELEGRAM_WEBHOOK_SECRET) {
       console.warn('❌ Webhook: неверный секрет');
       return res.sendStatus(403);
     }
-        const { message, callback_query } = req.body;
-        // ============ ОБРАБОТКА CALLBACK-КНОПОК ============
-if (callback_query) {
+
+    const { message, callback_query } = req.body || {};
+
+    // 🛡 ЗАЩИТА от пустых update (edited_message, channel_post и т.д.)
+    if (!message && !callback_query) {
+      return res.sendStatus(200);
+    }
+
+    // ============ ОБРАБОТКА CALLBACK-КНОПОК ============
+    if (callback_query) {
+      // ...
   try {
     const data = callback_query.data || '';
     const userId = callback_query.from.id;
@@ -3208,6 +3214,7 @@ const message =
 `🌤 Asr: ${prayerWithJamaat(prayerAsr, prayerAsrJ)}\n` +
 `🌆 Shom: ${prayerWithJamaat(prayerMaghrib, prayerMaghribJ)}\n` +
 `🌙 Xufton: ${prayerWithJamaat(prayerIsha, prayerIshaJ)}`;
+
 
     // === 4. Рассылка ===
     const botToken = process.env.TELEGRAM_BOT_TOKEN;

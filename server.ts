@@ -2354,15 +2354,17 @@ app.get('/api/services/list', async (req, res) => {
   }
 });
 
+// ✅ Оценить мастера (с проверкой initData)
 app.post('/api/services/rate', async (req, res) => {
   try {
-    const { providerId, rating, userId } = req.body;
+    const { providerId, rating } = req.body;
     if (!providerId || !rating || rating < 1 || rating > 5) {
       return res.status(400).json({ error: 'Неверная оценка' });
     }
-    if (!userId) {
-      return res.status(400).json({ error: 'Avval Telegram orqali kiring' });
-    }
+
+    // ✅ Проверяем initData и получаем userId
+    const userId = await requireUserId(req, res);
+    if (!userId) return;
 
     const existing = await pool.query(
       'SELECT id FROM service_ratings WHERE provider_id = $1 AND user_id = $2',
@@ -2615,15 +2617,17 @@ app.post('/api/restaurants/create', async (req, res) => {
   }
 });
 // Оценить ресторан (только один раз)
+// ✅ Оценить ресторан (с проверкой initData)
 app.post('/api/restaurants/rate', async (req, res) => {
   try {
-    const { restaurantId, rating, userId } = req.body;
+    const { restaurantId, rating } = req.body;
     if (!restaurantId || !rating || rating < 1 || rating > 5) {
       return res.status(400).json({ error: 'Неверная оценка' });
     }
-    if (!userId) {
-      return res.status(400).json({ error: 'Avval Telegram orqali kiring' });
-    }
+
+    // ✅ Проверяем initData и получаем userId
+    const userId = await requireUserId(req, res);
+    if (!userId) return;
 
     // Проверка: уже оценивал?
     const existing = await pool.query(

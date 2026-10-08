@@ -51,6 +51,11 @@ export const RestaurantsView: React.FC<RestaurantsViewProps> = ({ onClose }) => 
   const [fullscreenIndex, setFullscreenIndex] = useState(0);
 
   const API_URL = 'https://bekobod-app-1.onrender.com';
+  // ✅ Получить initData из Telegram
+const getInitData = (): string => {
+  const tg = (window as any).Telegram?.WebApp;
+  return tg?.initData || '';
+};
 
   const loadRestaurants = async () => {
     try {
@@ -107,13 +112,13 @@ export const RestaurantsView: React.FC<RestaurantsViewProps> = ({ onClose }) => 
   };
 
   const handleRate = async (rating: number) => {
-    if (!showRatingModal) return;
-    try {
-      const res = await fetch(`${API_URL}/api/restaurants/rate`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ restaurantId: showRatingModal.id, rating, userId }),
-      });
+  if (!showRatingModal) return;
+  try {
+    const res = await fetch(`${API_URL}/api/restaurants/rate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ restaurantId: showRatingModal.id, rating, initData: getInitData() }),
+    });
       const data = await res.json();
       if (data.error) {
         alert(data.error);

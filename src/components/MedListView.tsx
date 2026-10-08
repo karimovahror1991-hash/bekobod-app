@@ -50,7 +50,7 @@ export const MedListView: React.FC<MedListViewProps> = ({ onClose, type }) => {
 
    return (
     <PullToRefresh onRefresh={loadItems}>
-    <div className="min-h-screen bg-linear-to-b from-stone-50 to-stone-100">
+    <div className="min-h-screen bg-white">
       <div className={`bg-linear-to-br ${info.gradient} text-white sticky top-0 z-20 shadow-md`}>
         <div className="max-w-2xl mx-auto px-4 pt-6 pb-4 flex items-center space-x-3">
           <button

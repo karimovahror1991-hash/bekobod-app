@@ -352,10 +352,34 @@ const strictLimiter = rateLimit({
 });
 
 app.use('/api', globalLimiter);
+// ✅ CORS — белый список разрешённых источников
+const ALLOWED_ORIGINS = [
+  'https://bekobod-app-1.onrender.com',   // наш домен
+  'https://web.telegram.org',             // Telegram Web
+  'https://webk.telegram.org',            // Telegram Web K
+  'https://webz.telegram.org',            // Telegram Web Z
+  // Мобильные Telegram-клиенты НЕ шлют Origin — они проходят через fallback ниже
+];
+
 app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
+  const origin = req.headers.origin;
+
+  // Если Origin в белом списке — пропускаем
+  if (origin && ALLOWED_ORIGINS.includes(origin)) {
+    res.header('Access-Control-Allow-Origin', origin);
+    res.header('Vary', 'Origin');
+  }
+  // Если Origin НЕТ (мобильные Telegram, curl, серверные запросы) — пропускаем
+  else if (!origin) {
+    res.header('Access-Control-Allow-Origin', '*');
+  }
+  // Если Origin чужой — НЕ добавляем заголовок
+  // Браузер сам заблокирует запрос
+
   res.header('Access-Control-Allow-Headers', 'Content-Type');
   res.header('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+  res.header('Access-Control-Allow-Credentials', 'true');
+
   if (req.method === 'OPTIONS') return res.sendStatus(204);
   next();
 });

@@ -19,9 +19,8 @@ import {
   Briefcase,
   UtensilsCrossed,
   Phone,
-  Mail,
   Heart,
-   ShoppingBag,
+  ShoppingBag,
   Gamepad2,
   Handshake,
   Store
@@ -29,7 +28,7 @@ import {
 import { EmergencyView } from './components/EmergencyView';
 import { TransportView } from './components/TransportView';
 import { ServicesView } from './components/ServicesView';
-import { AdminView } from './components/AdminView';
+
 
 interface Section {
   id: string;
@@ -44,7 +43,6 @@ const sections: Section[] = [
   { id: 'ibodat', titleUz: 'Ibodat', titleRu: 'Поклонение', icon: Moon, gradient: 'from-emerald-500 to-teal-600' },
   { id: 'events', titleUz: 'Tadbirlar', titleRu: 'События', icon: PartyPopper, gradient: 'from-pink-500 to-rose-500' },
   { id: 'transport', titleUz: 'Transport', titleRu: 'Транспорт', icon: Bus, gradient: 'from-emerald-500 to-green-600' },
-  { id: 'admin', titleUz: 'Administrator', titleRu: 'Администратор', icon: Mail, gradient: 'from-indigo-500 to-violet-600' },
   { id: 'tibbiyot', titleUz: 'Tibbiyot', titleRu: 'Медицина', icon: Heart, gradient: 'from-rose-500 to-red-600' },
   { id: 'services', titleUz: "Xizmat ko'rsatish", titleRu: 'Услуги', icon: Wrench, gradient: 'from-cyan-500 to-teal-600' },
   { id: 'jobs', titleUz: 'Vakansiya', titleRu: 'Вакансии', icon: Briefcase, gradient: 'from-violet-500 to-purple-600' },
@@ -211,10 +209,7 @@ function App() {
   if (activeSection === 'transport') {
     return <TransportView onClose={() => setActiveSection(null)} />;
   }
-  if (activeSection === 'admin') {
-    return <AdminView onClose={() => setActiveSection(null)} userId={userId} />;
-  }
-    if (activeSection === 'jobs') {
+      if (activeSection === 'jobs') {
     return <JobsView onClose={() => setActiveSection(null)} userId={userId} />;
   }
   

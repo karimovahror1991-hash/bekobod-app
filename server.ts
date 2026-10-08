@@ -2399,11 +2399,22 @@ app.get('/api/services/rating/:providerId', async (req, res) => {
 });
 
 // ============ ADMIN MESSAGES ============
+// ✅ Отправить сообщение админу (с проверкой initData)
 app.post('/api/admin/message', async (req, res) => {
   try {
-    const { userId, userName, message } = req.body;
-    if (!userId || !message || !message.trim()) return res.status(400).json({ error: 'Сообщение не может быть пустым' });
-    const result = await pool.query('INSERT INTO admin_messages (user_id, user_name, message) VALUES ($1, $2, $3) RETURNING *', [userId, userName || null, message.trim()]);
+    const { userName, message } = req.body;
+    if (!message || !message.trim()) {
+      return res.status(400).json({ error: 'Сообщение не может быть пустым' });
+    }
+
+    // ✅ Проверяем initData и получаем userId
+    const userId = await requireUserId(req, res);
+    if (!userId) return;
+
+    const result = await pool.query(
+      'INSERT INTO admin_messages (user_id, user_name, message) VALUES ($1, $2, $3) RETURNING *',
+      [userId, userName || null, message.trim()]
+    );
     res.json({ message: result.rows[0] });
   } catch (error: any) {
     console.error('Admin message error:', error);
@@ -2411,6 +2422,7 @@ app.post('/api/admin/message', async (req, res) => {
   }
 });
 
+// Мои сообщения (публичный — без изменений)
 app.get('/api/admin/my-messages', async (req, res) => {
   try {
     const { userId } = req.query;
@@ -2423,6 +2435,7 @@ app.get('/api/admin/my-messages', async (req, res) => {
   }
 });
 
+// Все сообщения (только админ — без изменений)
 app.get('/api/admin/all-messages', async (req, res) => {
   try {
     const { adminId } = req.query;
@@ -2435,6 +2448,7 @@ app.get('/api/admin/all-messages', async (req, res) => {
   }
 });
 
+// Ответ админа (только админ — без изменений)
 app.post('/api/admin/reply', async (req, res) => {
   try {
     const { adminId, messageId, reply } = req.body;

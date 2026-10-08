@@ -193,45 +193,52 @@ export const ShopsView: React.FC<ShopsViewProps> = ({ onClose }) => {
                 <div className="text-5xl mb-3">{catInfo?.icon}</div>
                 <p className="text-sm">Hozircha ma'lumot yo'q</p>
               </div>
-            ) : (
-              filteredShops.map((shop) => (
-                <button
-                  key={shop.id}
-                  onClick={() => openShop(shop)}
-                  className="w-full bg-white rounded-3xl p-5 shadow-sm border border-stone-100 hover:shadow-lg transition-all text-left active:scale-[0.98] space-y-3"
-                >
-                  <h3 className="font-bold text-lg text-stone-900">{shop.name}</h3>
+              ) : (
+              <div className="space-y-2">
+                {filteredShops.map((shop) => (
+                  <button
+                    key={shop.id}
+                    onClick={() => openShop(shop)}
+                    className="w-full bg-white rounded-3xl shadow-sm border border-stone-100 hover:shadow-lg transition-all text-left active:scale-[0.98] flex flex-col"
+                    style={{ padding: '12px 16px', gap: '4px' }}
+                  >
+                    <h3 className="font-bold text-lg text-stone-900 leading-tight">
+                      {shop.name}
+                    </h3>
 
-                  {shop.description && (
-                    <p className="text-sm text-stone-600 line-clamp-2">{shop.description}</p>
-                  )}
+                    {shop.description && (
+                      <p className="text-sm text-stone-600 line-clamp-2 leading-tight">
+                        {shop.description}
+                      </p>
+                    )}
 
-                  {shop.address && (
-                    <div className="flex items-start space-x-2 text-sm text-stone-600">
-                      <MapPin className="w-4 h-4 mt-0.5 shrink-0 text-blue-500" />
-                      <span>{shop.address}</span>
+                    {shop.address && (
+                      <div className="flex items-center gap-2 text-sm text-stone-600 leading-tight">
+                        <MapPin className="w-4 h-4 shrink-0 text-blue-500" />
+                        <span className="break-words">{shop.address}</span>
+                      </div>
+                    )}
+
+                    {shop.phone && (
+                      <div className="flex items-center gap-2 text-sm text-stone-700 leading-tight">
+                        <Phone className="w-4 h-4 shrink-0 text-emerald-500" />
+                        <span className="font-semibold break-all">{shop.phone}</span>
+                      </div>
+                    )}
+
+                    {shop.hours && (
+                      <div className="flex items-center gap-2 text-sm text-stone-700 leading-tight">
+                        <Clock className="w-4 h-4 shrink-0 text-amber-500" />
+                        <span className="font-semibold">{shop.hours}</span>
+                      </div>
+                    )}
+
+                    <div className="text-right text-xs font-semibold text-amber-600 mt-1">
+                      Batafsil →
                     </div>
-                  )}
-
-                  {shop.phone && (
-                    <div className="flex items-center space-x-2 text-sm text-stone-700">
-                      <Phone className="w-4 h-4 shrink-0 text-emerald-500" />
-                      <span className="font-semibold">{shop.phone}</span>
-                    </div>
-                  )}
-
-                  {shop.hours && (
-                    <div className="flex items-center space-x-2 text-sm text-stone-700">
-                      <Clock className="w-4 h-4 shrink-0 text-amber-500" />
-                      <span className="font-semibold">{shop.hours}</span>
-                    </div>
-                  )}
-
-                  <div className="text-right text-xs font-semibold text-amber-600 pt-1">
-                    Batafsil →
-                  </div>
-                </button>
-              ))
+                  </button>
+                ))}
+              </div>
             )}
           </div>
         </div>

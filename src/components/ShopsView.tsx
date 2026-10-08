@@ -1,6 +1,6 @@
+import { PullToRefresh } from './PullToRefresh';
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Loader2, Phone, MapPin, Clock } from 'lucide-react';
-import { PullToRefresh } from './PullToRefresh';
 
 interface ShopsViewProps {
   onClose: () => void;
@@ -19,17 +19,17 @@ interface Shop {
 }
 
 const CATEGORIES = [
-  { id: 'oziq-ovqat', label: "Oziq-ovqat do'konlari", icon: '🛒', gradient: 'from-emerald-500 to-green-600' },
-  { id: 'kiyim', label: 'Kiyim-kechak', icon: '👕', gradient: 'from-violet-500 to-purple-600' },
-  { id: 'maishiy_texnika', label: 'Maishiy texnika va mobil operatorlar', icon: '🔌', gradient: 'from-blue-500 to-indigo-600' },
-  { id: 'gozallik', label: "Go'zallik va sartaroshxona", icon: '💇', gradient: 'from-pink-500 to-rose-600' },
-  { id: 'qurilish', label: 'Qurilish mollari', icon: '🏗️', gradient: 'from-amber-500 to-orange-600' },
-  { id: 'sugurta', label: "Sug'urta", icon: '🛡️', gradient: 'from-cyan-500 to-blue-600' },
-  { id: 'avto', label: 'Avto xizmatlar', icon: '🔧', gradient: 'from-stone-500 to-stone-700' },
-  { id: 'oquv_markazi', label: "O'quv markazi", icon: '🎓', gradient: 'from-teal-500 to-emerald-600' },
-  { id: 'bolalar_oyingohi', label: "Bolalar o'yingohi", icon: '🎪', gradient: 'from-yellow-500 to-orange-600' },
-  { id: 'toyxonalar', label: "To'yxonalar va tantanalar", icon: '🏛️', gradient: 'from-rose-500 to-pink-600' },
-  { id: 'tur_aviakassa', label: 'Tur agentliklari va Aviakassalar', icon: '✈️', gradient: 'from-sky-500 to-blue-600' },
+  { id: 'oziq_ovqat', label: "Oziq-ovqat do'konlari", icon: '🛒', line: 'from-emerald-400 to-green-500' },
+  { id: 'kiyim', label: 'Kiyim-kechak', icon: '👕', line: 'from-violet-400 to-purple-500' },
+  { id: 'maishiy_texnika', label: 'Maishiy texnika', icon: '🔌', line: 'from-blue-400 to-indigo-500' },
+  { id: 'gozallik', label: "Go'zallik va sartaroshxona", icon: '💇', line: 'from-pink-400 to-rose-500' },
+  { id: 'qurilish', label: 'Qurilish mollari', icon: '🏗️', line: 'from-amber-400 to-orange-500' },
+  { id: 'sugurta', label: "Sug'urta", icon: '🛡️', line: 'from-cyan-400 to-blue-500' },
+  { id: 'avto', label: 'Avto xizmatlar', icon: '🔧', line: 'from-stone-400 to-stone-600' },
+  { id: 'oquv_markazi', label: "O'quv markazi", icon: '🎓', line: 'from-teal-400 to-emerald-500' },
+  { id: 'bolalar_oyingohi', label: "Bolalar o'yingohi", icon: '🎪', line: 'from-yellow-400 to-orange-500' },
+  { id: 'toyxonalar', label: "To'yxonalar va tantanalar", icon: '🏛️', line: 'from-rose-400 to-pink-500' },
+  { id: 'tur_aviakassa', label: 'Tur agentliklari', icon: '✈️', line: 'from-sky-400 to-blue-500' },
 ];
 
 export const ShopsView: React.FC<ShopsViewProps> = ({ onClose }) => {
@@ -82,13 +82,13 @@ export const ShopsView: React.FC<ShopsViewProps> = ({ onClose }) => {
     ? shops.filter(s => s.category === selectedCategory)
     : [];
 
-  // === ЭКРАН МАГАЗИНА (с фото, загруженным при клике) ===
+  // === ЭКРАН МАГАЗИНА ===
   if (selectedShop) {
     const shop = selectedShop;
 
     return (
-      <div className="min-h-screen bg-linear-to-b from-stone-50 to-stone-100">
-        <div className="bg-white/95 backdrop-blur-lg border-b border-stone-200 sticky top-0 z-20 shadow-sm">
+      <div className="min-h-screen bg-white">
+        <div className="bg-white border-b border-stone-200 sticky top-0 z-20 shadow-sm">
           <div className="max-w-2xl mx-auto px-4 pt-6 pb-4 flex items-center space-x-3">
             <button
               onClick={() => {
@@ -106,7 +106,7 @@ export const ShopsView: React.FC<ShopsViewProps> = ({ onClose }) => {
         </div>
 
         <div className="max-w-2xl mx-auto px-4 py-6 space-y-4">
-          {/* Фото — грузится при клике */}
+          {/* Фото */}
           {photoLoading ? (
             <div className="flex justify-center py-12">
               <Loader2 className="w-6 h-6 animate-spin text-amber-600" />
@@ -160,25 +160,26 @@ export const ShopsView: React.FC<ShopsViewProps> = ({ onClose }) => {
     );
   }
 
-  // === ЭКРАН СПИСКА (быстро — без фото) ===
+  // === ЭКРАН СПИСКА МАГАЗИНОВ КАТЕГОРИИ ===
   if (selectedCategory) {
     const catInfo = CATEGORIES.find(c => c.id === selectedCategory);
     return (
       <PullToRefresh onRefresh={loadShops}>
-        <div className="min-h-screen bg-linear-to-b from-stone-50 to-stone-100">
-          <div className={`bg-linear-to-br ${catInfo?.gradient} text-white sticky top-0 z-20 shadow-md`}>
+        <div className="min-h-screen bg-white">
+          <div className="bg-white border-b border-stone-200 sticky top-0 z-20 shadow-sm">
             <div className="max-w-2xl mx-auto px-4 pt-6 pb-4 flex items-center space-x-3">
               <button
                 onClick={() => setSelectedCategory(null)}
-                className="w-11 h-11 rounded-2xl bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors shrink-0"
+                className="w-11 h-11 rounded-2xl bg-stone-100 hover:bg-amber-100 flex items-center justify-center transition-colors shrink-0"
               >
-                <ArrowLeft className="w-6 h-6 text-white" />
+                <ArrowLeft className="w-6 h-6 text-stone-700" />
               </button>
-              <div>
-                <h1 className="font-bold text-xl text-white">
-                  {catInfo?.icon} {catInfo?.label}
-                </h1>
-                <p className="text-xs text-white/80">{filteredShops.length} ta</p>
+              <div className="flex items-center gap-2">
+                <img src={`/icons/${catInfo?.id}.png`} alt="" className="w-8 h-8 object-contain" />
+                <div>
+                  <h1 className="font-bold text-lg text-stone-900">{catInfo?.label}</h1>
+                  <p className="text-xs text-stone-400">{filteredShops.length} ta</p>
+                </div>
               </div>
             </div>
           </div>
@@ -190,55 +191,53 @@ export const ShopsView: React.FC<ShopsViewProps> = ({ onClose }) => {
               </div>
             ) : filteredShops.length === 0 ? (
               <div className="text-center py-16 text-stone-400">
-                <div className="text-5xl mb-3">{catInfo?.icon}</div>
+                <img src={`/icons/${catInfo?.id}.png`} alt="" className="w-24 h-24 object-contain mx-auto mb-4 opacity-50" />
                 <p className="text-sm">Hozircha ma'lumot yo'q</p>
               </div>
-              ) : (
-              <div className="space-y-2">
-                {filteredShops.map((shop) => (
-                  <button
-                    key={shop.id}
-                    onClick={() => openShop(shop)}
-                    className="w-full bg-white rounded-3xl shadow-sm border border-stone-100 hover:shadow-lg transition-all text-left active:scale-[0.98] flex flex-col"
-                    style={{ padding: '12px 16px', gap: '4px' }}
-                  >
-                    <h3 className="font-bold text-lg text-stone-900 leading-tight">
-                      {shop.name}
-                    </h3>
+            ) : (
+              filteredShops.map((shop) => (
+                <button
+                  key={shop.id}
+                  onClick={() => openShop(shop)}
+                  className="w-full bg-white rounded-3xl shadow-sm border border-stone-100 hover:shadow-lg transition-all text-left active:scale-[0.98] flex flex-col"
+                  style={{ padding: '12px 16px', gap: '4px' }}
+                >
+                  <h3 className="font-bold text-base text-stone-900 leading-tight">
+                    {shop.name}
+                  </h3>
 
-                    {shop.description && (
-                      <p className="text-sm text-stone-600 line-clamp-2 leading-tight">
-                        {shop.description}
-                      </p>
-                    )}
+                  {shop.description && (
+                    <p className="text-xs text-stone-600 line-clamp-2 leading-tight">
+                      {shop.description}
+                    </p>
+                  )}
 
-                    {shop.address && (
-                      <div className="flex items-center gap-2 text-sm text-stone-600 leading-tight">
-                        <MapPin className="w-4 h-4 shrink-0 text-blue-500" />
-                        <span className="break-words">{shop.address}</span>
-                      </div>
-                    )}
-
-                    {shop.phone && (
-                      <div className="flex items-center gap-2 text-sm text-stone-700 leading-tight">
-                        <Phone className="w-4 h-4 shrink-0 text-emerald-500" />
-                        <span className="font-semibold break-all">{shop.phone}</span>
-                      </div>
-                    )}
-
-                    {shop.hours && (
-                      <div className="flex items-center gap-2 text-sm text-stone-700 leading-tight">
-                        <Clock className="w-4 h-4 shrink-0 text-amber-500" />
-                        <span className="font-semibold">{shop.hours}</span>
-                      </div>
-                    )}
-
-                    <div className="text-right text-xs font-semibold text-amber-600 mt-1">
-                      Batafsil →
+                  {shop.address && (
+                    <div className="flex items-center gap-1.5 text-xs text-stone-600 leading-tight">
+                      <MapPin className="w-3.5 h-3.5 shrink-0 text-blue-500" />
+                      <span className="break-words">{shop.address}</span>
                     </div>
-                  </button>
-                ))}
-              </div>
+                  )}
+
+                  {shop.phone && (
+                    <div className="flex items-center gap-1.5 text-xs text-stone-700 leading-tight">
+                      <Phone className="w-3.5 h-3.5 shrink-0 text-emerald-500" />
+                      <span className="font-semibold break-all">{shop.phone}</span>
+                    </div>
+                  )}
+
+                  {shop.hours && (
+                    <div className="flex items-center gap-1.5 text-xs text-stone-700 leading-tight">
+                      <Clock className="w-3.5 h-3.5 shrink-0 text-amber-500" />
+                      <span className="font-semibold">{shop.hours}</span>
+                    </div>
+                  )}
+
+                  <div className="text-right text-[10px] font-semibold text-amber-600 pt-0.5">
+                    Batafsil →
+                  </div>
+                </button>
+              ))
             )}
           </div>
         </div>
@@ -246,11 +245,12 @@ export const ShopsView: React.FC<ShopsViewProps> = ({ onClose }) => {
     );
   }
 
-  // === ЭКРАН КАТЕГОРИЙ ===
+  // === ГЛАВНЫЙ ЭКРАН — ВЫБОР КАТЕГОРИИ ===
   return (
     <PullToRefresh onRefresh={loadShops}>
-      <div className="min-h-screen bg-linear-to-b from-stone-50 to-stone-100">
-        <div className="bg-white/95 backdrop-blur-lg border-b border-stone-200 sticky top-0 z-20 shadow-sm">
+      <div className="min-h-screen bg-white">
+        {/* Заголовок */}
+        <div className="bg-white border-b border-stone-200 sticky top-0 z-20 shadow-sm">
           <div className="max-w-2xl mx-auto px-4 pt-6 pb-4 flex items-center space-x-3">
             <button
               onClick={onClose}
@@ -262,21 +262,37 @@ export const ShopsView: React.FC<ShopsViewProps> = ({ onClose }) => {
           </div>
         </div>
 
+        {/* Список категорий — крупные карточки */}
         <div className="max-w-2xl mx-auto px-4 py-6">
-          <div className="space-y-4">
+          <div className="space-y-6">
             {CATEGORIES.map((cat) => {
               const count = shops.filter(s => s.category === cat.id).length;
               return (
                 <button
                   key={cat.id}
                   onClick={() => setSelectedCategory(cat.id)}
-                  className={`w-full bg-linear-to-br ${cat.gradient} text-white rounded-3xl p-8 flex flex-col items-center justify-center shadow-xl hover:shadow-2xl transition-all duration-300 active:scale-95 min-h-50`}
+                  className="group w-full bg-white rounded-3xl pt-6 pb-4 px-6 flex flex-col items-center justify-center shadow-[0_4px_20px_rgba(0,0,0,0.08)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.12)] transition-all duration-300 active:scale-[0.98]"
                 >
-                  <div className="text-7xl mb-4">{cat.icon}</div>
-                  <div className="font-bold text-xl text-white text-center leading-tight">
+                  {/* Иконка */}
+                  <img
+                    src={`/icons/${cat.id}.png`}
+                    alt={cat.label}
+                    className="w-32 h-32 object-contain mb-3 group-hover:scale-110 transition-transform duration-300"
+                  />
+
+                  {/* Название */}
+                  <div className="text-xl font-bold text-stone-900 text-center leading-tight">
                     {cat.label}
                   </div>
-                  <div className="text-sm text-white/80 mt-2">{count} ta</div>
+
+                  {/* Подпись с количеством */}
+                  <div className="flex items-center gap-1 mt-2 text-sm text-stone-400">
+                    <MapPin className="w-3.5 h-3.5" />
+                    <span>{count} ta</span>
+                  </div>
+
+                  {/* Градиентная полоска */}
+                  <div className={`mt-4 w-20 h-1 rounded-full bg-linear-to-r ${cat.line}`} />
                 </button>
               );
             })}

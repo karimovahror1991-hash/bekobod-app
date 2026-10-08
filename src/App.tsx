@@ -1,15 +1,4 @@
-import { CommentsView } from './components/CommentsView';
-import { ShopsView } from './components/ShopsView';
-import { DonateView } from './components/DonateView';
-import { MiniOyinlarView } from './components/MiniOyinlarView';
-import { OldiSotdiView } from './components/OldiSotdiView';
-import { TibbiyotView } from './components/TibbiyotView';
-import { IbodatView } from './components/IbodatView';
-import { EventsView } from './components/EventsView';
-import { NewsView } from './components/NewsView';
-import { RestaurantsView } from './components/RestaurantsView';
-import { JobsView } from './components/JobsView';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, lazy, Suspense } from 'react';
 import { Cloud, Sun, CloudRain, Snowflake, Wind, Droplets, Moon } from 'lucide-react';
 import {
   Newspaper,
@@ -25,9 +14,37 @@ import {
   Handshake,
   Store
 } from 'lucide-react';
-import { EmergencyView } from './components/EmergencyView';
-import { TransportView } from './components/TransportView';
-import { ServicesView } from './components/ServicesView';
+
+// ✅ Ленивая загрузка — грузим компонент только при открытии раздела
+const CommentsView = lazy(() => import('./components/CommentsView').then(m => ({ default: m.CommentsView })));
+const ShopsView = lazy(() => import('./components/ShopsView').then(m => ({ default: m.ShopsView })));
+const DonateView = lazy(() => import('./components/DonateView').then(m => ({ default: m.DonateView })));
+const MiniOyinlarView = lazy(() => import('./components/MiniOyinlarView').then(m => ({ default: m.MiniOyinlarView })));
+const OldiSotdiView = lazy(() => import('./components/OldiSotdiView').then(m => ({ default: m.OldiSotdiView })));
+const TibbiyotView = lazy(() => import('./components/TibbiyotView').then(m => ({ default: m.TibbiyotView })));
+const IbodatView = lazy(() => import('./components/IbodatView').then(m => ({ default: m.IbodatView })));
+const EventsView = lazy(() => import('./components/EventsView').then(m => ({ default: m.EventsView })));
+const NewsView = lazy(() => import('./components/NewsView').then(m => ({ default: m.NewsView })));
+const RestaurantsView = lazy(() => import('./components/RestaurantsView').then(m => ({ default: m.RestaurantsView })));
+const JobsView = lazy(() => import('./components/JobsView').then(m => ({ default: m.JobsView })));
+const EmergencyView = lazy(() => import('./components/EmergencyView').then(m => ({ default: m.EmergencyView })));
+const TransportView = lazy(() => import('./components/TransportView').then(m => ({ default: m.TransportView })));
+const ServicesView = lazy(() => import('./components/ServicesView').then(m => ({ default: m.ServicesView })));
+
+// ✅ Экран загрузки для Suspense
+const LoadingScreen = () => (
+  <div className="min-h-screen bg-white flex items-center justify-center">
+    <div className="text-center">
+      <div className="w-10 h-10 border-4 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto" />
+      <p className="text-sm text-stone-400 mt-3">Yuklanmoqda...</p>
+    </div>
+  </div>
+);
+
+// ✅ Обёртка для ленивых компонентов
+const Lazy = ({ children }: { children: React.ReactNode }) => (
+  <Suspense fallback={<LoadingScreen />}>{children}</Suspense>
+);
 
 
 interface Section {
@@ -64,8 +81,8 @@ function App() {
   const announcementId = urlParams.get('announcement_id');
 
   if (screen === 'comments' && announcementId) {
-    return <CommentsView announcementId={Number(announcementId)} />;
-  }
+  return <Lazy><CommentsView announcementId={Number(announcementId)} /></Lazy>;
+}
   const [currentAd, setCurrentAd] = useState(0);
   const [ads, setAds] = useState<any[]>([]);
   const [weather, setWeather] = useState<any>(null);
@@ -192,55 +209,56 @@ function App() {
   };
 
   if (activeSection === 'emergency') {
-    return <EmergencyView onClose={() => setActiveSection(null)} />;
-  }
-  if (activeSection === 'transport') {
-    return <TransportView onClose={() => setActiveSection(null)} />;
-  }
-  if (activeSection === 'jobs') {
-    return <JobsView onClose={() => setActiveSection(null)} userId={userId} />;
-  }
-  if (activeSection === 'restaurants') {
-    return <RestaurantsView onClose={() => setActiveSection(null)} />;
-  }
-  if (activeSection === 'news') {
-    return <NewsView onClose={() => setActiveSection(null)} />;
-  }
-  if (activeSection === 'events') {
-    return <EventsView onClose={() => setActiveSection(null)} userId={userId} />;
-  }
-  if (activeSection === 'ibodat') {
-    return <IbodatView onClose={() => setActiveSection(null)} />;
-  }
-  if (activeSection === 'tibbiyot') {
-    return <TibbiyotView onClose={() => setActiveSection(null)} />;
-  }
-  if (activeSection === 'services') {
-    return <ServicesView onClose={() => setActiveSection(null)} />;
-  }
-  if (activeSection === 'oldi_sotdi') {
-    return <OldiSotdiView onClose={() => setActiveSection(null)} userId={userId} />;
-  }
-  if (activeSection === 'shops') {
-    return <ShopsView onClose={() => setActiveSection(null)} />;
-  }
-  if (activeSection === 'mini_oyinlar') {
-    return <MiniOyinlarView onClose={() => setActiveSection(null)} />;
-  }
-  if (activeSection === 'donate') {
-    return <DonateView onClose={() => setActiveSection(null)} />;
-  }
+  return <Lazy><EmergencyView onClose={() => setActiveSection(null)} /></Lazy>;
+}
+if (activeSection === 'transport') {
+  return <Lazy><TransportView onClose={() => setActiveSection(null)} /></Lazy>;
+}
+if (activeSection === 'jobs') {
+  return <Lazy><JobsView onClose={() => setActiveSection(null)} userId={userId} /></Lazy>;
+}
+if (activeSection === 'restaurants') {
+  return <Lazy><RestaurantsView onClose={() => setActiveSection(null)} /></Lazy>;
+}
+if (activeSection === 'news') {
+  return <Lazy><NewsView onClose={() => setActiveSection(null)} /></Lazy>;
+}
+if (activeSection === 'events') {
+  return <Lazy><EventsView onClose={() => setActiveSection(null)} userId={userId} /></Lazy>;
+}
+if (activeSection === 'ibodat') {
+  return <Lazy><IbodatView onClose={() => setActiveSection(null)} /></Lazy>;
+}
+if (activeSection === 'tibbiyot') {
+  return <Lazy><TibbiyotView onClose={() => setActiveSection(null)} /></Lazy>;
+}
+if (activeSection === 'services') {
+  return <Lazy><ServicesView onClose={() => setActiveSection(null)} /></Lazy>;
+}
+if (activeSection === 'oldi_sotdi') {
+  return <Lazy><OldiSotdiView onClose={() => setActiveSection(null)} userId={userId} /></Lazy>;
+}
+if (activeSection === 'shops') {
+  return <Lazy><ShopsView onClose={() => setActiveSection(null)} /></Lazy>;
+}
+if (activeSection === 'mini_oyinlar') {
+  return <Lazy><MiniOyinlarView onClose={() => setActiveSection(null)} /></Lazy>;
+}
+if (activeSection === 'donate') {
+  return <Lazy><DonateView onClose={() => setActiveSection(null)} /></Lazy>;
+}
 
-  return (
+ return (
+  <Suspense fallback={<LoadingScreen />}>
     <div className="min-h-screen bg-slate-50 flex flex-col">
-     {/* ===== ШАПКА с фото города, логотипом и погодой ===== */}
-<div className="relative overflow-hidden">
-  {/* Фото города на фоне (общее для всей шапки) */}
-  <img
-    src="/bekobod-city.jpg"
-    alt="Bekobod"
-    className="absolute inset-0 w-full h-full object-cover"
-  />
+      {/* ===== ШАПКА с фото города, логотипом и погодой ===== */}
+      <div className="relative overflow-hidden">
+        {/* Фото города на фоне (общее для всей шапки) */}
+        <img
+          src="/bekobod-city.jpg"
+          alt="Bekobod"
+          className="absolute inset-0 w-full h-full object-cover"
+        />
 
   {/* Тёмно-синий градиент поверх всего фото — ОДИН для шапки и погоды */}
   <div className="absolute inset-0 bg-linear-to-b from-slate-900/40 via-slate-900/30 to-slate-900/40" />
@@ -377,12 +395,13 @@ function App() {
     </div>
   </div>
 
-     {/* Футер — внутри блока с фото */}
-  <div className="relative text-center py-4 text-[10px] text-white/80 font-semibold drop-shadow-md">
-    © 2026 Bekobod Shahar Portali
-  </div>
-</div>
-</div>
+        {/* Футер */}
+      <div className="relative text-center py-4 text-[10px] text-white/50">
+        © 2026 Bekobod Shahar Portali
+      </div>
+    </div>
+    </div>
+  </Suspense>
 );
 }
 

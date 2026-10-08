@@ -28,7 +28,7 @@ const CATEGORIES = [
   { id: 'furniture', label: 'Mebel', icon: '🛋️', gradient: 'from-rose-500 to-pink-600' },
   { id: 'clothes', label: 'Kiyim-kechak', icon: '👕', gradient: 'from-violet-500 to-purple-600' },
   { id: 'kids', label: 'Bolalar uchun', icon: '🧸', gradient: 'from-pink-500 to-rose-600' },
-  { id: 'animals', label: 'Hayvonlar', icon: '🐕', gradient: 'from-lime-500 to-green-600' },
+  { id: 'animals', label: 'Hayvonlar', icon: '🐄', gradient: 'from-lime-500 to-green-600' },
 ];
 
 export const OldiSotdiView: React.FC<OldiSotdiViewProps> = ({ onClose, userId }) => {

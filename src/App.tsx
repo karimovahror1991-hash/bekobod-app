@@ -36,22 +36,23 @@ interface Section {
   titleRu: string;
   icon: React.ElementType;
   gradient: string;
+  iconFile?: string;
 }
 
 const sections: Section[] = [
-  { id: 'news', titleUz: 'Yangiliklar', titleRu: 'Новости', icon: Newspaper, gradient: 'from-blue-500 to-blue-600' },
-  { id: 'ibodat', titleUz: 'Ibodat', titleRu: 'Поклонение', icon: Moon, gradient: 'from-emerald-500 to-teal-600' },
-  { id: 'restaurants', titleUz: 'Restoran va kafelar', titleRu: 'Рестораны и кафе', icon: UtensilsCrossed, gradient: 'from-red-500 to-pink-600' },
-  { id: 'transport', titleUz: 'Transport', titleRu: 'Транспорт', icon: Bus, gradient: 'from-emerald-500 to-green-600' },
-  { id: 'tibbiyot', titleUz: 'Tibbiyot', titleRu: 'Медицина', icon: Heart, gradient: 'from-rose-500 to-red-600' },
-  { id: 'shops', titleUz: "Do'konlar va xizmatlar", titleRu: 'Магазины и услуги', icon: Store, gradient: 'from-teal-500 to-emerald-600' },
-  { id: 'oldi_sotdi', titleUz: 'Oldi sotdi', titleRu: 'Купля-продажа', icon: ShoppingBag, gradient: 'from-amber-500 to-orange-600' },
-  { id: 'services', titleUz: "Xizmat ko'rsatish", titleRu: 'Услуги', icon: Wrench, gradient: 'from-cyan-500 to-teal-600' },
-  { id: 'jobs', titleUz: 'Vakansiya', titleRu: 'Вакансии', icon: Briefcase, gradient: 'from-violet-500 to-purple-600' },
-  { id: 'emergency', titleUz: 'Shahar telefonlari', titleRu: 'Справочная служба', icon: Phone, gradient: 'from-rose-500 to-red-600' },
-  { id: 'events', titleUz: 'Tadbirlar', titleRu: 'События', icon: PartyPopper, gradient: 'from-pink-500 to-rose-500' },
-  { id: 'mini_oyinlar', titleUz: "Mini o'yinlar", titleRu: 'Мини-игры', icon: Gamepad2, gradient: 'from-purple-500 to-indigo-600' },
-  { id: 'donate', titleUz: "Loyihani qo'llab-quvvatlash", titleRu: 'Поддержать проект', icon: Handshake, gradient: 'from-emerald-500 to-teal-600' },
+  { id: 'news', titleUz: 'Yangiliklar', titleRu: 'Новости', icon: Newspaper, gradient: 'from-blue-500 to-blue-600', iconFile: 'main_news' },
+  { id: 'ibodat', titleUz: 'Ibodat', titleRu: 'Поклонение', icon: Moon, gradient: 'from-emerald-500 to-teal-600', iconFile: 'main_ibodat' },
+  { id: 'restaurants', titleUz: 'Restoran va kafelar', titleRu: 'Рестораны и кафе', icon: UtensilsCrossed, gradient: 'from-red-500 to-pink-600', iconFile: 'main_restaurants' },
+  { id: 'transport', titleUz: 'Transport', titleRu: 'Транспорт', icon: Bus, gradient: 'from-emerald-500 to-green-600', iconFile: 'main_transport' },
+  { id: 'tibbiyot', titleUz: 'Tibbiyot', titleRu: 'Медицина', icon: Heart, gradient: 'from-rose-500 to-red-600', iconFile: 'main_tibbiyot' },
+  { id: 'shops', titleUz: "Do'konlar va xizmatlar", titleRu: 'Магазины и услуги', icon: Store, gradient: 'from-teal-500 to-emerald-600', iconFile: 'main_shops' },
+  { id: 'oldi_sotdi', titleUz: 'Oldi sotdi', titleRu: 'Купля-продажа', icon: ShoppingBag, gradient: 'from-amber-500 to-orange-600', iconFile: 'main_oldi_sotdi' },
+  { id: 'services', titleUz: "Xizmat ko'rsatish", titleRu: 'Услуги', icon: Wrench, gradient: 'from-cyan-500 to-teal-600', iconFile: 'main_services' },
+  { id: 'jobs', titleUz: 'Vakansiya', titleRu: 'Вакансии', icon: Briefcase, gradient: 'from-violet-500 to-purple-600', iconFile: 'main_jobs' },
+  { id: 'emergency', titleUz: 'Shahar telefonlari', titleRu: 'Справочная служба', icon: Phone, gradient: 'from-rose-500 to-red-600', iconFile: 'main_emergency' },
+  { id: 'events', titleUz: 'Tadbirlar', titleRu: 'События', icon: PartyPopper, gradient: 'from-pink-500 to-rose-500', iconFile: 'main_events' },
+  { id: 'mini_oyinlar', titleUz: "Mini o'yinlar", titleRu: 'Мини-игры', icon: Gamepad2, gradient: 'from-purple-500 to-indigo-600', iconFile: 'main_mini_oyinlar' },
+  { id: 'donate', titleUz: "Loyihani qo'llab-quvvatlash", titleRu: 'Поддержать проект', icon: Handshake, gradient: 'from-emerald-500 to-teal-600', iconFile: 'main_donate' },
 ];
 
 // ⚙️ ФЛАГ: показывать ли блок рекламы на главном экране
@@ -342,17 +343,25 @@ function App() {
             className="group relative bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-3xl p-6 flex flex-col items-center justify-center space-y-3 border border-white/15 shadow-sm hover:shadow-xl transition-all duration-300 active:scale-95"
           >
             <div className="relative">
-              {/* Иконка в круге */}
-              <div className={`relative w-20 h-20 rounded-full bg-linear-to-br ${section.gradient} flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform duration-300`}>
-                <Icon className="w-9 h-9" />
-              </div>
+  {/* Иконка — PNG если есть, иначе старая круглая */}
+  {section.iconFile ? (
+    <img
+  src={`/icons/${section.iconFile}.png`}
+      alt={section.titleUz}
+      className="relative w-20 h-20 object-contain group-hover:scale-110 transition-transform duration-300 drop-shadow-lg"
+    />
+  ) : (
+    <div className={`relative w-20 h-20 rounded-full bg-linear-to-br ${section.gradient} flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+      <Icon className="w-9 h-9" />
+    </div>
+  )}
 
-              {badgeCount > 0 && (
-                <div className="absolute -top-1 -right-1 min-w-6 h-6 px-1.5 bg-rose-500 text-white text-xs font-bold rounded-full flex items-center justify-center shadow-lg border-2 border-white/30">
-                  {badgeCount > 99 ? '99+' : badgeCount}
-                </div>
-              )}
-            </div>
+  {badgeCount > 0 && (
+    <div className="absolute -top-1 -right-1 min-w-6 h-6 px-1.5 bg-rose-500 text-white text-xs font-bold rounded-full flex items-center justify-center shadow-lg border-2 border-white/30">
+      {badgeCount > 99 ? '99+' : badgeCount}
+    </div>
+  )}
+</div>
 
             <div className="text-center">
               <div className="text-base font-bold text-white leading-tight drop-shadow-md">

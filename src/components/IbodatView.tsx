@@ -1,15 +1,15 @@
 import { SuralarView } from './SuralarView';
 import { DuolarView } from './DuolarView';
 import React, { useState } from 'react';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, ChevronRight } from 'lucide-react';
 
 interface IbodatViewProps {
   onClose: () => void;
 }
 
 const CATEGORIES = [
-  { id: 'duolar', label: 'Duolar', icon: '📿', gradient: 'from-purple-500 to-violet-600' },
-  { id: 'suralar', label: 'Suralar', icon: '📖', gradient: 'from-amber-500 to-orange-600' },
+  { id: 'duolar', label: 'Duolar', icon: '📿', line: 'from-purple-400 to-violet-500' },
+  { id: 'suralar', label: 'Suralar', icon: '📖', line: 'from-amber-400 to-orange-500' },
 ];
 
 export const IbodatView: React.FC<IbodatViewProps> = ({ onClose }) => {
@@ -25,10 +25,11 @@ export const IbodatView: React.FC<IbodatViewProps> = ({ onClose }) => {
     return <SuralarView onClose={() => setSelectedCategory(null)} />;
   }
 
-  // Экран категорий (главный)
+  // Главный экран — выбор категории
   return (
-    <div className="min-h-screen bg-linear-to-b from-emerald-50 to-teal-100">
-      <div className="bg-white/95 backdrop-blur-lg border-b border-stone-200 sticky top-0 z-20 shadow-sm">
+    <div className="min-h-screen bg-white">
+      {/* Заголовок */}
+      <div className="bg-white border-b border-stone-200 sticky top-0 z-20 shadow-sm">
         <div className="max-w-2xl mx-auto px-4 pt-6 pb-4 flex items-center space-x-3">
           <button
             onClick={onClose}
@@ -40,18 +41,31 @@ export const IbodatView: React.FC<IbodatViewProps> = ({ onClose }) => {
         </div>
       </div>
 
+      {/* Крупные карточки категорий */}
       <div className="max-w-2xl mx-auto px-4 py-6">
-        <div className="space-y-4">
+        <div className="space-y-6">
           {CATEGORIES.map((cat) => (
             <button
               key={cat.id}
               onClick={() => setSelectedCategory(cat.id)}
-              className={`w-full bg-linear-to-br ${cat.gradient} text-white rounded-3xl p-8 flex flex-col items-center justify-center shadow-xl hover:shadow-2xl transition-all duration-300 active:scale-95 min-h-50`}
+              className="group w-full bg-white rounded-3xl pt-6 pb-4 px-6 flex flex-col items-center justify-center shadow-[0_4px_20px_rgba(0,0,0,0.08)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.12)] transition-all duration-300 active:scale-[0.98]"
             >
-              <div className="text-7xl mb-4">{cat.icon}</div>
-              <div className="font-bold text-xl text-white text-center leading-tight">
+              <img
+                src={`/icons/${cat.id}.png`}
+                alt={cat.label}
+                className="w-32 h-32 object-contain mb-3 group-hover:scale-110 transition-transform duration-300"
+              />
+
+              <div className="text-xl font-bold text-stone-900 text-center leading-tight">
                 {cat.label}
               </div>
+
+              <div className="flex items-center gap-1 mt-2 text-sm text-stone-400">
+                <ChevronRight className="w-3.5 h-3.5" />
+                <span>Ochish</span>
+              </div>
+
+              <div className={`mt-4 w-20 h-1 rounded-full bg-linear-to-r ${cat.line}`} />
             </button>
           ))}
         </div>

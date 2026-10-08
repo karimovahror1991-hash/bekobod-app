@@ -3058,12 +3058,12 @@ if (!testMode) {
       }
     }
 
-   // === 1. Погода ===
+   // === 1. Погода (дневной прогноз) ===
 const lat = 40.22;
 const lon = 69.22;
-let temp = 0, humidity = 0, wind = 0;
+let tempMax = 0, tempMin = 0, wind = 0, weatherCode = 0, humidity = 0;
 try {
-  const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,wind_speed_10m&timezone=auto`;
+  const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,temperature_2m_min,weather_code,wind_speed_10m_max&current=relative_humidity_2m&timezone=auto&forecast_days=1`;
   console.log('🌤 Fetching:', weatherUrl);
 
   const weatherRes = await fetch(weatherUrl);
@@ -3073,11 +3073,14 @@ try {
   console.log('🌤 Raw response:', weatherText.substring(0, 500));
 
   const weatherData: any = JSON.parse(weatherText);
-  temp = Math.round(weatherData?.current?.temperature_2m || 0);
-  humidity = weatherData?.current?.relative_humidity_2m || 0;
-  wind = weatherData?.current?.wind_speed_10m || 0;
 
-  console.log('🌤 Parsed:', { temp, humidity, wind });
+  tempMax = Math.round(weatherData?.daily?.temperature_2m_max?.[0] || 0);
+  tempMin = Math.round(weatherData?.daily?.temperature_2m_min?.[0] || 0);
+  weatherCode = weatherData?.daily?.weather_code?.[0] || 0;
+  wind = Math.round(weatherData?.daily?.wind_speed_10m_max?.[0] || 0);
+  humidity = weatherData?.current?.relative_humidity_2m || 0;
+
+  console.log('🌤 Parsed:', { tempMax, tempMin, wind, weatherCode, humidity });
 } catch (e: any) {
   console.error('❌ Weather error:', e.message);
 }
@@ -3128,24 +3131,51 @@ try {
     const weekday = weekdays[now.getDay()];
     const dateStr = `${String(now.getDate()).padStart(2, '0')}.${String(now.getMonth() + 1).padStart(2, '0')}.${now.getFullYear()}`;
 
-    // === 3.3. Сообщение ===
-    const message =
-      `🌅 <b>Xayrli tong, Bekobod!</b>\n\n` +
-      `📅 <b>${dateStr}, ${weekday}</b>\n\n` +
-      `🌤 <b>Bugungi ob-havo:</b>\n` +
-      `🌡 +${temp}°C\n` +
-      `💧 Namlik: ${humidity}%\n` +
-      `💨 Shamol: ${wind} km/soat\n\n` +
-      `💵 <b>Valyuta kurslari:</b>\n` +
-      (usd ? `🇺🇸 1 USD = ${Math.round(Number(usd.Rate))} so'm\n` : '') +
-      (eur ? `🇪🇺 1 EUR = ${Math.round(Number(eur.Rate))} so'm\n` : '') +
-      (rub ? `🇷🇺 1 RUB = ${Math.round(Number(rub.Rate))} so'm\n` : '') +
-      `\n🕌 <b>Namoz vaqtlari:</b>\n` +
-      `🌅 Bomdod: ${prayerFajr}\n` +
-      `🌞 Peshin: ${prayerDhuhr}\n` +
-      `🌤 Asr: ${prayerAsr}\n` +
-      `🌆 Shom: ${prayerMaghrib}\n` +
-      `🌙 Xufton: ${prayerIsha}`;
+   // === 3.3. Сообщение ===
+// Эмодзи и текст по коду погоды
+const getWeatherEmoji = (code: number): string => {
+  if (code === 0) return '☀️';
+  if (code === 1 || code === 2) return '🌤';
+  if (code === 3) return '☁️';
+  if (code >= 45 && code <= 48) return '🌫';
+  if (code >= 51 && code <= 67) return '🌧';
+  if (code >= 71 && code <= 77) return '❄️';
+  if (code >= 80 && code <= 82) return '🌧';
+  if (code >= 95) return '⛈';
+  return '🌤';
+};
+
+const getWeatherText = (code: number): string => {
+  if (code === 0) return 'Quyoshli';
+  if (code === 1 || code === 2) return 'Bulutli';
+  if (code === 3) return 'Qorong\'i';
+  if (code >= 45 && code <= 48) return 'Tumanli';
+  if (code >= 51 && code <= 67) return 'Yomg\'irli';
+  if (code >= 71 && code <= 77) return 'Qorli';
+  if (code >= 80 && code <= 82) return 'Yomg\'irli';
+  if (code >= 95) return 'Momaqaldiroq';
+  return 'Ochiq';
+};
+
+const message =
+  `🌅 <b>Xayrli tong, Bekobod!</b>\n\n` +
+  `📅 <b>${dateStr}, ${weekday}</b>\n\n` +
+  `🌤 <b>Bugungi ob-havo:</b>\n` +
+  `${getWeatherEmoji(weatherCode)} ${getWeatherText(weatherCode)}\n` +
+  `🌡 Kunduzi: ${tempMax > 0 ? '+' : ''}${tempMax}°C\n` +
+  `🌙 Kechasi: ${tempMin > 0 ? '+' : ''}${tempMin}°C\n` +
+  `💧 Namlik: ${humidity}%\n` +
+  `💨 Shamol: ${wind} km/soat\n\n` +
+  `💵 <b>Valyuta kurslari:</b>\n` +
+  (usd ? `🇺🇸 1 USD = ${Math.round(Number(usd.Rate))} so'm\n` : '') +
+  (eur ? `🇪🇺 1 EUR = ${Math.round(Number(eur.Rate))} so'm\n` : '') +
+  (rub ? `🇷🇺 1 RUB = ${Math.round(Number(rub.Rate))} so'm\n` : '') +
+  `\n🕌 <b>Namoz vaqtlari:</b>\n` +
+  `🌅 Bomdod: ${prayerFajr}\n` +
+  `🌞 Peshin: ${prayerDhuhr}\n` +
+  `🌤 Asr: ${prayerAsr}\n` +
+  `🌆 Shom: ${prayerMaghrib}\n` +
+  `🌙 Xufton: ${prayerIsha}`;
 
     // === 4. Рассылка ===
     const botToken = process.env.TELEGRAM_BOT_TOKEN;

@@ -319,7 +319,7 @@ function App() {
   />
 
   {/* Затемнение — посветлее, чтобы фото было заметно */}
-  <div className="absolute inset-0 bg-linear-to-b from-slate-900/70 via-slate-900/60 to-slate-900/75" />
+  <div className="absolute inset-0 bg-linear-to-b from-slate-900/55 via-slate-900/45 to-slate-900/60" />
 
   {/* Контент разделов */}
   <div className="relative max-w-2xl w-full mx-auto px-4 py-6">
@@ -336,7 +336,7 @@ function App() {
           <button
             key={section.id}
             onClick={() => setActiveSection(section.id)}
-            className="group relative bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-3xl p-6 flex flex-col items-center justify-center space-y-3 border border-white/15 shadow-sm hover:shadow-xl transition-all duration-300 active:scale-95"
+            className="group relative bg-white/15 hover:bg-white/25 backdrop-blur-md rounded-3xl p-6 flex flex-col items-center justify-center space-y-3 border border-white/15 shadow-sm hover:shadow-xl transition-all duration-300 active:scale-95"
           >
             <div className="relative">
               {/* Иконка в круге */}

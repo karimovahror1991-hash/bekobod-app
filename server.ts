@@ -3909,7 +3909,24 @@ app.post('/api/ads/delete', async (req, res) => {
 });
 // ============ STATIC ============
 const distPath = path.join(process.cwd(), 'dist');
-app.use(express.static(distPath));
+
+// ✅ Cache-Control для хэшированных assets (js, css) — кэш на 1 год
+app.use('/assets', express.static(path.join(distPath, 'assets'), {
+  maxAge: '1y',
+  immutable: true,
+}));
+
+// ✅ Cache-Control для иконок — кэш на 1 месяц
+app.use('/icons', express.static(path.join(distPath, 'icons'), {
+  maxAge: '30d',
+}));
+
+// Остальная статика (index.html, robots.txt и т.д.) — без кэша
+app.use(express.static(distPath, {
+  maxAge: 0,
+}));
+
+// SPA fallback — все незнакомые пути отдают index.html
 app.use((req, res) => {
   res.sendFile(path.join(distPath, 'index.html'));
 });

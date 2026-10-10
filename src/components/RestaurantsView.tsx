@@ -2,6 +2,7 @@ import { ImageViewer } from './ImageViewer';
 import { PullToRefresh } from './PullToRefresh';
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Phone, MapPin, Loader2, Star, Clock } from 'lucide-react';
+import { useNestedSwipeBack } from '../hooks/useSwipeBack';
 
 interface RestaurantsViewProps {
   onClose: () => void;
@@ -43,6 +44,13 @@ export const RestaurantsView: React.FC<RestaurantsViewProps> = ({ onClose }) => 
 
   // ⚡ Фото грузим ТОЛЬКО при открытии ресторана
   const [selectedRestaurant, setSelectedRestaurant] = useState<Restaurant | null>(null);
+  useNestedSwipeBack([
+  () => { if (fullscreenImage) { setFullscreenImage(null); return true; } return false; },
+  () => { if (showRatingModal) { setShowRatingModal(null); return true; } return false; },
+  () => { if (selectedRestaurant) { setSelectedRestaurant(null); setSelectedPhotos(null); return true; } return false; },
+  () => { if (selectedCategory) { setSelectedCategory(null); return true; } return false; },
+  () => { onClose(); return true; },
+]);
   const [selectedPhotos, setSelectedPhotos] = useState<{image_url: string | null, menu_images: string[]} | null>(null);
   const [photosLoading, setPhotosLoading] = useState(false);
 

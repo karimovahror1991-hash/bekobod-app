@@ -1,6 +1,7 @@
 import { PullToRefresh } from './PullToRefresh';
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Loader2, Phone, MapPin, Clock } from 'lucide-react';
+import { useNestedSwipeBack } from '../hooks/useSwipeBack';
 
 interface ShopsViewProps {
   onClose: () => void;
@@ -40,6 +41,12 @@ export const ShopsView: React.FC<ShopsViewProps> = ({ onClose }) => {
 
   // ⚡ Фото грузим ТОЛЬКО при клике
   const [selectedShop, setSelectedShop] = useState<Shop | null>(null);
+  useNestedSwipeBack([
+  () => { if (selectedPhoto) { setSelectedPhoto(null); return true; } return false; },
+  () => { if (selectedShop) { setSelectedShop(null); return true; } return false; },
+  () => { if (selectedCategory) { setSelectedCategory(null); return true; } return false; },
+  () => { onClose(); return true; },
+]);
   const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
   const [photoLoading, setPhotoLoading] = useState(false);
 

@@ -92,9 +92,13 @@ function App() {
   const [userId, setUserId] = useState<number | null>(null);
   const [badges, setBadges] = useState<{ news: number; events: number; oldi_sotdi: number }>({ news: 0, events: 0, oldi_sotdi: 0 });
 
-  useSwipeBack(() => {
-  if (activeSection) setActiveSection(null);
-}, !!activeSection);
+  const nestedSections = ['restaurants', 'shops'];
+useSwipeBack(
+  () => {
+    if (activeSection) setActiveSection(null);
+  },
+  !!activeSection && !nestedSections.includes(activeSection)
+);
 
   useEffect(() => {
     const tg = (window as any).Telegram?.WebApp;

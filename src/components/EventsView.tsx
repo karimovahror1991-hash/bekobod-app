@@ -1,6 +1,7 @@
 import { PullToRefresh } from './PullToRefresh';
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Loader2, MapPin, Phone, Calendar } from 'lucide-react';
+import { useSwipeBack } from '../hooks/useSwipeBack';
 
 interface EventsViewProps {
   onClose: () => void;
@@ -34,6 +35,10 @@ export const EventsView: React.FC<EventsViewProps> = ({ onClose, userId }) => {
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [subBadges, setSubBadges] = useState<{ [key: string]: number }>({});
+  useSwipeBack(() => {
+  if (selectedCategory) { setSelectedCategory(null); return; }
+  onClose();
+});
 
   const API_URL = 'https://bekobod-app-1.onrender.com';
 

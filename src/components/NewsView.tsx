@@ -31,8 +31,15 @@ export const NewsView: React.FC<NewsViewProps> = ({ onClose }) => {
   const [selectedNews, setSelectedNews] = useState<NewsItem | null>(null);
   const [subBadges, setSubBadges] = useState<{ [key: string]: number }>({});
   const [userId, setUserId] = useState<number | null>(null);
+useSwipeBack(() => {
+  if (selectedNews) { setSelectedNews(null); return; }
+  if (selectedCategory) { setSelectedCategory(null); return; }
+  onClose();
+});
+
   const API_URL = 'https://bekobod-app-1.onrender.com';
 
+  
   const getYouTubeId = (url: string | null): string | null => {
     if (!url) return null;
     const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|v\/|shorts\/))([^&?/]+)/);

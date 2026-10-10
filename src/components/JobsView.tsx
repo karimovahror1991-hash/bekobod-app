@@ -1,6 +1,7 @@
 import { PullToRefresh } from './PullToRefresh';
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Phone, Plus, Loader2, Building2, Wallet, Trash2 } from 'lucide-react';
+import { useSwipeBack } from '../hooks/useSwipeBack';
 
 interface JobsViewProps {
   onClose: () => void;
@@ -42,6 +43,10 @@ export const JobsView: React.FC<JobsViewProps> = ({ onClose, userId }) => {
   const [phone, setPhone] = useState('');
   const [category, setCategory] = useState('boshqa');
   const [creating, setCreating] = useState(false);
+  useSwipeBack(() => {
+  if (selectedCategory) { setSelectedCategory(null); return; }
+  onClose();
+});
 
   const API_URL = 'https://bekobod-app-1.onrender.com';
 // ✅ Получить initData из Telegram

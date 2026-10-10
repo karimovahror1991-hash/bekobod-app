@@ -119,7 +119,14 @@ async function uploadToSupabase(
 // ✅ Helper: проверить initData и получить userId
 async function requireUserId(req: any, res: any): Promise<number | null> {
   try {
-    const { initData } = req.body || {};
+    // 1. Пробуем заголовок (для GET-запросов и новых POST)
+    let initData = req.headers['x-telegram-init-data'] as string | undefined;
+
+    // 2. Fallback на тело (для старых POST)
+    if (!initData) {
+      initData = req.body?.initData;
+    }
+
     if (!initData) {
       res.status(401).json({ error: 'initData required' });
       return null;

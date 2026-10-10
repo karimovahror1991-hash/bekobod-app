@@ -24,6 +24,7 @@ const CATEGORIES = [
   { id: 'uy', label: 'Uy xizmatlari', icon: '🏠', iconFile: 'uy', line: 'from-cyan-400 to-blue-500' },
   { id: 'komp', label: 'Kompyuter', icon: '💻', iconFile: 'komp', line: 'from-violet-400 to-purple-500' },
   { id: 'telefon', label: 'Telefon ustalari', icon: '📱', iconFile: 'telefon', line: 'from-teal-400 to-emerald-500' },
+  { id: 'boshqalar', label: 'Boshqa xizmatlar', icon: '👨‍🔧', iconFile: 'boshqa_xizmatlar', line: 'from-stone-400 to-stone-500' },
 ];
 
 export const ServicesView: React.FC<ServicesViewProps> = ({ onClose }) => {

@@ -36,6 +36,7 @@ export const ShopsView: React.FC<ShopsViewProps> = ({ onClose }) => {
   const [shops, setShops] = useState<Shop[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // ⚡ Фото грузим ТОЛЬКО при клике
   const [selectedShop, setSelectedShop] = useState<Shop | null>(null);
@@ -79,8 +80,17 @@ export const ShopsView: React.FC<ShopsViewProps> = ({ onClose }) => {
   };
 
   const filteredShops = selectedCategory
-    ? shops.filter(s => s.category === selectedCategory)
-    : [];
+  ? shops.filter(s => {
+      if (s.category !== selectedCategory) return false;
+      if (!searchQuery.trim()) return true;
+      const q = searchQuery.toLowerCase().trim();
+      return (
+        s.name.toLowerCase().includes(q) ||
+        (s.address && s.address.toLowerCase().includes(q)) ||
+        (s.description && s.description.toLowerCase().includes(q))
+      );
+    })
+  : [];
 
   // === ЭКРАН МАГАЗИНА ===
   if (selectedShop) {
@@ -183,18 +193,54 @@ export const ShopsView: React.FC<ShopsViewProps> = ({ onClose }) => {
               </div>
             </div>
           </div>
-
+{/* ✅ Поиск */}
+<div className="max-w-2xl mx-auto px-4 pt-4">
+  <div className="relative">
+    <input
+      type="text"
+      value={searchQuery}
+      onChange={(e) => setSearchQuery(e.target.value)}
+      placeholder="Qidirish..."
+      className="w-full pl-10 pr-10 py-3 rounded-2xl border border-stone-200 bg-stone-50 text-sm focus:outline-none focus:border-amber-400 focus:bg-white transition"
+    />
+    <svg
+      className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400"
+      fill="none" stroke="currentColor" viewBox="0 0 24 24"
+    >
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+    </svg>
+    {searchQuery && (
+      <button
+        onClick={() => setSearchQuery('')}
+        className="absolute right-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-stone-300 hover:bg-stone-400 text-white flex items-center justify-center text-xs transition"
+      >
+        ✕
+      </button>
+    )}
+  </div>
+</div>
           <div className="max-w-2xl mx-auto px-4 py-6 space-y-3">
             {loading ? (
               <div className="flex justify-center py-12">
                 <Loader2 className="w-6 h-6 animate-spin text-amber-600" />
               </div>
-            ) : filteredShops.length === 0 ? (
-              <div className="text-center py-16 text-stone-400">
-                <img src={`/icons/${catInfo?.id}.png`} alt="" className="w-24 h-24 object-contain mx-auto mb-4 opacity-50" />
-                <p className="text-sm">Hozircha ma'lumot yo'q</p>
-              </div>
-            ) : (
+          ) : filteredShops.length === 0 ? (
+  <div className="text-center py-16 text-stone-400">
+    <img src={`/icons/${catInfo?.id}.png`} alt="" className="w-24 h-24 object-contain mx-auto mb-4 opacity-50" />
+    <p className="text-sm">
+      {searchQuery.trim() ? 'Hech narsa topilmadi' : "Hozircha ma'lumot yo'q"}
+    </p>
+    {searchQuery.trim() && (
+      <button
+        onClick={() => setSearchQuery('')}
+        className="mt-3 text-xs text-amber-600 font-semibold"
+      >
+        Qidiruvni tozalash
+      </button>
+    )}
+  </div>
+) : (
               filteredShops.map((shop) => (
                 <button
                   key={shop.id}
@@ -270,7 +316,10 @@ export const ShopsView: React.FC<ShopsViewProps> = ({ onClose }) => {
               return (
                 <button
                   key={cat.id}
-                  onClick={() => setSelectedCategory(cat.id)}
+                  onClick={() => {
+  setSelectedCategory(cat.id);
+  setSearchQuery('');
+}}
                   className="group w-full bg-white rounded-3xl pt-6 pb-4 px-6 flex flex-col items-center justify-center shadow-[0_4px_20px_rgba(0,0,0,0.08)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.12)] transition-all duration-300 active:scale-[0.98]"
                 >
                   {/* Иконка */}

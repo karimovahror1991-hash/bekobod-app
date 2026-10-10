@@ -404,19 +404,16 @@ const ALLOWED_ORIGINS = [
 app.use((req, res, next) => {
   const origin = req.headers.origin;
 
-  // Если Origin в белом списке — пропускаем
+  // Если Origin в белом списке — разрешаем
   if (origin && ALLOWED_ORIGINS.includes(origin)) {
     res.header('Access-Control-Allow-Origin', origin);
     res.header('Vary', 'Origin');
   }
-  // Если Origin НЕТ (мобильные Telegram, curl, серверные запросы) — пропускаем
-  else if (!origin) {
-    res.header('Access-Control-Allow-Origin', '*');
-  }
-  // Если Origin чужой — НЕ добавляем заголовок
-  // Браузер сам заблокирует запрос
+  // Если Origin отсутствует (мобильные Telegram, curl, серверные запросы) —
+  // заголовок НЕ ставим. CORS-заголовок нужен только браузерам.
+  // Мобильные Telegram-клиенты CORS не проверяют и работают как раньше.
 
-  res.header('Access-Control-Allow-Headers', 'Content-Type');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, X-Telegram-Init-Data');
   res.header('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
   res.header('Access-Control-Allow-Credentials', 'true');
 

@@ -6,6 +6,7 @@ import rateLimit from 'express-rate-limit';
 import path from 'path';
 import dotenv from 'dotenv';
 import { Pool } from 'pg';
+import { createClient } from '@supabase/supabase-js';
 
 dotenv.config();
 
@@ -17,7 +18,14 @@ const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false }
 });
-
+// ✅ Supabase Storage — для загрузки фото
+const supabase = createClient(
+  process.env.SUPABASE_URL || '',
+  process.env.SUPABASE_SECRET_KEY || '',
+  {
+    auth: { persistSession: false },
+  }
+);
 // ============ ADMINS ============
 const SUPER_ADMIN = 988368940;
 const ADMINS = [988368940, 259258146]; // главный + второй админ
@@ -74,6 +82,38 @@ function validateInitData(initData: string, botToken: string): { valid: boolean;
     return { valid: true, user };
   } catch (error: any) {
     return { valid: false, error: error.message };
+  }
+}
+// ✅ Helper: загрузить фото в Supabase Storage
+async function uploadToSupabase(
+  buffer: Buffer,
+  folder: string
+): Promise<string | null> {
+  try {
+    const timestamp = Date.now();
+    const random = Math.random().toString(36).substring(2, 8);
+    const filename = `${folder}/${timestamp}-${random}.jpg`;
+
+    const { error } = await supabase.storage
+      .from('images')
+      .upload(filename, buffer, {
+        contentType: 'image/jpeg',
+        upsert: false,
+      });
+
+    if (error) {
+      console.error('❌ Supabase upload error:', error.message);
+      return null;
+    }
+
+    const { data: urlData } = supabase.storage
+      .from('images')
+      .getPublicUrl(filename);
+
+    return urlData.publicUrl;
+  } catch (e: any) {
+    console.error('❌ uploadToSupabase error:', e.message);
+    return null;
   }
 }
 // ✅ Helper: проверить initData и получить userId
@@ -1085,34 +1125,33 @@ if (message?.text === '/list_announcements' && message.from.id === SUPER_ADMIN) 
         const description = parts[5] || null;
 
         // Картинка — ImgBB
-        let imageUrl: string | null = null;
-        if (message.photo && message.photo.length > 0) {
-          const fileId = message.photo[message.photo.length - 1].file_id;
-          const botToken = process.env.TELEGRAM_BOT_TOKEN;
-          const imgbbKey = process.env.IMGBB_API_KEY;
-                   if (botToken) {
-            try {
-              const fileRes = await fetch(`https://api.telegram.org/bot${botToken}/getFile?file_id=${fileId}`);
-              const fileData: any = await fileRes.json();
-              if (!fileData.ok) throw new Error('Telegram error');
+       let imageUrl: string | null = null;
+if (message.photo && message.photo.length > 0) {
+  const fileId = message.photo[message.photo.length - 1].file_id;
+  const botToken = process.env.TELEGRAM_BOT_TOKEN;
+  if (botToken) {
+    try {
+      const fileRes = await fetch(`https://api.telegram.org/bot${botToken}/getFile?file_id=${fileId}`);
+      const fileData: any = await fileRes.json();
+      if (!fileData.ok) throw new Error('Telegram error');
 
-                          const tempUrl = `https://api.telegram.org/file/bot${botToken}/${fileData.result.file_path}`;
-              const arrayBuf = await fetch(tempUrl).then(r => r.arrayBuffer());
-              const imageBuffer = Buffer.from(arrayBuf);
+      const tempUrl = `https://api.telegram.org/file/bot${botToken}/${fileData.result.file_path}`;
+      const arrayBuf = await fetch(tempUrl).then(r => r.arrayBuffer());
+      const imageBuffer = Buffer.from(arrayBuf);
 
-                // Сжимаем до 800px по ширине, качество 80%
-              const compressed = await sharp(imageBuffer)
-  .resize({ width: 800, withoutEnlargement: true })
-  .jpeg({ quality: 80 })
-  .toBuffer();
+      // Сжимаем до 800px по ширине, качество 80%
+      const compressed = await sharp(imageBuffer)
+        .resize({ width: 800, withoutEnlargement: true })
+        .jpeg({ quality: 80 })
+        .toBuffer();
 
-                           // Конвертируем в base64 data URL
-              imageUrl = `data:image/jpeg;base64,${compressed.toString('base64')}`;
-                    } catch (e) {
-              console.error('Photo upload error:', e);
-            }
-          }
-        }
+      // ✅ Загружаем в Supabase
+      imageUrl = await uploadToSupabase(compressed, 'restaurants');
+    } catch (e) {
+      console.error('Photo upload error:', e);
+    }
+  }
+}
 
         const result = await pool.query(
           'INSERT INTO restaurants (name, category, address, phone, description, image_url, hours) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
@@ -1165,8 +1204,9 @@ if (message?.text === '/list_announcements' && message.from.id === SUPER_ADMIN) 
   .toBuffer();
 
               // Конвертируем в base64 data URL
-              const finalUrl = `data:image/jpeg;base64,${compressed.toString('base64')}`;
-
+              // ✅ Загружаем в Supabase
+const finalUrl = await uploadToSupabase(compressed, 'restaurants');
+if (!finalUrl) throw new Error('Upload failed');
               await pool.query(
                 `UPDATE restaurants SET menu_images = array_append(COALESCE(menu_images, '{}'), $1) WHERE id = $2`,
                 [finalUrl, restaurantId]
@@ -1223,7 +1263,9 @@ if (message?.text === '/list_announcements' && message.from.id === SUPER_ADMIN) 
   .toBuffer();
 
               // Конвертируем в base64 data URL
-              const finalUrl = `data:image/jpeg;base64,${compressed.toString('base64')}`;
+             // ✅ Загружаем в Supabase
+const finalUrl = await uploadToSupabase(compressed, 'restaurants');
+if (!finalUrl) throw new Error('Upload failed');
 
               await pool.query(
                 'UPDATE restaurants SET image_url = $1 WHERE id = $2',
@@ -1293,7 +1335,7 @@ if (message?.text === '/list_announcements' && message.from.id === SUPER_ADMIN) 
                 .toBuffer();
 
                             // Конвертируем в base64 data URL
-              imageUrl = `data:image/jpeg;base64,${compressed.toString('base64')}`;
+             imageUrl = await uploadToSupabase(compressed, 'shops');;
             } catch (e) {
               console.error('Photo upload error:', e);
             }
@@ -1513,7 +1555,7 @@ if (message?.text === '/list_announcements' && message.from.id === SUPER_ADMIN) 
                 .toBuffer();
 
               // Конвертируем в base64 data URL
-              imageUrl = `data:image/jpeg;base64,${compressed.toString('base64')}`;
+             imageUrl = await uploadToSupabase(compressed, 'meds');
             } catch (e) {
               console.error('Photo upload error:', e);
             }
@@ -1802,7 +1844,7 @@ if ((message?.caption?.startsWith('/add_news')) && ADMINS.includes(message.from.
                 .toBuffer();
 
               // Конвертируем в base64 data URL
-              imageUrl = `data:image/jpeg;base64,${compressed.toString('base64')}`;
+              imageUrl = await uploadToSupabase(compressed, 'ads');
             } catch (e) {
               console.error('Photo upload error:', e);
             }
@@ -3615,7 +3657,7 @@ app.post('/api/translate', strictLimiter, async (req, res) => {
   }
 });
 // ============ OLDI SOTDI (LISTINGS) ============
-// Загрузка фото (сжатие + base64, без внешних сервисов)
+// ✅ Загрузка фото в Supabase Storage (сжатие + ссылка вместо base64)
 app.post('/api/upload-image', strictLimiter, async (req, res) => {
   try {
     const { image } = req.body;
@@ -3624,13 +3666,18 @@ app.post('/api/upload-image', strictLimiter, async (req, res) => {
     const base64Data = image.replace(/^data:image\/\w+;base64,/, '');
     const imageBuffer = Buffer.from(base64Data, 'base64');
 
-    // ⚡ Сжимаем до 800px, качество 80% (как у ресторанов)
+    // ⚡ Сжимаем до 800px, качество 80%
     const compressed = await sharp(imageBuffer)
       .resize({ width: 800, withoutEnlargement: true })
       .jpeg({ quality: 80 })
       .toBuffer();
 
-    const url = `data:image/jpeg;base64,${compressed.toString('base64')}`;
+    // ✅ Загружаем в Supabase
+    const url = await uploadToSupabase(compressed, 'listings');
+    if (!url) {
+      return res.status(500).json({ error: 'Upload failed' });
+    }
+
     res.json({ url, thumb: url });
   } catch (error: any) {
     console.error('Upload image error:', error);

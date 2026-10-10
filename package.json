@@ -10,6 +10,7 @@
     "start": "node dist/server.cjs"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.117.3",
     "@tailwindcss/postcss": "^4.3.3",
     "@vitejs/plugin-react": "^4.3.1",
     "autoprefixer": "^10.4.20",

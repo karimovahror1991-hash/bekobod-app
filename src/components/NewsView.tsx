@@ -75,7 +75,7 @@ useSwipeBack(() => {
       const results: { [key: string]: number } = {};
       for (const c of cats) {
         try {
-          const res = await fetch(`${API_URL}/api/badge-sub/news/${c}?userId=${userId}`);
+         const res = await fetch(`${API_URL}/api/badge-sub/news/${c}`);
           const data = await res.json();
           results[c] = data.count || 0;
         } catch {

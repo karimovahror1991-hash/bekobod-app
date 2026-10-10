@@ -112,10 +112,10 @@ const getInitData = (): string => {
   const id = tg?.initDataUnsafe?.user?.id;
   if (id) {
     setUserId(id);
-    fetch(`${API_URL}/api/taxi/notifications?userId=${id}`)
-      .then(r => r.json())
-      .then(d => setNotifications(d.notifications || []))
-      .catch((err) => console.error('Notifications error:', err));
+   fetch(`${API_URL}/api/taxi/notifications`)
+  .then(r => r.json())
+  .then(d => setNotifications(d.notifications || []))
+  .catch((err) => console.error('Notifications error:', err));
   }
 }, []);
 
@@ -129,7 +129,7 @@ const getInitData = (): string => {
       const my: {[key: number]: number} = {};
       for (const r of rides) {
         try {
-          const res = await fetch(`${API_URL}/api/taxi/my-rating/${r.id}?userId=${userId}`);
+         const res = await fetch(`${API_URL}/api/taxi/my-rating/${r.id}`);
           const data = await res.json();
           if (data.rating) my[r.id] = data.rating;
         } catch {}

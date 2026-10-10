@@ -474,6 +474,10 @@ app.post('/api/track', strictLimiter, async (req, res) => {
 // Регистрация вебхука Telegram (с секретом)
 app.get('/api/setup-webhook', async (req, res) => {
   try {
+    const cronSecret = req.query.secret;
+if (!cronSecret || cronSecret !== process.env.CRON_SECRET) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
     const botToken = process.env.TELEGRAM_BOT_TOKEN;
     const secret = process.env.TELEGRAM_WEBHOOK_SECRET;
     const webhookUrl = 'https://bekobod-app-1.onrender.com/api/telegram-webhook';
@@ -502,8 +506,9 @@ app.get('/api/setup-webhook', async (req, res) => {
 // Статистика (только главный админ)
 app.get('/api/stats', async (req, res) => {
   try {
-    const { adminId } = req.query;
-    if (Number(adminId) !== 988368940) {
+    const userId = await requireUserId(req, res);
+    if (!userId) return;
+    if (userId !== 988368940) {
       return res.status(403).json({ error: 'Доступ запрещён' });
     }
 
@@ -526,9 +531,10 @@ app.get('/api/stats', async (req, res) => {
 // Бейджи — сколько нового у пользователя
 app.get('/api/badge/:section', async (req, res) => {
   try {
-    const { section } = req.params;
-    const { userId } = req.query;
+    const userId = await requireUserId(req, res);
     if (!userId) return res.json({ count: 0 });
+
+    const { section } = req.params;
 
     let totalQuery = '';
     if (section === 'news') totalQuery = 'SELECT COUNT(*) FROM news';
@@ -586,9 +592,10 @@ app.post('/api/badge/:section/seen', async (req, res) => {
 // Бейджи по подкатегориям
 app.get('/api/badge-sub/:section/:sub', async (req, res) => {
   try {
-    const { section, sub } = req.params;
-    const { userId } = req.query;
+    const userId = await requireUserId(req, res);
     if (!userId) return res.json({ count: 0 });
+
+    const { section, sub } = req.params;
 
     let totalQuery = '';
     let params: any[] = [];
@@ -2150,8 +2157,8 @@ app.post('/api/taxi/close', async (req, res) => {
 // Получить непрочитанные уведомления такси для юзера
 app.get('/api/taxi/notifications', async (req, res) => {
   try {
-    const { userId } = req.query;
-    if (!userId) return res.json({ notifications: [] });
+    const userId = await requireUserId(req, res);
+    if (!userId) return;
 
     const result = await pool.query(
       `SELECT id, type, message, direction, ride_id, created_at
@@ -2342,9 +2349,10 @@ app.get('/api/taxi/driver-rating/:phone', async (req, res) => {
 // Моя оценка рейса
 app.get('/api/taxi/my-rating/:rideId', async (req, res) => {
   try {
+    const userId = await requireUserId(req, res);
+    if (!userId) return;
+
     const { rideId } = req.params;
-    const { userId } = req.query;
-    if (!userId) return res.json({ rating: null });
 
     const result = await pool.query(
       'SELECT rating FROM taxi_ratings WHERE ride_id = $1 AND user_id = $2',
@@ -2511,8 +2519,8 @@ app.post('/api/admin/message', async (req, res) => {
 // Мои сообщения (публичный — без изменений)
 app.get('/api/admin/my-messages', async (req, res) => {
   try {
-    const { userId } = req.query;
-    if (!userId) return res.status(400).json({ error: 'Не указан пользователь' });
+   const userId = await requireUserId(req, res);
+    if (!userId) return;
     const result = await pool.query('SELECT * FROM admin_messages WHERE user_id = $1 ORDER BY created_at DESC', [userId]);
     res.json({ messages: result.rows });
   } catch (error: any) {
@@ -2524,8 +2532,8 @@ app.get('/api/admin/my-messages', async (req, res) => {
 // Все сообщения (только админ — без изменений)
 app.get('/api/admin/all-messages', async (req, res) => {
   try {
-    const { adminId } = req.query;
-    if (!ADMINS.includes(Number(adminId))) return res.status(403).json({ error: 'Доступ запрещён' });
+     const userId = await requireUserId(req, res);
+    if (!userId) return;
     const result = await pool.query('SELECT * FROM admin_messages ORDER BY created_at DESC LIMIT 50');
     res.json({ messages: result.rows });
   } catch (error: any) {
@@ -2768,9 +2776,10 @@ app.get('/api/restaurants/rating/:restaurantId', async (req, res) => {
 // Моя оценка ресторана
 app.get('/api/restaurants/my-rating/:restaurantId', async (req, res) => {
   try {
+    const userId = await requireUserId(req, res);
+    if (!userId) return;
+
     const { restaurantId } = req.params;
-    const { userId } = req.query;
-    if (!userId) return res.json({ rating: null });
 
     const result = await pool.query(
       'SELECT rating FROM restaurant_ratings WHERE restaurant_id = $1 AND user_id = $2',

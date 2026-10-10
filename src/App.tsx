@@ -136,7 +136,7 @@ function App() {
         const sectionsToLoad = ['news', 'events', 'oldi_sotdi'];
         const results: any = {};
         for (const s of sectionsToLoad) {
-          const res = await fetch(`https://bekobod-app-1.onrender.com/api/badge/${s}?userId=${userId}`);
+          const res = await fetch(`https://bekobod-app-1.onrender.com/api/badge/${s}`);
           const data = await res.json();
           results[s] = data.count || 0;
         }

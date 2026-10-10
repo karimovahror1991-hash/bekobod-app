@@ -53,7 +53,7 @@ export const OldiSotdiView: React.FC<OldiSotdiViewProps> = ({ onClose, userId })
   const [images, setImages] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
   const [creating, setCreating] = useState(false);
-  
+
 useSwipeBack(() => {
   if (selectedListing) { setSelectedListing(null); return; }
   if (selectedCategory) { setSelectedCategory(null); return; }
@@ -91,7 +91,7 @@ const getInitData = (): string => {
       const results: { [key: string]: number } = {};
       for (const c of cats) {
         try {
-          const res = await fetch(`${API_URL}/api/badge-sub/oldi_sotdi/${c}?userId=${userId}`);
+         const res = await fetch(`${API_URL}/api/badge-sub/oldi_sotdi/${c}`);
           const data = await res.json();
           results[c] = data.count || 0;
         } catch {

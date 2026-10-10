@@ -573,10 +573,12 @@ const getInitData = (): string => {
             ) : (
               filteredListings.map((item) => (
                 <button
-                  key={item.id}
-                  onClick={() => openListing(item)}
-                  className="w-full bg-white rounded-3xl p-4 shadow-sm border border-stone-100 hover:shadow-xl transition-all text-left active:scale-[0.98] space-y-2"
-                >
+  key={item.id}
+  onClick={() => openListing(item)}
+  style={{ padding: '16px' }}
+  className="w-full bg-white rounded-3xl shadow-sm border border-stone-100 hover:shadow-xl transition-all text-left active:scale-[0.98] space-y-2"
+>
+              
                   <div className="flex items-start justify-between">
                     <h3 className="font-bold text-base text-stone-900 leading-tight flex-1">
                       {item.title}

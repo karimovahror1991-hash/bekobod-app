@@ -1,5 +1,4 @@
 import React, { useEffect, useState, lazy, Suspense } from 'react';
-import { useSwipeBack } from './hooks/useSwipeBack';
 import { Cloud, Sun, CloudRain, Snowflake, Wind, Droplets, Moon } from 'lucide-react';
 import {
   Newspaper,
@@ -92,15 +91,7 @@ function App() {
   const [userId, setUserId] = useState<number | null>(null);
   const [badges, setBadges] = useState<{ news: number; events: number; oldi_sotdi: number }>({ news: 0, events: 0, oldi_sotdi: 0 });
 
-  const nestedSections = ['restaurants', 'shops'];
-useSwipeBack(
-  () => {
-    if (activeSection) setActiveSection(null);
-  },
-  !!activeSection && !nestedSections.includes(activeSection)
-);
-
-  useEffect(() => {
+   useEffect(() => {
     const tg = (window as any).Telegram?.WebApp;
     const user = tg?.initDataUnsafe?.user;
 

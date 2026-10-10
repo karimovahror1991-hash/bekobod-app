@@ -1,7 +1,7 @@
 import { PullToRefresh } from './PullToRefresh';
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Loader2, Phone, MapPin, Clock } from 'lucide-react';
-import { useNestedSwipeBack } from '../hooks/useSwipeBack';
+import { useSwipeBack } from '../hooks/useSwipeBack';
 
 interface ShopsViewProps {
   onClose: () => void;
@@ -44,12 +44,12 @@ export const ShopsView: React.FC<ShopsViewProps> = ({ onClose }) => {
     const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
   const [photoLoading, setPhotoLoading] = useState(false);
 
-    useNestedSwipeBack([
-    () => { if (selectedPhoto) { setSelectedPhoto(null); return true; } return false; },
-    () => { if (selectedShop) { setSelectedShop(null); return true; } return false; },
-    () => { if (selectedCategory) { setSelectedCategory(null); return true; } return false; },
-    () => { onClose(); return true; },
-  ]);
+   useSwipeBack(() => {
+  if (selectedPhoto) { setSelectedPhoto(null); return; }
+  if (selectedShop) { setSelectedShop(null); return; }
+  if (selectedCategory) { setSelectedCategory(null); return; }
+  onClose();
+});
 
   const API_URL = 'https://bekobod-app-1.onrender.com';
 

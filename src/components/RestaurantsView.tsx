@@ -2,7 +2,7 @@ import { ImageViewer } from './ImageViewer';
 import { PullToRefresh } from './PullToRefresh';
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Phone, MapPin, Loader2, Star, Clock } from 'lucide-react';
-import { useNestedSwipeBack } from '../hooks/useSwipeBack';
+import { useSwipeBack } from '../hooks/useSwipeBack';
 
 interface RestaurantsViewProps {
   onClose: () => void;
@@ -52,13 +52,13 @@ export const RestaurantsView: React.FC<RestaurantsViewProps> = ({ onClose }) => 
   const [fullscreenPhotos, setFullscreenPhotos] = useState<string[]>([]);
   const [fullscreenIndex, setFullscreenIndex] = useState(0);
 
-    useNestedSwipeBack([
-    () => { if (fullscreenImage) { setFullscreenImage(null); return true; } return false; },
-    () => { if (showRatingModal) { setShowRatingModal(null); return true; } return false; },
-    () => { if (selectedRestaurant) { setSelectedRestaurant(null); setSelectedPhotos(null); return true; } return false; },
-    () => { if (selectedCategory) { setSelectedCategory(null); return true; } return false; },
-    () => { onClose(); return true; },
-  ]);
+   useSwipeBack(() => {
+  if (fullscreenImage) { setFullscreenImage(null); return; }
+  if (showRatingModal) { setShowRatingModal(null); return; }
+  if (selectedRestaurant) { setSelectedRestaurant(null); setSelectedPhotos(null); return; }
+  if (selectedCategory) { setSelectedCategory(null); return; }
+  onClose();
+});
 
   const API_URL = 'https://bekobod-app-1.onrender.com';
   // ✅ Получить initData из Telegram

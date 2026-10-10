@@ -160,14 +160,13 @@ const getInitData = (): string => {
 
       try {
         await fetch(`${API_URL}/api/taxi/register`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            name: driverName.trim(),
-            phone: normalizedPhone,
-            userId,
-          }),
-        });
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    name: driverName.trim(),
+    phone: normalizedPhone,
+  }),
+});
       } catch {}
 
       const res = await fetch(`${API_URL}/api/taxi/create`, {

@@ -2284,13 +2284,26 @@ app.get('/api/taxi/rating/:rideId', async (req, res) => {
 
 app.post('/api/taxi/register', async (req, res) => {
   try {
-    const { name, phone, userId } = req.body;
+    const userId = await requireUserId(req, res);
+    if (!userId) return;
+
+    const { name, phone } = req.body;
     if (!name || !phone) return res.status(400).json({ error: 'Заполните имя и телефон' });
-    const existing = await pool.query('SELECT * FROM taxi_drivers WHERE phone = $1', [phone]);
+
+    const existing = await pool.query('SELECT id, name, phone FROM taxi_drivers WHERE phone = $1', [phone]);
     if (existing.rows.length > 0) {
-      return res.status(400).json({ error: `Bu raqam allaqachon ${existing.rows[0].name} nomiga ro'yxatdan o'tgan.`, alreadyExists: true, driver: existing.rows[0] });
+      return res.status(400).json({
+        error: `Bu raqam allaqachon ${existing.rows[0].name} nomiga ro'yxatdan o'tgan.`,
+        alreadyExists: true,
+        driver: existing.rows[0],
+      });
     }
-    const result = await pool.query('INSERT INTO taxi_drivers (name, phone, user_id) VALUES ($1, $2, $3) RETURNING *', [name, phone, userId || null]);
+
+    const result = await pool.query(
+      'INSERT INTO taxi_drivers (name, phone, user_id) VALUES ($1, $2, $3) RETURNING id, name, phone',
+      [name, phone, userId]
+    );
+
     res.json({ driver: result.rows[0], alreadyExists: false });
   } catch (error: any) {
     console.error('Taxi register error:', error);
@@ -2300,7 +2313,10 @@ app.post('/api/taxi/register', async (req, res) => {
 
 app.get('/api/taxi/drivers', async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM taxi_drivers ORDER BY name ASC');
+    const userId = await requireUserId(req, res);
+    if (!userId) return;
+
+    const result = await pool.query('SELECT id, name, phone FROM taxi_drivers ORDER BY name ASC');
     res.json({ drivers: result.rows });
   } catch (error: any) {
     console.error('Taxi drivers error:', error);

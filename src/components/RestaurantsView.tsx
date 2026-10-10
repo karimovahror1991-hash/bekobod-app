@@ -341,13 +341,14 @@ const getInitData = (): string => {
 {/* ✅ Поиск */}
 <div className="max-w-2xl mx-auto px-4 pt-4">
   <div className="relative">
-    <input
-      type="text"
-      value={searchQuery}
-      onChange={(e) => setSearchQuery(e.target.value)}
-      placeholder=" "
-      className="w-full pl-10 pr-10 py-3 rounded-2xl border border-stone-200 bg-stone-50 text-sm focus:outline-none focus:border-amber-400 focus:bg-white transition"
-    />
+   <input
+  type="text"
+  value={searchQuery}
+  onChange={(e) => setSearchQuery(e.target.value)}
+  placeholder=" "
+  style={{ paddingLeft: '40px', paddingRight: '40px' }}
+  className="w-full py-3 rounded-2xl border border-stone-200 bg-stone-50 text-sm focus:outline-none focus:border-amber-400 focus:bg-white transition"
+/>
     {!searchQuery && (
       <svg
         className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400 pointer-events-none"

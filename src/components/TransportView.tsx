@@ -3,6 +3,7 @@ import { TaxiView } from './TaxiView';
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Clock, MapPin } from 'lucide-react';
 import { transport, TransportCategory } from '../data/transport';
+import { useSwipeBack } from '../hooks/useSwipeBack';
 
 interface TransportViewProps {
   onClose: () => void;
@@ -31,7 +32,10 @@ export const TransportView: React.FC<TransportViewProps> = ({ onClose }) => {
   const [showTaxi, setShowTaxi] = useState(false);
   const [cityTaxiCount, setCityTaxiCount] = useState(0);
   const [taxiRidesCount, setTaxiRidesCount] = useState(0);
-
+useSwipeBack(() => {
+  if (selectedCategory) { setSelectedCategory(null); return; }
+  onClose();
+});
   // Загрузка счётчиков из БД
   useEffect(() => {
     fetch('https://bekobod-app-1.onrender.com/api/city-taxi/list')

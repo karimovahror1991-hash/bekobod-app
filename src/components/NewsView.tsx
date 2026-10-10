@@ -1,6 +1,7 @@
 import { PullToRefresh } from './PullToRefresh';
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Loader2, ChevronRight, Clock, ExternalLink } from 'lucide-react';
+import { useSwipeBack } from '../hooks/useSwipeBack';
 
 interface NewsViewProps {
   onClose: () => void;

@@ -1,6 +1,7 @@
 import { PullToRefresh } from './PullToRefresh';
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Loader2, Plus, Phone, Trash2, X, Image as ImageIcon, Check, MapPin } from 'lucide-react';
+import { useSwipeBack } from '../hooks/useSwipeBack';
 
 interface OldiSotdiViewProps {
   onClose: () => void;
@@ -52,6 +53,12 @@ export const OldiSotdiView: React.FC<OldiSotdiViewProps> = ({ onClose, userId })
   const [images, setImages] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
   const [creating, setCreating] = useState(false);
+  
+useSwipeBack(() => {
+  if (selectedListing) { setSelectedListing(null); return; }
+  if (selectedCategory) { setSelectedCategory(null); return; }
+  onClose();
+});
 
   const API_URL = 'https://bekobod-app-1.onrender.com';
 // ✅ Получить initData из Telegram

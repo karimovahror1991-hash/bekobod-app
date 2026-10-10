@@ -1,6 +1,7 @@
 import { PullToRefresh } from './PullToRefresh';
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Phone, MapPin, Loader2 } from 'lucide-react';
+import { useSwipeBack } from '../hooks/useSwipeBack';
 
 interface EmergencyViewProps {
   onClose: () => void;
@@ -33,7 +34,10 @@ export const EmergencyView: React.FC<EmergencyViewProps> = ({ onClose }) => {
   const [selectedCategory, setSelectedCategory] = useState<CategoryInfo | null>(null);
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [loading, setLoading] = useState(true);
-
+useSwipeBack(() => {
+  if (selectedCategory) { setSelectedCategory(null); return; }
+  onClose();
+});
   const API_URL = 'https://bekobod-app-1.onrender.com';
 
   const loadContacts = async () => {

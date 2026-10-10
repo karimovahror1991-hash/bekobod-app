@@ -2,6 +2,7 @@ import { SuralarView } from './SuralarView';
 import { DuolarView } from './DuolarView';
 import React, { useState } from 'react';
 import { ArrowLeft, ChevronRight } from 'lucide-react';
+import { useSwipeBack } from '../hooks/useSwipeBack';
 
 interface IbodatViewProps {
   onClose: () => void;
@@ -15,6 +16,10 @@ const CATEGORIES = [
 export const IbodatView: React.FC<IbodatViewProps> = ({ onClose }) => {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
+  useSwipeBack(() => {
+  if (selectedCategory) { setSelectedCategory(null); return; }
+  onClose();
+});
   // Экран «Duolar»
   if (selectedCategory === 'duolar') {
     return <DuolarView onClose={() => setSelectedCategory(null)} />;

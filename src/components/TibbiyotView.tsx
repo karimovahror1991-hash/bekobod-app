@@ -1,6 +1,7 @@
 import { MedListView } from './MedListView';
 import React, { useState } from 'react';
 import { ArrowLeft, Phone, MapPin } from 'lucide-react';
+import { useSwipeBack } from '../hooks/useSwipeBack';
 
 interface TibbiyotViewProps {
   onClose: () => void;
@@ -29,6 +30,10 @@ const CATEGORIES = [
 
 export const TibbiyotView: React.FC<TibbiyotViewProps> = ({ onClose }) => {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+useSwipeBack(() => {
+  if (selectedCategory) { setSelectedCategory(null); return; }
+  onClose();
+});
 
   // === ЭКРАН «Dorixonalar» ===
   if (selectedCategory === 'dorixona') {

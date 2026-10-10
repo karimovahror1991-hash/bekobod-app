@@ -44,20 +44,21 @@ export const RestaurantsView: React.FC<RestaurantsViewProps> = ({ onClose }) => 
 
   // ⚡ Фото грузим ТОЛЬКО при открытии ресторана
   const [selectedRestaurant, setSelectedRestaurant] = useState<Restaurant | null>(null);
-  useNestedSwipeBack([
-  () => { if (fullscreenImage) { setFullscreenImage(null); return true; } return false; },
-  () => { if (showRatingModal) { setShowRatingModal(null); return true; } return false; },
-  () => { if (selectedRestaurant) { setSelectedRestaurant(null); setSelectedPhotos(null); return true; } return false; },
-  () => { if (selectedCategory) { setSelectedCategory(null); return true; } return false; },
-  () => { onClose(); return true; },
-]);
-  const [selectedPhotos, setSelectedPhotos] = useState<{image_url: string | null, menu_images: string[]} | null>(null);
+    const [selectedPhotos, setSelectedPhotos] = useState<{image_url: string | null, menu_images: string[]} | null>(null);
   const [photosLoading, setPhotosLoading] = useState(false);
 
   // Fullscreen
   const [fullscreenImage, setFullscreenImage] = useState<string | null>(null);
   const [fullscreenPhotos, setFullscreenPhotos] = useState<string[]>([]);
   const [fullscreenIndex, setFullscreenIndex] = useState(0);
+
+    useNestedSwipeBack([
+    () => { if (fullscreenImage) { setFullscreenImage(null); return true; } return false; },
+    () => { if (showRatingModal) { setShowRatingModal(null); return true; } return false; },
+    () => { if (selectedRestaurant) { setSelectedRestaurant(null); setSelectedPhotos(null); return true; } return false; },
+    () => { if (selectedCategory) { setSelectedCategory(null); return true; } return false; },
+    () => { onClose(); return true; },
+  ]);
 
   const API_URL = 'https://bekobod-app-1.onrender.com';
   // ✅ Получить initData из Telegram

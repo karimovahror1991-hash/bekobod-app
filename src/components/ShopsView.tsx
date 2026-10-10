@@ -41,14 +41,15 @@ export const ShopsView: React.FC<ShopsViewProps> = ({ onClose }) => {
 
   // ⚡ Фото грузим ТОЛЬКО при клике
   const [selectedShop, setSelectedShop] = useState<Shop | null>(null);
-  useNestedSwipeBack([
-  () => { if (selectedPhoto) { setSelectedPhoto(null); return true; } return false; },
-  () => { if (selectedShop) { setSelectedShop(null); return true; } return false; },
-  () => { if (selectedCategory) { setSelectedCategory(null); return true; } return false; },
-  () => { onClose(); return true; },
-]);
-  const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
+    const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
   const [photoLoading, setPhotoLoading] = useState(false);
+
+    useNestedSwipeBack([
+    () => { if (selectedPhoto) { setSelectedPhoto(null); return true; } return false; },
+    () => { if (selectedShop) { setSelectedShop(null); return true; } return false; },
+    () => { if (selectedCategory) { setSelectedCategory(null); return true; } return false; },
+    () => { onClose(); return true; },
+  ]);
 
   const API_URL = 'https://bekobod-app-1.onrender.com';
 

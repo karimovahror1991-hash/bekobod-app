@@ -331,23 +331,13 @@ if (activeSection === 'donate') {
   )}
 </div>
 
-     {/* ===== РАЗДЕЛЫ на фоне города ===== */}
-<div className="relative flex-1">
-  {/* Фото города */}
-  <img
-    src="/bekobod-city.jpg"
-    alt="Bekobod"
-    className="absolute inset-0 w-full h-full object-cover"
-  />
-
-  {/* Затемнение — посветлее, чтобы фото было заметно */}
-  <div className="absolute inset-0 bg-linear-to-b from-slate-900/35 via-slate-900/25 to-slate-900/35" />
-
+     {/* ===== РАЗДЕЛЫ на белом фоне ===== */}
+<div className="flex-1 bg-stone-50">
   {/* Контент разделов */}
-  <div className="relative max-w-2xl w-full mx-auto px-4 py-6">
-    <h2 className="font-bold text-lg mb-4 flex items-center space-x-2 text-white drop-shadow-md">
+  <div className="max-w-2xl w-full mx-auto px-4 py-6">
+    <h2 className="font-bold text-lg mb-4 flex items-center space-x-2 text-stone-900">
       <span>Bo'limlar</span>
-      <span className="text-xs font-normal text-white/60">Bo'limlar / Разделы</span>
+      <span className="text-xs font-normal text-stone-400">Bo'limlar / Разделы</span>
     </h2>
 
     <div className="grid grid-cols-2 gap-4">
@@ -358,7 +348,7 @@ if (activeSection === 'donate') {
           <button
             key={section.id}
             onClick={() => setActiveSection(section.id)}
-            className="group relative bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-3xl p-6 flex flex-col items-center justify-center space-y-3 border border-white/15 shadow-sm hover:shadow-xl transition-all duration-300 active:scale-95"
+            className="group relative bg-white hover:bg-stone-50 rounded-3xl p-6 flex flex-col items-center justify-center space-y-3 border border-stone-200 shadow-sm hover:shadow-xl transition-all duration-300 active:scale-95"
           >
             <div className="relative">
   {/* Иконка — PNG если есть, иначе старая круглая */}
@@ -382,13 +372,13 @@ if (activeSection === 'donate') {
 </div>
 
             <div className="text-center">
-              <div className="text-base font-bold text-white leading-tight drop-shadow-md">
-                {section.titleUz}
-              </div>
-              <div className="text-xs text-white/80 leading-tight mt-1 drop-shadow-md">
-                {section.titleRu}
-              </div>
-            </div>
+  <div className="text-base font-bold text-stone-900 leading-tight">
+    {section.titleUz}
+  </div>
+  <div className="text-xs text-stone-500 leading-tight mt-1">
+    {section.titleRu}
+  </div>
+</div>
           </button>
         );
       })}
@@ -396,9 +386,9 @@ if (activeSection === 'donate') {
   </div>
 
         {/* Футер */}
-      <div className="relative text-center py-4 text-[10px] text-white/50">
-        © 2026 Bekobod Shahar Portali
-      </div>
+<div className="text-center py-4 text-[10px] text-stone-400">
+  © 2026 Bekobod Shahar Portali
+</div>
     </div>
     </div>
   </Suspense>
